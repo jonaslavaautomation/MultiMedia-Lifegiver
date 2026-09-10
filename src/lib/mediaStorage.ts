@@ -76,12 +76,20 @@ export async function getMediaSignedUrl(path: string, expiresIn = 3600): Promise
 
 /** Looks up a media row's storage path by id and resolves it to a signed URL. */
 export async function getMediaUrlById(mediaId: string): Promise<string | null> {
-  const { data, error } = await supabase.from('media').select('url').eq('id', mediaId).maybeSingle();
+  const info = await getMediaInfoById(mediaId);
+  return info?.url ?? null;
+}
+
+/** Like getMediaUrlById, but also returns the media row's type — used to decide image vs. video background rendering. */
+export async function getMediaInfoById(mediaId: string): Promise<{ url: string; type: MediaType } | null> {
+  const { data, error } = await supabase.from('media').select('url, type').eq('id', mediaId).maybeSingle();
   if (error || !data) {
     if (error) console.error('Error fetching media row:', error.message);
     return null;
   }
-  return getMediaSignedUrl(data.url);
+  const signedUrl = await getMediaSignedUrl(data.url);
+  if (!signedUrl) return null;
+  return { url: signedUrl, type: data.type as MediaType };
 }
 
 /** Best-effort delete — used both for rollback-on-DB-failure and the Delete action. */

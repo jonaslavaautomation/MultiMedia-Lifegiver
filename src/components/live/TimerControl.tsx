@@ -1,7 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Play, Pause, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { getDisplayMs, formatDuration } from '@/lib/liveTimer';
+import {
+  getDisplayMs,
+  formatDuration,
+  startTimer,
+  pauseTimer,
+  resetTimer,
+  setTimerMode,
+  setCountdownDuration,
+} from '@/lib/liveTimer';
 import type { TimerMode, TimerState } from '@/types/live';
 
 interface TimerControlProps {
@@ -24,40 +32,34 @@ export function TimerControl({ timer, onChange }: TimerControlProps) {
   const isLow = isCountingDown && displayMs <= 60_000 && displayMs > 0;
   const isDone = isCountingDown && displayMs === 0;
 
-  function setMode(mode: TimerMode) {
+  function handleSetMode(mode: TimerMode) {
     if (timer.running) return;
-    onChange({ ...timer, mode, startedAt: null, accumulatedMs: 0 });
+    onChange(setTimerMode(timer, mode));
   }
 
-  function setDurationMinutes(minutes: number) {
-    onChange({ ...timer, durationMs: Math.max(0, minutes) * 60_000 });
+  function handleSetDurationMinutes(minutes: number) {
+    onChange(setCountdownDuration(timer, minutes));
   }
 
   function handleStart() {
-    onChange({ ...timer, running: true, startedAt: Date.now() });
+    onChange(startTimer(timer));
   }
 
   function handlePause() {
-    const elapsedSinceStart = timer.startedAt != null ? Date.now() - timer.startedAt : 0;
-    onChange({
-      ...timer,
-      running: false,
-      startedAt: null,
-      accumulatedMs: timer.accumulatedMs + elapsedSinceStart,
-    });
+    onChange(pauseTimer(timer));
   }
 
   function handleReset() {
-    onChange({ ...timer, running: false, startedAt: null, accumulatedMs: 0 });
+    onChange(resetTimer(timer));
   }
 
   return (
     <div className="rounded-2xl bg-zinc-900/60 border border-zinc-800/80 p-4">
       <div className="flex items-center gap-2 mb-3">
-        <Button variant={timer.mode === 'stopwatch' ? 'primary' : 'outline'} size="sm" onClick={() => setMode('stopwatch')} disabled={timer.running}>
+        <Button variant={timer.mode === 'stopwatch' ? 'primary' : 'outline'} size="sm" onClick={() => handleSetMode('stopwatch')} disabled={timer.running}>
           Stopwatch
         </Button>
-        <Button variant={timer.mode === 'countdown' ? 'primary' : 'outline'} size="sm" onClick={() => setMode('countdown')} disabled={timer.running}>
+        <Button variant={timer.mode === 'countdown' ? 'primary' : 'outline'} size="sm" onClick={() => handleSetMode('countdown')} disabled={timer.running}>
           Countdown
         </Button>
       </div>
@@ -70,7 +72,7 @@ export function TimerControl({ timer, onChange }: TimerControlProps) {
             min={0}
             disabled={timer.running}
             value={Math.round((timer.durationMs ?? 0) / 60_000)}
-            onChange={(e) => setDurationMinutes(Number(e.target.value) || 0)}
+            onChange={(e) => handleSetDurationMinutes(Number(e.target.value) || 0)}
             className="w-16 rounded-lg bg-zinc-950/80 border border-zinc-700/80 text-zinc-100 px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-maroon-500/40"
           />
         </div>

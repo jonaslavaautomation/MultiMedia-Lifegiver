@@ -35,6 +35,7 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [addImageOpen, setAddImageOpen] = useState(false);
   const [backgroundOpen, setBackgroundOpen] = useState(false);
+  const [backgroundVideoUrl, setBackgroundVideoUrl] = useState<string | null>(null);
 
   const { containerRef, canvasElRef, canvas } = useFabricCanvas({ backgroundColor: DEFAULT_SLIDE_BACKGROUND_COLOR });
   const { selection, refreshSelection } = useSelectedObject(canvas);
@@ -207,13 +208,15 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
       if (isEmptySlideContent(content)) {
         applySolidBackground(canvas!, DEFAULT_SLIDE_BACKGROUND_COLOR);
         backgroundMediaIdRef.current = null;
+        setBackgroundVideoUrl(null);
       } else {
         // Shared with the read-only Present-mode renderer (src/lib/renderSlide.ts)
         // so the two never render a slide differently from each other.
-        await resolveAndRenderSlide(canvas!, content);
+        const { videoBackgroundUrl } = await resolveAndRenderSlide(canvas!, content);
         if (cancelled) return;
 
         backgroundMediaIdRef.current = content.meta?.backgroundMediaId ?? null;
+        setBackgroundVideoUrl(videoBackgroundUrl);
         canvas!.requestRenderAll();
       }
 
@@ -321,18 +324,29 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
     if (!canvas) return;
     applySolidBackground(canvas, hex);
     backgroundMediaIdRef.current = null;
+    setBackgroundVideoUrl(null);
     markDirty();
   }
 
-  async function handleBackgroundImage(item: MediaItem) {
+  async function handleBackgroundMedia(item: MediaItem) {
     if (!canvas) return;
     const signedUrl = await getMediaSignedUrl(item.url);
     if (!signedUrl) {
-      setSaveError('Failed to load that image.');
+      setSaveError(`Failed to load that ${item.type}.`);
       setSaveStatus('error');
       return;
     }
-    await applyImageBackground(canvas, signedUrl);
+
+    if (item.type === 'video') {
+      canvas.backgroundImage = undefined;
+      canvas.backgroundColor = 'transparent';
+      canvas.requestRenderAll();
+      setBackgroundVideoUrl(signedUrl);
+    } else {
+      await applyImageBackground(canvas, signedUrl);
+      setBackgroundVideoUrl(null);
+    }
+
     backgroundMediaIdRef.current = item.id;
     markDirty();
   }
@@ -381,6 +395,7 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
           canvasElRef={canvasElRef}
           saveStatus={saveStatus}
           loadingSlide={loadingSlide}
+          backgroundVideoUrl={backgroundVideoUrl}
         />
         <SlideFilmstrip
           slides={slides}
@@ -397,7 +412,7 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
         open={backgroundOpen}
         onClose={() => setBackgroundOpen(false)}
         onPickColor={handleBackgroundColor}
-        onPickImage={handleBackgroundImage}
+        onPickMedia={handleBackgroundMedia}
       />
     </div>
   );

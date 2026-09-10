@@ -1,12 +1,27 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Monitor, Tv, Eye, EyeOff, ChevronLeft, ChevronRight, Presentation as PresentationIcon } from 'lucide-react';
+import {
+  ArrowLeft,
+  Monitor,
+  Tv,
+  Eye,
+  EyeOff,
+  ChevronLeft,
+  ChevronRight,
+  Presentation as PresentationIcon,
+  Smartphone,
+  Copy,
+  Check,
+} from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
+import { Modal } from '@/components/ui/Modal';
 import { useLiveChannel } from '@/hooks/useLiveChannel';
+import { useRealtimeLiveChannel } from '@/hooks/useRealtimeLiveChannel';
 import { SlideCanvasRenderer } from '@/components/live/SlideCanvasRenderer';
 import { TimerControl } from '@/components/live/TimerControl';
+import { startTimer, pauseTimer, resetTimer, setTimerMode, setCountdownDuration } from '@/lib/liveTimer';
 import { INITIAL_TIMER_STATE, type LiveState, type TimerState } from '@/types/live';
 import type { Slide } from '@/types';
 
@@ -29,8 +44,12 @@ export function PresentLivePage() {
   const [blackout, setBlackout] = useState(false);
   const [timer, setTimer] = useState<TimerState>(INITIAL_TIMER_STATE);
 
+  const [remoteModalOpen, setRemoteModalOpen] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+
   const restoredRef = useRef(false);
   const { post, lastMessage } = useLiveChannel(id ?? '');
+  const { post: postRemote, lastMessage: lastRemoteMessage, connected: remoteConnected } = useRealtimeLiveChannel(id ?? '');
 
   const fetchData = useCallback(async () => {
     if (!id) return;
@@ -101,17 +120,82 @@ export function PresentLivePage() {
     [title, slideIndex, slides, blackout, timer]
   );
 
-  // Answer late-joining Projector/Stage windows.
+  // Shared slide-navigation / blackout callbacks — the UI buttons, keyboard
+  // shortcuts, and remote commands (from a phone) all funnel through these
+  // so they can never diverge in behavior.
+  const goNext = useCallback(() => {
+    setSlideIndex((i) => Math.min(i + 1, Math.max(slides.length - 1, 0)));
+  }, [slides.length]);
+  const goPrev = useCallback(() => {
+    setSlideIndex((i) => Math.max(i - 1, 0));
+  }, []);
+  const goToSlide = useCallback(
+    (index: number) => {
+      setSlideIndex(Math.min(Math.max(index, 0), Math.max(slides.length - 1, 0)));
+    },
+    [slides.length]
+  );
+  const toggleBlackout = useCallback(() => setBlackout((b) => !b), []);
+
+  // Answer late-joining Projector/Stage windows (same-computer, BroadcastChannel).
   useEffect(() => {
     if (lastMessage?.type === 'request-state') {
       post({ type: 'state', state: buildState() });
     }
   }, [lastMessage, post, buildState]);
 
-  // Broadcast on every state change.
+  // Handle Realtime traffic: request-state from a newly-opened remote, or a
+  // command it sent. Commands are applied via the exact same functions the
+  // local UI uses, so a phone tapping "Next" behaves identically to
+  // clicking Next here.
   useEffect(() => {
-    post({ type: 'state', state: buildState() });
-  }, [post, buildState]);
+    if (!lastRemoteMessage) return;
+
+    if (lastRemoteMessage.type === 'request-state') {
+      postRemote({ type: 'state', state: buildState() });
+      return;
+    }
+
+    if (lastRemoteMessage.type === 'command') {
+      switch (lastRemoteMessage.action) {
+        case 'next':
+          goNext();
+          break;
+        case 'previous':
+          goPrev();
+          break;
+        case 'goto':
+          goToSlide(lastRemoteMessage.slideIndex);
+          break;
+        case 'toggle-blackout':
+          toggleBlackout();
+          break;
+        case 'timer-start':
+          setTimer((t) => startTimer(t));
+          break;
+        case 'timer-pause':
+          setTimer((t) => pauseTimer(t));
+          break;
+        case 'timer-reset':
+          setTimer((t) => resetTimer(t));
+          break;
+        case 'timer-set-mode':
+          setTimer((t) => setTimerMode(t, lastRemoteMessage.mode));
+          break;
+        case 'timer-set-duration':
+          setTimer((t) => setCountdownDuration(t, lastRemoteMessage.minutes));
+          break;
+      }
+    }
+  }, [lastRemoteMessage, postRemote, buildState, goNext, goPrev, goToSlide, toggleBlackout]);
+
+  // Broadcast on every state change — over both the local BroadcastChannel
+  // (Projector/Stage on this computer) and Realtime (a connected remote).
+  useEffect(() => {
+    const state = buildState();
+    post({ type: 'state', state });
+    postRemote({ type: 'state', state });
+  }, [post, postRemote, buildState]);
 
   // Keyboard shortcuts: -> / Space next, <- previous, B blackout.
   useEffect(() => {
@@ -121,22 +205,36 @@ export function PresentLivePage() {
 
       if (e.key === 'ArrowRight' || e.key === ' ') {
         e.preventDefault();
-        setSlideIndex((i) => Math.min(i + 1, Math.max(slides.length - 1, 0)));
+        goNext();
       } else if (e.key === 'ArrowLeft') {
         e.preventDefault();
-        setSlideIndex((i) => Math.max(i - 1, 0));
+        goPrev();
       } else if (e.key.toLowerCase() === 'b') {
-        setBlackout((b) => !b);
+        toggleBlackout();
       }
     }
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [slides.length]);
+  }, [goNext, goPrev, toggleBlackout]);
 
   function openWindow(kind: 'projector' | 'stage') {
     if (!id) return;
     const url = `${window.location.origin}/presentations/${id}/present/${kind}`;
     window.open(url, `lifegiver-${kind}-${id}`, 'popup=yes,width=1280,height=720');
+  }
+
+  const remoteUrl = id ? `${window.location.origin}/presentations/${id}/present/remote` : '';
+
+  function handleCopyRemoteLink() {
+    navigator.clipboard
+      .writeText(remoteUrl)
+      .then(() => {
+        setLinkCopied(true);
+        setTimeout(() => setLinkCopied(false), 2000);
+      })
+      .catch(() => {
+        // Clipboard access can be denied — the link is still visible/selectable in the modal.
+      });
   }
 
   if (loading) {
@@ -173,7 +271,7 @@ export function PresentLivePage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant={blackout ? 'danger' : 'outline'} size="sm" onClick={() => setBlackout((b) => !b)} title="Toggle blackout (B)">
+          <Button variant={blackout ? 'danger' : 'outline'} size="sm" onClick={toggleBlackout} title="Toggle blackout (B)">
             {blackout ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
             {blackout ? 'Blacked Out' : 'Blackout'}
           </Button>
@@ -182,6 +280,9 @@ export function PresentLivePage() {
           </Button>
           <Button variant="outline" size="sm" onClick={() => openWindow('stage')}>
             <Tv className="w-3.5 h-3.5" /> Open Stage Display
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setRemoteModalOpen(true)}>
+            <Smartphone className="w-3.5 h-3.5" /> Remote Control
           </Button>
         </div>
       </div>
@@ -196,7 +297,7 @@ export function PresentLivePage() {
             slides.map((slide, index) => (
               <button
                 key={slide.id}
-                onClick={() => setSlideIndex(index)}
+                onClick={() => goToSlide(index)}
                 className={`shrink-0 w-40 lg:w-full text-left px-3 py-2.5 rounded-xl border transition-all ${
                   index === slideIndex
                     ? 'border-maroon-500 bg-maroon-950/30 text-maroon-200'
@@ -224,14 +325,10 @@ export function PresentLivePage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => setSlideIndex((i) => Math.max(i - 1, 0))} disabled={slideIndex === 0}>
+            <Button variant="outline" onClick={goPrev} disabled={slideIndex === 0}>
               <ChevronLeft className="w-4 h-4" /> Previous
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => setSlideIndex((i) => Math.min(i + 1, slides.length - 1))}
-              disabled={slideIndex >= slides.length - 1}
-            >
+            <Button variant="outline" onClick={goNext} disabled={slideIndex >= slides.length - 1}>
               Next <ChevronRight className="w-4 h-4" />
             </Button>
             <span className="text-xs text-zinc-500 ml-2">
@@ -248,6 +345,31 @@ export function PresentLivePage() {
           <TimerControl timer={timer} onChange={setTimer} />
         </div>
       </div>
+
+      {/* Remote Control share link */}
+      <Modal open={remoteModalOpen} onClose={() => setRemoteModalOpen(false)} title="Remote Control">
+        <div className="flex flex-col gap-4">
+          <p className="text-sm text-zinc-400 leading-relaxed">
+            Open this link on a phone or tablet to control this presentation remotely — next/previous, blackout, and
+            the timer all sync back here in real time.
+          </p>
+          <div className="flex items-center gap-2">
+            <input
+              readOnly
+              value={remoteUrl}
+              onFocus={(e) => e.currentTarget.select()}
+              className="flex-1 min-w-0 rounded-lg bg-zinc-950/80 border border-zinc-700/80 text-zinc-300 px-3 py-2 text-xs"
+            />
+            <Button variant="secondary" size="sm" onClick={handleCopyRemoteLink}>
+              {linkCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              {linkCopied ? 'Copied' : 'Copy'}
+            </Button>
+          </div>
+          <p className={`text-xs ${remoteConnected ? 'text-emerald-400' : 'text-zinc-500'}`}>
+            ● Remote sync {remoteConnected ? 'active' : 'connecting…'}
+          </p>
+        </div>
+      </Modal>
     </div>
   );
 }

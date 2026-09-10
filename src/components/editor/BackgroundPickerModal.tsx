@@ -9,12 +9,13 @@ interface BackgroundPickerModalProps {
   open: boolean;
   onClose: () => void;
   onPickColor: (hex: string) => void;
-  onPickImage: (item: MediaItem) => void;
+  /** Called with the picked item — may be an image or a video. */
+  onPickMedia: (item: MediaItem) => void;
 }
 
-type Tab = 'color' | 'image';
+type Tab = 'color' | 'media';
 
-export function BackgroundPickerModal({ open, onClose, onPickColor, onPickImage }: BackgroundPickerModalProps) {
+export function BackgroundPickerModal({ open, onClose, onPickColor, onPickMedia }: BackgroundPickerModalProps) {
   const [tab, setTab] = useState<Tab>('color');
   const [customColor, setCustomColor] = useState('#09090b');
 
@@ -25,8 +26,8 @@ export function BackgroundPickerModal({ open, onClose, onPickColor, onPickImage 
           <Button variant={tab === 'color' ? 'primary' : 'outline'} size="sm" onClick={() => setTab('color')}>
             Solid Color
           </Button>
-          <Button variant={tab === 'image' ? 'primary' : 'outline'} size="sm" onClick={() => setTab('image')}>
-            Image
+          <Button variant={tab === 'media' ? 'primary' : 'outline'} size="sm" onClick={() => setTab('media')}>
+            Media
           </Button>
         </div>
 
@@ -74,11 +75,11 @@ export function BackgroundPickerModal({ open, onClose, onPickColor, onPickImage 
           </div>
         ) : (
           <MediaPicker
-            accept={['image']}
+            accept={['image', 'video']}
             multiple={false}
             onSelect={(items) => {
               if (items[0]) {
-                onPickImage(items[0]);
+                onPickMedia(items[0]);
                 onClose();
               }
             }}
