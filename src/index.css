@@ -1,4 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap');
+/* Inter/Poppins are the app's own UI fonts; the rest are the curated slide-editor
+   font list (src/lib/editorConstants.ts). All are requested up front so they're
+   virtually always loaded before someone opens the editor's font picker. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&family=Merriweather:wght@400;700&family=Playfair+Display:wght@500;600;700&family=Montserrat:wght@400;600;700&family=Oswald:wght@400;500;600&family=Lora:wght@400;600&family=Roboto+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;

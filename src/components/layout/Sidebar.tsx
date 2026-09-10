@@ -11,7 +11,6 @@ import {
   Church,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import type { UserRole } from '@/types';
 
 interface NavItem {
   label: string;

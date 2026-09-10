@@ -3,7 +3,6 @@ import { Users as UsersIcon, Shield, Music4, User as UserIcon, Search } from 'lu
 import { supabase } from '@/lib/supabase';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { Input } from '@/components/ui/Input';
 import { EmptyState } from '@/components/ui/EmptyState';
 import type { Profile, UserRole } from '@/types';
 
