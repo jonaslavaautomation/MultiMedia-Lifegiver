@@ -1,0 +1,73 @@
+import { useCallback, useEffect, useState } from 'react';
+import type { Canvas, FabricObject, Textbox } from 'fabric';
+import type { SelectedObjectSnapshot } from '@/types/editor';
+
+function snapshotFor(object: FabricObject | undefined): SelectedObjectSnapshot | null {
+  if (!object) return null;
+
+  if (object.type === 'textbox') {
+    const textbox = object as Textbox;
+    return {
+      kind: 'textbox',
+      id: String(textbox.get('id') ?? ''),
+      fontFamily: textbox.fontFamily ?? 'Poppins',
+      fontSize: textbox.fontSize ?? 72,
+      fill: typeof textbox.fill === 'string' ? textbox.fill : '#ffffff',
+      textAlign: (textbox.textAlign as 'left' | 'center' | 'right') ?? 'center',
+    };
+  }
+
+  if (object.type === 'image') {
+    return { kind: 'image', id: String(object.get('id') ?? '') };
+  }
+
+  return null;
+}
+
+/**
+ * Subscribes to Fabric selection events and exposes a plain, serializable
+ * snapshot of the current selection for the toolbar to render contextual
+ * controls against — the toolbar never touches the live Fabric object
+ * directly for reading state, only for issuing commands.
+ */
+export function useSelectedObject(canvas: Canvas | null): {
+  selection: SelectedObjectSnapshot | null;
+  refreshSelection: () => void;
+} {
+  const [selection, setSelection] = useState<SelectedObjectSnapshot | null>(null);
+
+  const computeSnapshot = useCallback(() => {
+    if (!canvas) {
+      setSelection(null);
+      return;
+    }
+    const activeObjects = canvas.getActiveObjects();
+    if (activeObjects.length === 0) {
+      setSelection(null);
+    } else if (activeObjects.length === 1) {
+      setSelection(snapshotFor(activeObjects[0]));
+    } else {
+      setSelection({ kind: 'multiple', count: activeObjects.length });
+    }
+  }, [canvas]);
+
+  useEffect(() => {
+    if (!canvas) return;
+
+    canvas.on('selection:created', computeSnapshot);
+    canvas.on('selection:updated', computeSnapshot);
+    canvas.on('selection:cleared', computeSnapshot);
+    canvas.on('object:modified', computeSnapshot);
+    canvas.on('text:changed', computeSnapshot);
+
+    return () => {
+      canvas.off('selection:created', computeSnapshot);
+      canvas.off('selection:updated', computeSnapshot);
+      canvas.off('selection:cleared', computeSnapshot);
+      canvas.off('object:modified', computeSnapshot);
+      canvas.off('text:changed', computeSnapshot);
+    };
+  }, [canvas, computeSnapshot]);
+
+  return { selection, refreshSelection: computeSnapshot };
+}

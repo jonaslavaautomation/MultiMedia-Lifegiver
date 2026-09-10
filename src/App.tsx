@@ -7,6 +7,7 @@ import { DashboardPage } from '@/pages/DashboardPage';
 import { PresentationsPage } from '@/pages/PresentationsPage';
 import { PresentationEditorPage } from '@/pages/PresentationEditorPage';
 import { SongsPage } from '@/pages/SongsPage';
+import { SongDetailPage } from '@/pages/SongDetailPage';
 import { BiblePage } from '@/pages/BiblePage';
 import { MediaPage } from '@/pages/MediaPage';
 import { TemplatesPage } from '@/pages/TemplatesPage';
@@ -28,6 +29,7 @@ function ProtectedRoutes() {
       <Route path="/presentations" element={<AppLayout><PresentationsPage /></AppLayout>} />
       <Route path="/presentations/:id/edit" element={<AppLayout><PresentationEditorPage /></AppLayout>} />
       <Route path="/songs" element={<AppLayout><SongsPage /></AppLayout>} />
+      <Route path="/songs/:id" element={<AppLayout><SongDetailPage /></AppLayout>} />
       <Route path="/bible" element={<AppLayout><BiblePage /></AppLayout>} />
       <Route path="/media" element={<AppLayout><MediaPage /></AppLayout>} />
       <Route path="/templates" element={<AppLayout><TemplatesPage /></AppLayout>} />

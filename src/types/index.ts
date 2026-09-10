@@ -4,6 +4,43 @@ export type PresentationStatus = 'draft' | 'ready' | 'archived';
 
 export type MediaType = 'image' | 'video' | 'audio';
 
+export type SongSectionType =
+  | 'intro'
+  | 'verse'
+  | 'pre-chorus'
+  | 'chorus'
+  | 'bridge'
+  | 'tag'
+  | 'outro';
+
+export interface SongSection {
+  id: string;
+  type: SongSectionType;
+  label: string;
+  text: string;
+  order: number;
+}
+
+export interface SongLyrics {
+  sections: SongSection[];
+}
+
+/**
+ * Slide canvas data stored in `slides.content`. This is Fabric.js's own
+ * `canvas.toJSON(['id','data'])` output, round-tripped opaquely via
+ * `canvas.loadFromJSON()` — we don't assert its internal shape beyond the
+ * `meta` sidecar we bolt on ourselves.
+ */
+export interface SlideCanvasMeta {
+  schemaVersion: 1;
+  backgroundMediaId: string | null;
+}
+
+export interface SlideCanvasData {
+  [key: string]: unknown;
+  meta?: SlideCanvasMeta;
+}
+
 export interface Profile {
   id: string;
   full_name: string | null;
@@ -33,7 +70,7 @@ export interface Slide {
   id: string;
   presentation_id: string;
   title: string;
-  content: Record<string, unknown>;
+  content: SlideCanvasData;
   background_id: string | null;
   sort_order: number;
   created_at: string;
@@ -46,10 +83,14 @@ export interface Song {
   author: string | null;
   key: string | null;
   tempo: string | null;
-  lyrics: Record<string, unknown>;
+  lyrics: SongLyrics;
   created_by: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface SongWithCreator extends Song {
+  creator?: Pick<Profile, 'full_name' | 'role'> | null;
 }
 
 export interface BibleVerse {
@@ -74,6 +115,10 @@ export interface MediaItem {
   metadata: Record<string, unknown>;
   uploaded_by: string | null;
   created_at: string;
+}
+
+export interface MediaItemWithUploader extends MediaItem {
+  uploader?: Pick<Profile, 'full_name' | 'role'> | null;
 }
 
 export interface Template {
