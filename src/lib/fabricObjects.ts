@@ -1,4 +1,4 @@
-import { Canvas, FabricImage, Textbox, type FabricObject } from 'fabric';
+import { Canvas, FabricImage, StaticCanvas, Textbox, type FabricObject } from 'fabric';
 import type { SlideCanvasData } from '@/types';
 import { DEFAULT_SLIDE_BACKGROUND_COLOR, DEFAULT_TEXT_PROPS, SLIDE_HEIGHT, SLIDE_WIDTH } from '@/lib/editorConstants';
 
@@ -68,14 +68,18 @@ export async function createImageObjectFromUrl(
   return img;
 }
 
-export function applySolidBackground(canvas: Canvas, hex: string): void {
+// The next three operate on StaticCanvas (Fabric's non-interactive base
+// class that Canvas extends) so they're reusable by the read-only
+// Present-mode slide renderer, not just the interactive editor.
+
+export function applySolidBackground(canvas: StaticCanvas, hex: string): void {
   canvas.backgroundImage = undefined;
   canvas.backgroundColor = hex;
   canvas.requestRenderAll();
 }
 
 /** Sets a full-bleed background image (covers the slide, not a movable object). */
-export async function applyImageBackground(canvas: Canvas, url: string): Promise<void> {
+export async function applyImageBackground(canvas: StaticCanvas, url: string): Promise<void> {
   const img = await FabricImage.fromURL(url, { crossOrigin: 'anonymous' });
 
   const scale = Math.max(SLIDE_WIDTH / img.width, SLIDE_HEIGHT / img.height);
@@ -92,7 +96,7 @@ export async function applyImageBackground(canvas: Canvas, url: string): Promise
   canvas.requestRenderAll();
 }
 
-export function clearBackgroundImage(canvas: Canvas): void {
+export function clearBackgroundImage(canvas: StaticCanvas): void {
   canvas.backgroundImage = undefined;
   canvas.backgroundColor = DEFAULT_SLIDE_BACKGROUND_COLOR;
   canvas.requestRenderAll();

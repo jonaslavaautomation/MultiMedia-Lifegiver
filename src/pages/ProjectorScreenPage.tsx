@@ -1,0 +1,50 @@
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { Maximize } from 'lucide-react';
+import { useLiveChannel } from '@/hooks/useLiveChannel';
+import { SlideCanvasRenderer } from '@/components/live/SlideCanvasRenderer';
+import type { LiveState } from '@/types/live';
+
+/**
+ * Audience-facing output. Full-bleed, letterboxed to 16:9, chrome-less.
+ * Meant to be dragged to the screen wired to a projector/TV and put into
+ * real fullscreen via the corner button (browsers require a user gesture
+ * inside this window to grant fullscreen).
+ */
+export function ProjectorScreenPage() {
+  const { id } = useParams<{ id: string }>();
+  const [state, setState] = useState<LiveState | null>(null);
+  const { post, lastMessage } = useLiveChannel(id ?? '');
+
+  useEffect(() => {
+    post({ type: 'request-state' });
+  }, [post]);
+
+  useEffect(() => {
+    if (lastMessage?.type === 'state') setState(lastMessage.state);
+  }, [lastMessage]);
+
+  function handleFullscreen() {
+    document.documentElement.requestFullscreen().catch(() => {
+      // Fullscreen can be denied (e.g. no user gesture, browser policy) — fail silently.
+    });
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black flex items-center justify-center overflow-hidden">
+      {!state?.blackout && (
+        <div style={{ width: 'min(100vw, 177.78vh)', aspectRatio: '16 / 9' }}>
+          <SlideCanvasRenderer content={state?.currentContent ?? null} className="w-full h-full" />
+        </div>
+      )}
+
+      <button
+        onClick={handleFullscreen}
+        title="Fullscreen"
+        className="absolute bottom-4 right-4 p-2.5 rounded-lg bg-white/10 text-white/60 hover:bg-white/20 hover:text-white transition-all"
+      >
+        <Maximize className="w-4 h-4" />
+      </button>
+    </div>
+  );
+}

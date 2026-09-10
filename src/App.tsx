@@ -6,6 +6,10 @@ import { LoginPage } from '@/pages/LoginPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { PresentationsPage } from '@/pages/PresentationsPage';
 import { PresentationEditorPage } from '@/pages/PresentationEditorPage';
+import { PresentLivePage } from '@/pages/PresentLivePage';
+import { ProjectorScreenPage } from '@/pages/ProjectorScreenPage';
+import { StageDisplayPage } from '@/pages/StageDisplayPage';
+import { LiveGuard } from '@/components/live/LiveGuard';
 import { SongsPage } from '@/pages/SongsPage';
 import { SongDetailPage } from '@/pages/SongDetailPage';
 import { BiblePage } from '@/pages/BiblePage';
@@ -28,6 +32,9 @@ function ProtectedRoutes() {
       <Route path="/dashboard" element={<AppLayout><DashboardPage /></AppLayout>} />
       <Route path="/presentations" element={<AppLayout><PresentationsPage /></AppLayout>} />
       <Route path="/presentations/:id/edit" element={<AppLayout><PresentationEditorPage /></AppLayout>} />
+      <Route path="/presentations/:id/present" element={<LiveGuard><PresentLivePage /></LiveGuard>} />
+      <Route path="/presentations/:id/present/projector" element={<LiveGuard><ProjectorScreenPage /></LiveGuard>} />
+      <Route path="/presentations/:id/present/stage" element={<LiveGuard><StageDisplayPage /></LiveGuard>} />
       <Route path="/songs" element={<AppLayout><SongsPage /></AppLayout>} />
       <Route path="/songs/:id" element={<AppLayout><SongDetailPage /></AppLayout>} />
       <Route path="/bible" element={<AppLayout><BiblePage /></AppLayout>} />

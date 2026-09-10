@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState, useCallback } from 'react';
-import { ArrowLeft, Presentation, Pencil, Calendar, Clock, User } from 'lucide-react';
+import { ArrowLeft, Presentation, Pencil, Calendar, Clock, User, Play } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -153,6 +153,9 @@ export function PresentationEditorPage() {
             </div>
           </div>
         </div>
+        <Button variant="primary" onClick={() => navigate(`/presentations/${presentation.id}/present`)} className="shrink-0">
+          <Play className="w-4 h-4" /> Go Live
+        </Button>
       </div>
 
       {/* Rename modal */}

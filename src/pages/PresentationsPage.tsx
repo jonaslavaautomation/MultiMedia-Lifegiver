@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Presentation, Plus, Copy, Trash2, Search, MoreVertical, Calendar, Clock, User, Pencil } from 'lucide-react';
+import { Presentation, Plus, Copy, Trash2, Search, MoreVertical, Calendar, Clock, User, Pencil, Play } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -271,6 +271,12 @@ export function PresentationsPage() {
                   <>
                     <div className="fixed inset-0 z-0" onClick={() => setMenuOpen(null)} />
                     <div className="absolute right-0 mt-1 w-40 bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl z-20 py-1 overflow-hidden">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setMenuOpen(null); navigate(`/presentations/${p.id}/present`); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800 transition-colors"
+                      >
+                        <Play className="w-3.5 h-3.5" /> Present
+                      </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); openRename(p); }}
                         className="w-full flex items-center gap-2 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800 transition-colors"
