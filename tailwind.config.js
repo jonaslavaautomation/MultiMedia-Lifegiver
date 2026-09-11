@@ -34,10 +34,39 @@ export default {
           900: '#2f4321',
           950: '#17240f',
         },
+        // Cyber-broadcast HUD surfaces — scoped to live/broadcast screens
+        // (Operator console, Stage Display, Overlay) rather than the main
+        // admin UI, which keeps the brand/leaf palette above.
+        hud: {
+          bg: '#0B0F17',
+          panel: '#0E1420',
+          border: '#1E2A3A',
+        },
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
         display: ['Poppins', 'Inter', 'system-ui', 'sans-serif'],
+      },
+      backgroundImage: {
+        'hud-grid':
+          'linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px)',
+      },
+      backgroundSize: {
+        'hud-grid': '32px 32px',
+      },
+      keyframes: {
+        'pulse-glow': {
+          '0%, 100%': { opacity: '1', boxShadow: '0 0 0 0 rgba(16, 185, 129, 0.55)' },
+          '50%': { opacity: '0.75', boxShadow: '0 0 0 6px rgba(16, 185, 129, 0)' },
+        },
+        'pulse-glow-red': {
+          '0%, 100%': { opacity: '1', boxShadow: '0 0 0 0 rgba(239, 68, 68, 0.55)' },
+          '50%': { opacity: '0.75', boxShadow: '0 0 0 6px rgba(239, 68, 68, 0)' },
+        },
+      },
+      animation: {
+        'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
+        'pulse-glow-red': 'pulse-glow-red 2s ease-in-out infinite',
       },
     },
   },

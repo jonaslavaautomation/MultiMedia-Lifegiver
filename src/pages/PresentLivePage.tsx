@@ -21,6 +21,7 @@ import { useLiveChannel } from '@/hooks/useLiveChannel';
 import { useRealtimeLiveChannel } from '@/hooks/useRealtimeLiveChannel';
 import { SlideCanvasRenderer } from '@/components/live/SlideCanvasRenderer';
 import { TimerControl } from '@/components/live/TimerControl';
+import { BroadcastTelemetryBar } from '@/components/live/BroadcastTelemetryBar';
 import { startTimer, pauseTimer, resetTimer, setTimerMode, setCountdownDuration } from '@/lib/liveTimer';
 import { INITIAL_TIMER_STATE, type LiveState, type TimerState } from '@/types/live';
 import type { Slide } from '@/types';
@@ -239,16 +240,16 @@ export function PresentLivePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-950 px-4 py-6">
-        <div className="h-10 w-64 bg-zinc-900/60 rounded-lg animate-pulse mb-6" />
-        <div className="aspect-video max-w-3xl bg-zinc-900/40 border border-zinc-800/50 rounded-2xl animate-pulse" />
+      <div className="min-h-screen bg-hud-bg px-4 py-6">
+        <div className="h-10 w-64 bg-hud-panel/60 rounded-lg animate-pulse mb-6" />
+        <div className="aspect-video max-w-3xl bg-hud-panel/40 border border-hud-border rounded-2xl animate-pulse" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-zinc-950 px-4 py-6">
+      <div className="min-h-screen bg-hud-bg px-4 py-6">
         <Button variant="ghost" size="icon" onClick={() => navigate(`/presentations/${id}/edit`)} className="mb-6">
           <ArrowLeft className="w-4 h-4" />
         </Button>
@@ -258,15 +259,18 @@ export function PresentLivePage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex flex-col">
+    <div className="min-h-screen bg-hud-bg flex flex-col">
+      {/* Broadcast Telemetry Bar */}
+      <BroadcastTelemetryBar onAir={!blackout} timer={timer} />
+
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 lg:px-6 py-3 border-b border-zinc-900">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 lg:px-6 py-3 border-b border-hud-border bg-hud-panel/40">
         <div className="flex items-center gap-3 min-w-0">
           <Button variant="ghost" size="icon" onClick={() => navigate(`/presentations/${id}/edit`)} title="Back to editor">
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div className="min-w-0">
-            <p className="text-xs text-brand-400 font-semibold uppercase tracking-wider">Live</p>
+            <p className="text-xs text-cyan-400 font-semibold uppercase tracking-wider">Operator Console</p>
             <h1 className="text-sm font-semibold text-zinc-100 truncate">{title}</h1>
           </div>
         </div>
@@ -290,7 +294,7 @@ export function PresentLivePage() {
       {/* Body */}
       <div className="flex-1 flex flex-col lg:flex-row gap-4 p-4 lg:p-6 min-h-0">
         {/* Slide list */}
-        <div className="lg:w-64 shrink-0 flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto lg:max-h-[calc(100vh-96px)]">
+        <div className="lg:w-64 shrink-0 flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto lg:max-h-[calc(100vh-136px)]">
           {slides.length === 0 ? (
             <p className="text-sm text-zinc-500">No slides in this presentation.</p>
           ) : (
@@ -300,8 +304,8 @@ export function PresentLivePage() {
                 onClick={() => goToSlide(index)}
                 className={`shrink-0 w-40 lg:w-full text-left px-3 py-2.5 rounded-xl border transition-all ${
                   index === slideIndex
-                    ? 'border-brand-500 bg-brand-950/30 text-brand-200'
-                    : 'border-zinc-800/80 bg-zinc-900/40 text-zinc-400 hover:border-zinc-700'
+                    ? 'border-cyan-500/70 bg-cyan-950/20 text-cyan-200 shadow-[0_0_0_1px_rgba(6,182,212,0.25)]'
+                    : 'border-hud-border bg-hud-panel/60 text-zinc-400 hover:border-zinc-600'
                 }`}
               >
                 <span className="text-[10px] text-zinc-500 mr-1.5">{index + 1}</span>
@@ -315,12 +319,24 @@ export function PresentLivePage() {
         <div className="flex-1 flex flex-col gap-4 min-w-0">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="sm:col-span-2">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mb-1.5">Current</p>
-              <SlideCanvasRenderer content={slides[slideIndex]?.content ?? null} className="rounded-2xl border border-brand-700/50 overflow-hidden bg-zinc-900/40" />
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse-glow-red" />
+                <p className="text-[10px] font-bold uppercase tracking-wider text-red-400">Program — On Air</p>
+              </div>
+              <SlideCanvasRenderer
+                content={slides[slideIndex]?.content ?? null}
+                className="rounded-2xl border-2 border-red-600/60 overflow-hidden bg-hud-panel shadow-[0_0_24px_-6px_rgba(239,68,68,0.35)]"
+              />
             </div>
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mb-1.5">Next</p>
-              <SlideCanvasRenderer content={slides[slideIndex + 1]?.content ?? null} className="rounded-2xl border border-zinc-800/80 overflow-hidden bg-zinc-900/40" />
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-400">Preview — Next</p>
+              </div>
+              <SlideCanvasRenderer
+                content={slides[slideIndex + 1]?.content ?? null}
+                className="rounded-2xl border border-cyan-700/50 overflow-hidden bg-hud-panel shadow-[0_0_16px_-6px_rgba(6,182,212,0.3)]"
+              />
             </div>
           </div>
 
