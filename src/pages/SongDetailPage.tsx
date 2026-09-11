@@ -9,7 +9,7 @@ import { Alert } from '@/components/ui/Alert';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SongSectionEditor } from '@/components/songs/SongSectionEditor';
 import { AddSectionModal } from '@/components/songs/AddSectionModal';
-import { createTextSlideContent } from '@/lib/slideContent';
+import { createTextSlideContent, splitTextIntoChunks } from '@/lib/slideContent';
 import type { Song, SongSection, SongSectionType } from '@/types';
 
 function labelForNewSection(type: SongSectionType, existing: SongSection[]): string {
@@ -39,6 +39,7 @@ export function SongDetailPage() {
   const [addSectionOpen, setAddSectionOpen] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [presentationTitle, setPresentationTitle] = useState('');
+  const [linesPerSlide, setLinesPerSlide] = useState(4);
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
 
@@ -179,12 +180,28 @@ export function SongDetailPage() {
       return;
     }
 
-    const slideRows = chosen.map((section, index) => ({
-      presentation_id: presentation.id,
-      title: section.label,
-      content: createTextSlideContent(section.text.trim() || section.label),
-      sort_order: index,
-    }));
+    const slideRows: { presentation_id: string; title: string; content: ReturnType<typeof createTextSlideContent>; sort_order: number }[] = [];
+    chosen.forEach((section) => {
+      const chunks = splitTextIntoChunks(section.text, linesPerSlide);
+      if (chunks.length === 0) {
+        // Section has no lyrics yet — still add a placeholder slide so it's not silently dropped.
+        slideRows.push({
+          presentation_id: presentation.id,
+          title: section.label,
+          content: createTextSlideContent(section.label),
+          sort_order: slideRows.length,
+        });
+        return;
+      }
+      chunks.forEach((chunkText, chunkIndex) => {
+        slideRows.push({
+          presentation_id: presentation.id,
+          title: chunks.length > 1 ? `${section.label} (${chunkIndex + 1}/${chunks.length})` : section.label,
+          content: createTextSlideContent(chunkText),
+          sort_order: slideRows.length,
+        });
+      });
+    });
 
     const { error: slidesError } = await supabase.from('slides').insert(slideRows);
 
@@ -331,7 +348,8 @@ export function SongDetailPage() {
           <h2 className="text-base font-semibold text-zinc-100">Generate Slides</h2>
         </div>
         <p className="text-xs text-zinc-500 mb-4">
-          Pick which sections to include, then generate a new presentation with one slide per section.
+          Pick which sections to include, then generate a new presentation. Long sections are automatically
+          split across multiple slides.
         </p>
 
         {generateError && (
@@ -363,6 +381,16 @@ export function SongDetailPage() {
               label="Presentation title"
               value={presentationTitle}
               onChange={(e) => setPresentationTitle(e.target.value)}
+            />
+          </div>
+          <div className="w-full sm:w-32">
+            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Lines per slide</label>
+            <input
+              type="number"
+              min={1}
+              value={linesPerSlide}
+              onChange={(e) => setLinesPerSlide(Math.max(1, Number(e.target.value) || 1))}
+              className="w-full rounded-xl bg-zinc-900/80 border border-zinc-700/80 text-zinc-100 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-maroon-500/40 focus:border-maroon-600/60"
             />
           </div>
           <Button

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useStaticFabricCanvas } from '@/hooks/useStaticFabricCanvas';
 import { applySolidBackground } from '@/lib/fabricObjects';
 import { resolveAndRenderSlide } from '@/lib/renderSlide';
@@ -20,6 +20,7 @@ export function SlideCanvasRenderer({ content, className = '' }: SlideCanvasRend
   const { containerRef, canvasElRef, canvas } = useStaticFabricCanvas({
     backgroundColor: DEFAULT_SLIDE_BACKGROUND_COLOR,
   });
+  const [videoBackgroundUrl, setVideoBackgroundUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!canvas) return;
@@ -30,11 +31,14 @@ export function SlideCanvasRenderer({ content, className = '' }: SlideCanvasRend
 
       if (!content || isEmptySlideContent(content)) {
         applySolidBackground(canvas!, DEFAULT_SLIDE_BACKGROUND_COLOR);
+        if (!cancelled) setVideoBackgroundUrl(null);
         return;
       }
 
-      await resolveAndRenderSlide(canvas!, content);
-      if (!cancelled) canvas!.requestRenderAll();
+      const { videoBackgroundUrl: videoUrl } = await resolveAndRenderSlide(canvas!, content);
+      if (cancelled) return;
+      setVideoBackgroundUrl(videoUrl);
+      canvas!.requestRenderAll();
     }
 
     render();
@@ -45,8 +49,19 @@ export function SlideCanvasRenderer({ content, className = '' }: SlideCanvasRend
   }, [canvas, content]);
 
   return (
-    <div ref={containerRef} className={className} style={{ aspectRatio: '16 / 9' }}>
-      <canvas ref={canvasElRef} />
+    <div ref={containerRef} className={`relative ${className}`} style={{ aspectRatio: '16 / 9' }}>
+      {videoBackgroundUrl && (
+        <video
+          key={videoBackgroundUrl}
+          src={videoBackgroundUrl}
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      )}
+      <canvas ref={canvasElRef} className="relative" />
     </div>
   );
 }

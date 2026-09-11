@@ -68,12 +68,33 @@ export function createTextSlideContent(text: string, options: TextSlideOptions =
 }
 
 /**
- * A blank slide whose background is a media library image. No canvas
- * objects — the editor resolves `meta.backgroundMediaId` (and the
- * corresponding `slides.background_id` FK) into a signed URL and applies it
- * as `canvas.backgroundImage` when the slide is loaded.
+ * Splits lyrics text into slide-sized chunks (e.g. 4 lines each) instead of
+ * one whole verse/chorus per slide — matches the "auto-split long lyrics"
+ * behavior of tools like WorshipTools' Loop Connect. Blank lines are
+ * dropped; a chunk with no non-blank lines is omitted entirely.
  */
-export function createImageBackgroundSlideContent(mediaId: string): SlideCanvasData {
+export function splitTextIntoChunks(text: string, linesPerChunk: number): string[] {
+  const lines = text.split('\n').map((l) => l.trim());
+  const nonEmptyLines = lines.filter((l) => l.length > 0);
+  if (nonEmptyLines.length === 0) return [];
+
+  const safeChunkSize = Math.max(1, Math.floor(linesPerChunk) || 1);
+  const chunks: string[] = [];
+  for (let i = 0; i < nonEmptyLines.length; i += safeChunkSize) {
+    chunks.push(nonEmptyLines.slice(i, i + safeChunkSize).join('\n'));
+  }
+  return chunks;
+}
+
+/**
+ * A blank slide whose background is a media library image or video. No
+ * canvas objects — the editor/Present-mode renderer resolves
+ * `meta.backgroundMediaId` (and the corresponding `slides.background_id`
+ * FK) into a signed URL and applies it as a background when the slide is
+ * loaded. Type-agnostic — the actual image-vs-video handling happens at
+ * render time via a fresh lookup of the media row's type.
+ */
+export function createMediaBackgroundSlideContent(mediaId: string): SlideCanvasData {
   return {
     version: '6.9.1',
     objects: [],

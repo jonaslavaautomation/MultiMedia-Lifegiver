@@ -26,7 +26,7 @@ import { Alert } from '@/components/ui/Alert';
 import { useSignedUrl } from '@/components/media/useSignedUrl';
 import { MediaUploadModal } from '@/components/media/MediaUploadModal';
 import { deleteMediaObject, formatFileSize } from '@/lib/mediaStorage';
-import { createImageBackgroundSlideContent } from '@/lib/slideContent';
+import { createMediaBackgroundSlideContent } from '@/lib/slideContent';
 import type { MediaItemWithUploader, MediaType } from '@/types';
 
 type TypeFilter = 'all' | MediaType;
@@ -161,7 +161,7 @@ export function MediaPage() {
     const slideRows = chosen.map((item, index) => ({
       presentation_id: presentation.id,
       title: item.name,
-      content: createImageBackgroundSlideContent(item.id),
+      content: createMediaBackgroundSlideContent(item.id),
       background_id: item.id,
       sort_order: index,
     }));
@@ -378,7 +378,7 @@ interface MediaCardProps {
 
 function MediaCard({ item, selectMode, selected, menuOpen, onToggleMenu, onCloseMenu, onSelect, onRename, onDelete }: MediaCardProps) {
   const thumbUrl = useSignedUrl(item.type === 'image' ? item.url : item.thumbnail_url);
-  const canSelect = selectMode && item.type === 'image';
+  const canSelect = selectMode && (item.type === 'image' || item.type === 'video');
 
   return (
     <Card

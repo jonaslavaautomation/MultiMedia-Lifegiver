@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Search, ArrowLeft } from 'lucide-react';
 import { BIBLE_BOOKS, type BibleBookMeta } from '@/data/bibleBooks';
 import { fetchAndCacheChapter, type ChapterVerse } from '@/lib/bibleApi';
+import type { ParsedReference } from '@/lib/bibleReference';
 import { Alert } from '@/components/ui/Alert';
 
 export interface SelectedVerse {
@@ -14,16 +15,20 @@ export interface SelectedVerse {
 interface BibleVersePickerProps {
   isSelected: (book: string, chapter: number, verse: number) => boolean;
   onToggleVerse: (verse: SelectedVerse) => void;
+  /** Set (to a fresh object) to navigate straight to a parsed reference — see BiblePage's quick search. */
+  jumpTo?: ParsedReference | null;
+  onJumped?: () => void;
 }
 
 /** Book grid -> chapter grid -> verse checklist. Reports selections upward; the caller owns what "Add to Slide" does. */
-export function BibleVersePicker({ isSelected, onToggleVerse }: BibleVersePickerProps) {
+export function BibleVersePicker({ isSelected, onToggleVerse, jumpTo, onJumped }: BibleVersePickerProps) {
   const [search, setSearch] = useState('');
   const [book, setBook] = useState<BibleBookMeta | null>(null);
   const [chapter, setChapter] = useState<number | null>(null);
   const [verses, setVerses] = useState<ChapterVerse[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingVerseRange, setPendingVerseRange] = useState<{ start: number; end: number } | null>(null);
 
   const loadChapter = useCallback(async (b: BibleBookMeta, c: number) => {
     setLoading(true);
@@ -42,6 +47,32 @@ export function BibleVersePicker({ isSelected, onToggleVerse }: BibleVersePicker
   useEffect(() => {
     if (book && chapter) loadChapter(book, chapter);
   }, [book, chapter, loadChapter]);
+
+  // Quick-search jump: navigate straight to the parsed book/chapter and
+  // queue its verse range to auto-select once that chapter's verses load.
+  useEffect(() => {
+    if (!jumpTo) return;
+    setBook(jumpTo.book);
+    setChapter(jumpTo.chapter);
+    setPendingVerseRange(
+      jumpTo.verseStart != null ? { start: jumpTo.verseStart, end: jumpTo.verseEnd ?? jumpTo.verseStart } : null
+    );
+    onJumped?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jumpTo]);
+
+  useEffect(() => {
+    if (!pendingVerseRange || !book || !chapter || verses.length === 0) return;
+    verses
+      .filter((v) => v.verse >= pendingVerseRange.start && v.verse <= pendingVerseRange.end)
+      .forEach((v) => {
+        if (!isSelected(book.name, chapter, v.verse)) {
+          onToggleVerse({ book: book.name, chapter, verse: v.verse, text: v.text });
+        }
+      });
+    setPendingVerseRange(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [verses, pendingVerseRange]);
 
   const filteredBooks = BIBLE_BOOKS.filter((b) => b.name.toLowerCase().includes(search.toLowerCase()));
   const oldTestament = filteredBooks.filter((b) => b.testament === 'old');

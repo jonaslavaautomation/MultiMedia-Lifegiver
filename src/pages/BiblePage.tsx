@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Sparkles, X } from 'lucide-react';
+import { BookOpen, Sparkles, X, Search } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 import { BibleVersePicker, type SelectedVerse } from '@/components/bible/BibleVersePicker';
 import { createTextSlideContent } from '@/lib/slideContent';
+import { BIBLE_BOOKS } from '@/data/bibleBooks';
+import { parseReference, type ParsedReference } from '@/lib/bibleReference';
 
 function verseKey(book: string, chapter: number, verse: number): string {
   return `${book}|${chapter}|${verse}`;
@@ -17,6 +19,20 @@ export function BiblePage() {
   const [selected, setSelected] = useState<SelectedVerse[]>([]);
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
+
+  const [searchRef, setSearchRef] = useState('');
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [jumpTo, setJumpTo] = useState<ParsedReference | null>(null);
+
+  function handleReferenceSearch() {
+    const parsed = parseReference(searchRef, BIBLE_BOOKS);
+    if (!parsed) {
+      setSearchError('Could not understand that reference. Try something like "John 3:16".');
+      return;
+    }
+    setSearchError(null);
+    setJumpTo(parsed);
+  }
 
   function isSelected(book: string, chapter: number, verse: number): boolean {
     const key = verseKey(book, chapter, verse);
@@ -98,8 +114,41 @@ export function BiblePage() {
         </div>
       )}
 
+      {/* Quick reference search */}
+      <div className="mb-4">
+        <div className="relative max-w-md">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+          <input
+            type="text"
+            placeholder='Jump to a reference, e.g. "John 3:16"'
+            value={searchRef}
+            onChange={(e) => setSearchRef(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleReferenceSearch();
+            }}
+            className="w-full rounded-xl bg-zinc-900/80 border border-zinc-700/80 text-zinc-100 placeholder-zinc-500 pl-11 pr-24 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-maroon-500/40 focus:border-maroon-600/60"
+          />
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={handleReferenceSearch}
+            className="absolute right-1.5 top-1/2 -translate-y-1/2"
+          >
+            Go
+          </Button>
+        </div>
+        {searchError && (
+          <p className="text-xs text-red-400 mt-1.5">{searchError}</p>
+        )}
+      </div>
+
       <Card className="p-5">
-        <BibleVersePicker isSelected={isSelected} onToggleVerse={toggleVerse} />
+        <BibleVersePicker
+          isSelected={isSelected}
+          onToggleVerse={toggleVerse}
+          jumpTo={jumpTo}
+          onJumped={() => setJumpTo(null)}
+        />
       </Card>
 
       {selected.length > 0 && (
