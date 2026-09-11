@@ -51,7 +51,7 @@ export function StageDisplayPage() {
       </div>
 
       <div className="flex-1 flex flex-col lg:flex-row gap-4 min-h-0">
-        <div className="flex-1 min-h-0">
+        <div className="flex-1 min-h-0 min-w-0">
           <SlideCanvasRenderer content={state?.currentContent ?? null} className="w-full h-full rounded-2xl border border-zinc-800 overflow-hidden" />
         </div>
 
