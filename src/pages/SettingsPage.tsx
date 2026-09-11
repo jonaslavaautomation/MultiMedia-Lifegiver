@@ -28,11 +28,11 @@ export function SettingsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="rounded-xl bg-zinc-900/40 border border-zinc-800/50 p-4">
               <p className="text-xs text-zinc-500 mb-1">Version</p>
-              <p className="text-sm font-medium text-zinc-200">Phase 1 — Foundation</p>
+              <p className="text-sm font-medium text-zinc-200">Phase 3 — Live Presentation</p>
             </div>
             <div className="rounded-xl bg-zinc-900/40 border border-zinc-800/50 p-4">
               <p className="text-xs text-zinc-500 mb-1">Current Phase</p>
-              <p className="text-sm font-medium text-zinc-200">1 of 3</p>
+              <p className="text-sm font-medium text-zinc-200">3 of 3</p>
             </div>
           </div>
         </Card>
@@ -77,8 +77,8 @@ export function SettingsPage() {
           <div className="space-y-3">
             {[
               { phase: 'Phase 1', label: 'Foundation — Auth, Dashboard, Presentations', done: true },
-              { phase: 'Phase 2', label: 'Songs, Bible, Media, Templates', done: false },
-              { phase: 'Phase 3', label: 'Slide Editor & Live Presentation Mode', done: false },
+              { phase: 'Phase 2', label: 'Songs, Bible, Media, Templates', done: true },
+              { phase: 'Phase 3', label: 'Slide Editor & Live Presentation Mode', done: true },
             ].map((item) => (
               <div key={item.phase} className="flex items-center justify-between py-2">
                 <div className="flex items-center gap-3">
