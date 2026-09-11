@@ -3,6 +3,7 @@ import { Plus, Copy, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Alert } from '@/components/ui/Alert';
+import { SlideCanvasRenderer } from '@/components/live/SlideCanvasRenderer';
 import type { Slide } from '@/types';
 
 interface SlideFilmstripProps {
@@ -63,8 +64,11 @@ export function SlideFilmstrip({ slides, currentSlideId, onSelect, onAdd, onDupl
             }`}
             onClick={() => onSelect(slide.id)}
           >
-            <div className="aspect-video bg-zinc-900/60 flex items-center justify-center">
-              <span className="text-xs text-zinc-500">{index + 1}</span>
+            <div className="relative min-w-0">
+              <SlideCanvasRenderer content={slide.content} className="bg-zinc-900/60" />
+              <span className="absolute top-1 left-1.5 text-[10px] text-zinc-400 bg-zinc-950/70 rounded px-1 py-0.5 pointer-events-none">
+                {index + 1}
+              </span>
             </div>
             <div className="px-2 py-1 bg-zinc-950/80 flex items-center justify-between gap-1">
               <p className="text-[10px] text-zinc-400 truncate flex-1">{slide.title}</p>

@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 import { BibleVersePicker, type SelectedVerse } from '@/components/bible/BibleVersePicker';
-import { createTextSlideContent } from '@/lib/slideContent';
+import { createVerseSlideContent } from '@/lib/slideContent';
 import { BIBLE_BOOKS } from '@/data/bibleBooks';
 import { parseReference, type ParsedReference } from '@/lib/bibleReference';
 import { BIBLE_TRANSLATIONS, DEFAULT_TRANSLATION } from '@/data/bibleTranslations';
@@ -101,7 +101,7 @@ export function BiblePage() {
     const slideRows = selected.map((v, index) => ({
       presentation_id: presentation.id,
       title: `${v.book} ${v.chapter}:${v.verse}`,
-      content: createTextSlideContent(v.text),
+      content: createVerseSlideContent(`${v.book} ${v.chapter}:${v.verse}`, v.text),
       sort_order: index,
     }));
 
