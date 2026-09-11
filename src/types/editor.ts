@@ -14,6 +14,9 @@ export type SelectedObjectSnapshot =
       fontSize: number;
       fill: string;
       textAlign: TextAlign;
+      bold: boolean;
+      italic: boolean;
+      underline: boolean;
     }
   | {
       kind: 'image';
