@@ -569,7 +569,7 @@ function MediaCard({
           </span>
           <span className="flex items-center gap-1 truncate">
             <User className="w-2.5 h-2.5" />
-            {item.uploader?.full_name ?? 'Unknown'}
+            LifeGiver
           </span>
         </div>
       </div>
