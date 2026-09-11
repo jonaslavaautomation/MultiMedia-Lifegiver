@@ -1,9 +1,17 @@
 import { supabase } from '@/lib/supabase';
-import type { MediaType } from '@/types';
+import type { MediaFolder, MediaType } from '@/types';
 
 const MEDIA_BUCKET = 'media';
 
-export const MEDIA_LIMITS: Record<'image' | 'video', { maxBytes: number; mimeTypes: string[] }> = {
+export const MEDIA_FOLDERS: { value: MediaFolder; label: string }[] = [
+  { value: 'images', label: 'Images' },
+  { value: 'videos', label: 'Videos' },
+  { value: 'audio', label: 'Audio' },
+  { value: 'backgrounds', label: 'Backgrounds' },
+  { value: 'logos', label: 'Logos' },
+];
+
+export const MEDIA_LIMITS: Record<MediaType, { maxBytes: number; mimeTypes: string[] }> = {
   image: {
     maxBytes: 10 * 1024 * 1024, // 10MB — comfortably covers high-res slide backgrounds
     mimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
@@ -14,25 +22,30 @@ export const MEDIA_LIMITS: Record<'image' | 'video', { maxBytes: number; mimeTyp
     maxBytes: 200 * 1024 * 1024,
     mimeTypes: ['video/mp4', 'video/webm'],
   },
+  audio: {
+    maxBytes: 50 * 1024 * 1024, // 50MB — comfortably covers a full song/sermon track
+    mimeTypes: ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/mp4', 'audio/x-m4a'],
+  },
 };
 
 export type MediaValidationResult = { ok: true; type: MediaType } | { ok: false; reason: string };
 
 export function validateFile(file: File): MediaValidationResult {
-  const isImage = MEDIA_LIMITS.image.mimeTypes.includes(file.type);
-  const isVideo = MEDIA_LIMITS.video.mimeTypes.includes(file.type);
+  const match = (Object.entries(MEDIA_LIMITS) as [MediaType, (typeof MEDIA_LIMITS)[MediaType]][]).find(([, limits]) =>
+    limits.mimeTypes.includes(file.type)
+  );
 
-  if (!isImage && !isVideo) {
+  if (!match) {
     return { ok: false, reason: `Unsupported file type: ${file.type || 'unknown'}.` };
   }
 
-  const limits = isImage ? MEDIA_LIMITS.image : MEDIA_LIMITS.video;
+  const [type, limits] = match;
   if (file.size > limits.maxBytes) {
     const maxMb = Math.round(limits.maxBytes / (1024 * 1024));
     return { ok: false, reason: `File is too large. Maximum size is ${maxMb}MB.` };
   }
 
-  return { ok: true, type: isImage ? 'image' : 'video' };
+  return { ok: true, type };
 }
 
 function fileExtension(file: File): string {
@@ -46,10 +59,16 @@ function fileExtension(file: File): string {
 /**
  * Uploads a file into the private `media` bucket under a per-user path
  * prefix, matching the storage RLS policy's `(storage.foldername(name))[1]
- * = auth.uid()::text` check.
+ * = auth.uid()::text` check — the user id must stay the FIRST path
+ * segment, so the organizational folder (images/videos/etc.) goes after
+ * it rather than before, keeping the existing RLS policy untouched.
  */
-export async function uploadMediaFile(file: File, userId: string): Promise<{ path: string }> {
-  const path = `${userId}/${crypto.randomUUID()}.${fileExtension(file)}`;
+export async function uploadMediaFile(
+  file: File,
+  userId: string,
+  folder?: MediaFolder
+): Promise<{ path: string }> {
+  const path = `${userId}/${folder ? `${folder}/` : ''}${crypto.randomUUID()}.${fileExtension(file)}`;
 
   const { error } = await supabase.storage.from(MEDIA_BUCKET).upload(path, file, {
     contentType: file.type,

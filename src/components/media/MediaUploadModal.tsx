@@ -1,10 +1,11 @@
 import { useRef, useState } from 'react';
-import { Upload, CheckCircle2, XCircle, Loader2, Image as ImageIcon, Video } from 'lucide-react';
+import { Upload, CheckCircle2, XCircle, Loader2, Image as ImageIcon, Video, Music } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { deleteMediaObject, uploadMediaFile, validateFile } from '@/lib/mediaStorage';
+import { deleteMediaObject, uploadMediaFile, validateFile, MEDIA_FOLDERS } from '@/lib/mediaStorage';
+import type { MediaFolder } from '@/types';
 
 interface QueueItem {
   id: string;
@@ -20,12 +21,14 @@ interface MediaUploadModalProps {
   onUploaded: () => void;
 }
 
-const ACCEPTED_TYPES = 'image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm';
+const ACCEPTED_TYPES =
+  'image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/mp4,audio/x-m4a';
 
 export function MediaUploadModal({ open, onClose, onUploaded }: MediaUploadModalProps) {
   const { user } = useAuth();
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [dragOver, setDragOver] = useState(false);
+  const [folder, setFolder] = useState<MediaFolder>('images');
   const inputRef = useRef<HTMLInputElement>(null);
 
   function handleClose() {
@@ -45,7 +48,7 @@ export function MediaUploadModal({ open, onClose, onUploaded }: MediaUploadModal
     setQueue((prev) => prev.map((q) => (q.id === item.id ? { ...q, status: 'uploading' } : q)));
 
     try {
-      const { path } = await uploadMediaFile(item.file, user.id);
+      const { path } = await uploadMediaFile(item.file, user.id, folder);
 
       const { error: insertError } = await supabase.from('media').insert({
         name: item.file.name,
@@ -53,6 +56,7 @@ export function MediaUploadModal({ open, onClose, onUploaded }: MediaUploadModal
         url: path,
         thumbnail_url: validation.type === 'image' ? path : null,
         file_size: item.file.size,
+        folder,
         metadata: { mimeType: item.file.type },
       });
 
@@ -83,6 +87,23 @@ export function MediaUploadModal({ open, onClose, onUploaded }: MediaUploadModal
   return (
     <Modal open={open} onClose={handleClose} title="Upload Media">
       <div className="flex flex-col gap-4">
+        <div>
+          <label className="block text-sm font-medium text-zinc-300 mb-1.5">Folder</label>
+          <div className="flex flex-wrap gap-2">
+            {MEDIA_FOLDERS.map((f) => (
+              <Button
+                key={f.value}
+                type="button"
+                variant={folder === f.value ? 'primary' : 'outline'}
+                size="sm"
+                onClick={() => setFolder(f.value)}
+              >
+                {f.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+
         <div
           onDragOver={(e) => {
             e.preventDefault();
@@ -100,8 +121,10 @@ export function MediaUploadModal({ open, onClose, onUploaded }: MediaUploadModal
           }`}
         >
           <Upload className="w-6 h-6 text-zinc-500" />
-          <p className="text-sm text-zinc-300">Drag & drop images or videos here</p>
-          <p className="text-xs text-zinc-500">or click to browse — JPG, PNG, WEBP, GIF up to 10MB, MP4/WEBM up to 200MB</p>
+          <p className="text-sm text-zinc-300">Drag & drop images, videos, or audio here</p>
+          <p className="text-xs text-zinc-500">
+            or click to browse — images up to 10MB, video up to 200MB, audio up to 50MB
+          </p>
           <input
             ref={inputRef}
             type="file"
@@ -121,6 +144,8 @@ export function MediaUploadModal({ open, onClose, onUploaded }: MediaUploadModal
               <div key={item.id} className="flex items-center gap-3 px-3 py-2 rounded-xl bg-zinc-900/60 border border-zinc-800/80">
                 {item.file.type.startsWith('video') ? (
                   <Video className="w-4 h-4 text-zinc-500 shrink-0" />
+                ) : item.file.type.startsWith('audio') ? (
+                  <Music className="w-4 h-4 text-zinc-500 shrink-0" />
                 ) : (
                   <ImageIcon className="w-4 h-4 text-zinc-500 shrink-0" />
                 )}

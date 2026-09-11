@@ -33,6 +33,7 @@ export function SongDetailPage() {
 
   const [titleValue, setTitleValue] = useState('');
   const [authorValue, setAuthorValue] = useState('');
+  const [categoryValue, setCategoryValue] = useState('');
   const [keyValue, setKeyValue] = useState('');
   const [tempoValue, setTempoValue] = useState('');
 
@@ -64,6 +65,7 @@ export function SongDetailPage() {
       setSections(fetchedSections);
       setTitleValue(fetched.title);
       setAuthorValue(fetched.author ?? '');
+      setCategoryValue(fetched.category ?? '');
       setKeyValue(fetched.key ?? '');
       setTempoValue(fetched.tempo ?? '');
       setPresentationTitle(fetched.title);
@@ -92,7 +94,7 @@ export function SongDetailPage() {
     }
   }
 
-  async function handleFieldBlur(field: 'title' | 'author' | 'key' | 'tempo', value: string) {
+  async function handleFieldBlur(field: 'title' | 'author' | 'category' | 'key' | 'tempo', value: string) {
     if (!song) return;
     const cleaned = value.trim();
     if (field === 'title' && !cleaned) {
@@ -282,7 +284,14 @@ export function SongDetailPage() {
             onBlur={() => handleFieldBlur('author', authorValue)}
           />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Input
+            label="Category"
+            placeholder="e.g. Worship, Hymn, Christmas"
+            value={categoryValue}
+            onChange={(e) => setCategoryValue(e.target.value)}
+            onBlur={() => handleFieldBlur('category', categoryValue)}
+          />
           <Input
             label="Key"
             placeholder="e.g. G"

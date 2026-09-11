@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Sparkles, X, Search } from 'lucide-react';
+import { BookOpen, Sparkles, X, Search, Copy, Check, ChevronDown } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -9,6 +9,7 @@ import { BibleVersePicker, type SelectedVerse } from '@/components/bible/BibleVe
 import { createTextSlideContent } from '@/lib/slideContent';
 import { BIBLE_BOOKS } from '@/data/bibleBooks';
 import { parseReference, type ParsedReference } from '@/lib/bibleReference';
+import { BIBLE_TRANSLATIONS, DEFAULT_TRANSLATION } from '@/data/bibleTranslations';
 
 function verseKey(book: string, chapter: number, verse: number): string {
   return `${book}|${chapter}|${verse}`;
@@ -23,6 +24,9 @@ export function BiblePage() {
   const [searchRef, setSearchRef] = useState('');
   const [searchError, setSearchError] = useState<string | null>(null);
   const [jumpTo, setJumpTo] = useState<ParsedReference | null>(null);
+  const [translation, setTranslation] = useState(DEFAULT_TRANSLATION);
+  const [translationMenuOpen, setTranslationMenuOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   function handleReferenceSearch() {
     const parsed = parseReference(searchRef, BIBLE_BOOKS);
@@ -58,6 +62,21 @@ export function BiblePage() {
       return `${first.book} ${first.chapter}:${verseNums[0]}-${verseNums[verseNums.length - 1]}`;
     }
     return `${first.book} ${first.chapter} +${selected.length - 1} more`;
+  }
+
+  async function handleCopy() {
+    const text = selected
+      .slice()
+      .sort((a, b) => a.verse - b.verse)
+      .map((v) => `${v.text} (${v.book} ${v.chapter}:${v.verse})`)
+      .join('\n\n');
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard access can be denied — nothing more we can do here.
+    }
   }
 
   async function handleAddToSlide() {
@@ -100,12 +119,46 @@ export function BiblePage() {
 
   return (
     <div className="px-4 lg:px-8 py-6 lg:py-8 max-w-4xl mx-auto pb-28">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold font-display text-zinc-100 flex items-center gap-2">
-          <BookOpen className="w-6 h-6 text-maroon-400" />
-          Bible
-        </h1>
-        <p className="text-sm text-zinc-500 mt-1">Browse a book and chapter, then add verses to a presentation.</p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold font-display text-zinc-100 flex items-center gap-2">
+            <BookOpen className="w-6 h-6 text-maroon-400" />
+            Bible
+          </h1>
+          <p className="text-sm text-zinc-500 mt-1">Browse a book and chapter, then add verses to a presentation.</p>
+        </div>
+
+        <div className="relative shrink-0">
+          <button
+            onClick={() => setTranslationMenuOpen((o) => !o)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-900/80 border border-zinc-700/80 text-sm text-zinc-200 hover:border-zinc-600 transition-all"
+          >
+            {translation}
+            <ChevronDown className="w-3.5 h-3.5 text-zinc-500" />
+          </button>
+          {translationMenuOpen && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setTranslationMenuOpen(false)} />
+              <div className="absolute right-0 mt-1 w-56 bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl z-50 py-1 overflow-hidden">
+                {BIBLE_TRANSLATIONS.map((t) => (
+                  <button
+                    key={t.code}
+                    onClick={() => {
+                      setTranslation(t.code);
+                      setTranslationMenuOpen(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 text-sm transition-colors ${
+                      t.code === translation ? 'text-maroon-400 bg-maroon-950/30' : 'text-zinc-200 hover:bg-zinc-800'
+                    }`}
+                  >
+                    <span className="font-medium">{t.code}</span>
+                    <span className="block text-[11px] text-zinc-500">{t.name} — {t.note}</span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       {generateError && (
@@ -161,6 +214,10 @@ export function BiblePage() {
             <div className="flex items-center gap-2 shrink-0">
               <Button variant="ghost" size="sm" onClick={() => setSelected([])}>
                 <X className="w-3.5 h-3.5" /> Clear
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleCopy}>
+                {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                {copied ? 'Copied' : 'Copy'}
               </Button>
               <Button variant="primary" onClick={handleAddToSlide} disabled={generating}>
                 {generating ? (

@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Search, ArrowLeft } from 'lucide-react';
+import { useCallback, useEffect, useState, type MouseEvent } from 'react';
+import { Search, ArrowLeft, Copy, Check } from 'lucide-react';
 import { BIBLE_BOOKS, type BibleBookMeta } from '@/data/bibleBooks';
 import { fetchAndCacheChapter, type ChapterVerse } from '@/lib/bibleApi';
 import type { ParsedReference } from '@/lib/bibleReference';
@@ -29,6 +29,20 @@ export function BibleVersePicker({ isSelected, onToggleVerse, jumpTo, onJumped }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendingVerseRange, setPendingVerseRange] = useState<{ start: number; end: number } | null>(null);
+  const [copiedVerse, setCopiedVerse] = useState<number | null>(null);
+
+  async function handleCopyVerse(e: MouseEvent, verse: ChapterVerse) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!book || !chapter) return;
+    try {
+      await navigator.clipboard.writeText(`${verse.text} (${book.name} ${chapter}:${verse.verse})`);
+      setCopiedVerse(verse.verse);
+      setTimeout(() => setCopiedVerse((v) => (v === verse.verse ? null : v)), 1500);
+    } catch {
+      // Clipboard access can be denied — nothing more we can do here.
+    }
+  }
 
   const loadChapter = useCallback(async (b: BibleBookMeta, c: number) => {
     setLoading(true);
@@ -147,7 +161,7 @@ export function BibleVersePicker({ isSelected, onToggleVerse, jumpTo, onJumped }
           {verses.map((v) => (
             <label
               key={v.verse}
-              className="flex items-start gap-2.5 p-2 rounded-lg hover:bg-zinc-900/50 cursor-pointer text-sm transition-colors"
+              className="group flex items-start gap-2.5 p-2 rounded-lg hover:bg-zinc-900/50 cursor-pointer text-sm transition-colors"
             >
               <input
                 type="checkbox"
@@ -155,10 +169,18 @@ export function BibleVersePicker({ isSelected, onToggleVerse, jumpTo, onJumped }
                 onChange={() => onToggleVerse({ book: book.name, chapter, verse: v.verse, text: v.text })}
                 className="mt-0.5 w-4 h-4 rounded border-zinc-600 bg-zinc-900 text-maroon-600 focus:ring-maroon-500/40 shrink-0"
               />
-              <span className="text-zinc-300 leading-relaxed">
+              <span className="text-zinc-300 leading-relaxed flex-1">
                 <span className="text-zinc-500 mr-1.5">{v.verse}</span>
                 {v.text}
               </span>
+              <button
+                type="button"
+                title="Copy verse"
+                onClick={(e) => handleCopyVerse(e, v)}
+                className="opacity-0 group-hover:opacity-100 shrink-0 p-1 rounded text-zinc-500 hover:text-zinc-200 transition-all"
+              >
+                {copiedVerse === v.verse ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
             </label>
           ))}
         </div>
