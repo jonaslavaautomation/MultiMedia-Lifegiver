@@ -9,7 +9,6 @@ import {
   Users,
   Settings,
   X,
-  Church,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
@@ -52,13 +51,19 @@ export function MobileNav({ open, onClose }: MobileNavProps) {
         key={item.to}
         to={item.to}
         onClick={onClose}
-        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+        className={`flex items-center gap-3 px-2.5 py-2 rounded-xl text-sm font-medium transition-all ${
           active
-            ? 'bg-maroon-900/40 text-zinc-100 border-l-2 border-maroon-500'
+            ? 'bg-brand-900/40 text-zinc-100 border-l-2 border-brand-500'
             : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900'
         }`}
       >
-        <Icon className={`w-5 h-5 ${active ? 'text-maroon-400' : 'text-zinc-500'}`} />
+        <span
+          className={`flex items-center justify-center w-8 h-8 rounded-lg shrink-0 ${
+            active ? 'bg-gradient-to-br from-brand-500 to-brand-700 shadow-md shadow-brand-950/50' : 'bg-zinc-900 border border-zinc-800/80'
+          }`}
+        >
+          <Icon className={`w-4 h-4 ${active ? 'text-white' : 'text-zinc-500'}`} />
+        </span>
         {item.label}
       </NavLink>
     );
@@ -68,17 +73,11 @@ export function MobileNav({ open, onClose }: MobileNavProps) {
     <div className="lg:hidden fixed inset-0 z-50">
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
       <div className="absolute left-0 top-0 bottom-0 w-72 bg-zinc-950 border-r border-zinc-900 flex flex-col">
-        <div className="flex items-center justify-between px-5 h-16 border-b border-zinc-900">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-maroon-600 to-maroon-800 flex items-center justify-center">
-              <Church className="w-5 h-5 text-white" strokeWidth={2.5} />
-            </div>
-            <div className="flex flex-col leading-tight">
-              <span className="text-sm font-bold font-display text-zinc-100">LifeGiver</span>
-              <span className="text-[10px] text-zinc-500 uppercase tracking-[0.15em]">Media Studio</span>
-            </div>
+        <div className="flex items-center justify-between gap-3 px-5 h-16 border-b border-zinc-900">
+          <div className="rounded-lg bg-white shadow-lg shadow-black/30 p-1.5 shrink-0">
+            <img src="/lifegiver-logo.png" alt="LifeGiver Davao" className="h-8 w-auto object-contain" />
           </div>
-          <button onClick={onClose} className="text-zinc-500 hover:text-zinc-300">
+          <button onClick={onClose} className="text-zinc-500 hover:text-zinc-300 shrink-0">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -95,7 +94,7 @@ export function MobileNav({ open, onClose }: MobileNavProps) {
         </nav>
         <div className="px-3 py-4 border-t border-zinc-900">
           <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-zinc-900/40">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-maroon-700 to-maroon-900 flex items-center justify-center text-xs font-bold text-white">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-700 to-brand-900 flex items-center justify-center text-xs font-bold text-white">
               {profile?.full_name?.charAt(0).toUpperCase() ?? '?'}
             </div>
             <div className="flex flex-col min-w-0">

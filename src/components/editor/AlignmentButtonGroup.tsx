@@ -22,7 +22,7 @@ export function AlignmentButtonGroup({ value, onChange }: AlignmentButtonGroupPr
           title={`Align ${align}`}
           onClick={() => onChange(align)}
           className={`p-1.5 transition-all ${
-            value === align ? 'bg-maroon-900/50 text-maroon-400' : 'text-zinc-400 hover:bg-zinc-800'
+            value === align ? 'bg-brand-900/50 text-brand-400' : 'text-zinc-400 hover:bg-zinc-800'
           }`}
         >
           <Icon className="w-3.5 h-3.5" />

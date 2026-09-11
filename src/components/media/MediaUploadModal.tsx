@@ -117,7 +117,7 @@ export function MediaUploadModal({ open, onClose, onUploaded }: MediaUploadModal
           }}
           onClick={() => inputRef.current?.click()}
           className={`flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-8 text-center cursor-pointer transition-all ${
-            dragOver ? 'border-maroon-500 bg-maroon-950/20' : 'border-zinc-800 hover:border-zinc-700'
+            dragOver ? 'border-brand-500 bg-brand-950/20' : 'border-zinc-800 hover:border-zinc-700'
           }`}
         >
           <Upload className="w-6 h-6 text-zinc-500" />

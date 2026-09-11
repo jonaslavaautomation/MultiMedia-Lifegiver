@@ -89,7 +89,7 @@ export function MediaPicker({ accept, multiple = false, onSelect, onCancel, onUp
             placeholder="Search media…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-lg bg-zinc-900/80 border border-zinc-700/80 text-zinc-100 placeholder-zinc-500 pl-9 pr-3 py-2 text-xs transition-all focus:outline-none focus:ring-2 focus:ring-maroon-500/40 focus:border-maroon-600/60"
+            className="w-full rounded-lg bg-zinc-900/80 border border-zinc-700/80 text-zinc-100 placeholder-zinc-500 pl-9 pr-3 py-2 text-xs transition-all focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-600/60"
           />
         </div>
         {onUploadNew && (
@@ -164,7 +164,7 @@ function MediaPickerCard({
       type="button"
       onClick={onClick}
       className={`relative aspect-square rounded-xl overflow-hidden border transition-all text-left ${
-        selected ? 'border-maroon-500 ring-2 ring-maroon-500/40' : 'border-zinc-800/80 hover:border-zinc-700'
+        selected ? 'border-brand-500 ring-2 ring-brand-500/40' : 'border-zinc-800/80 hover:border-zinc-700'
       }`}
     >
       {thumbUrl ? (
@@ -182,7 +182,7 @@ function MediaPickerCard({
         <p className="text-[10px] text-zinc-200 truncate">{item.name}</p>
       </div>
       {multiple && selected && (
-        <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-maroon-600 flex items-center justify-center">
+        <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-brand-600 flex items-center justify-center">
           <Check className="w-3 h-3 text-white" />
         </div>
       )}

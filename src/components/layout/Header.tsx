@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Menu, Church } from 'lucide-react';
+import { LogOut, Menu } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/Button';
 import { useState } from 'react';
@@ -25,17 +25,12 @@ export function Header() {
           >
             <Menu className="w-5 h-5" />
           </button>
-          <div className="lg:hidden flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-maroon-600 to-maroon-800 flex items-center justify-center">
-              <Church className="w-4 h-4 text-white" strokeWidth={2.5} />
-            </div>
-            <span className="text-sm font-bold font-display text-zinc-100">LifeGiver</span>
-          </div>
+          <span className="lg:hidden text-sm font-bold font-display text-zinc-100">LifeGiver</span>
         </div>
 
         <div className="flex items-center gap-3">
           <div className="hidden sm:flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-zinc-900/60 border border-zinc-800">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-maroon-700 to-maroon-900 flex items-center justify-center text-xs font-bold text-white">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-brand-700 to-brand-900 flex items-center justify-center text-xs font-bold text-white">
               {profile?.full_name?.charAt(0).toUpperCase() ?? '?'}
             </div>
             <div className="flex flex-col leading-tight">

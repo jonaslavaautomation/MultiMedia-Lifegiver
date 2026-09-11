@@ -33,8 +33,8 @@ export type EditorFont = (typeof EDITOR_FONTS)[number];
 export const COLOR_SWATCHES = [
   '#ffffff',
   '#09090b',
-  '#dc4262', // maroon-500
-  '#a31f3e', // maroon-700
+  '#dc4262', // brand-500
+  '#a31f3e', // brand-700
   '#f59e0b', // amber-500
   '#10b981', // emerald-500
   '#0ea5e9', // sky-500
