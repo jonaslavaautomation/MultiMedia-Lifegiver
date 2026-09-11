@@ -1,10 +1,9 @@
-import type { RefObject } from 'react';
 import { Loader2 } from 'lucide-react';
 import type { SaveStatus } from '@/types/editor';
 
 interface EditorCanvasStageProps {
-  containerRef: RefObject<HTMLDivElement>;
-  canvasElRef: RefObject<HTMLCanvasElement>;
+  containerRef: (node: HTMLDivElement | null) => void;
+  canvasElRef: (node: HTMLCanvasElement | null) => void;
   saveStatus: SaveStatus;
   loadingSlide: boolean;
   backgroundVideoUrl?: string | null;

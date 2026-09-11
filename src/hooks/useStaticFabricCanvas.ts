@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { StaticCanvas } from 'fabric';
 import { SLIDE_HEIGHT, SLIDE_WIDTH } from '@/lib/editorConstants';
 
@@ -7,8 +7,8 @@ interface UseStaticFabricCanvasParams {
 }
 
 interface UseStaticFabricCanvasResult {
-  containerRef: React.RefObject<HTMLDivElement>;
-  canvasElRef: React.RefObject<HTMLCanvasElement>;
+  containerRef: (node: HTMLDivElement | null) => void;
+  canvasElRef: (node: HTMLCanvasElement | null) => void;
   canvas: StaticCanvas | null;
 }
 
@@ -18,17 +18,25 @@ interface UseStaticFabricCanvasResult {
  * StaticCanvas (no selection/controls) since Present-mode output is
  * display-only. Kept as a separate hook rather than a flag on the editor's
  * hook to keep the already-shipped interactive editor untouched.
+ *
+ * containerRef/canvasElRef are CALLBACK refs (see useFabricCanvas.ts for
+ * why) — kept in sync with that hook even though this one's current
+ * callers all render their canvas unconditionally on mount, so a future
+ * caller that renders it behind a loading gate doesn't quietly break.
  */
 export function useStaticFabricCanvas({ backgroundColor }: UseStaticFabricCanvasParams): UseStaticFabricCanvasResult {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const canvasElRef = useRef<HTMLCanvasElement>(null);
   const canvasInstanceRef = useRef<StaticCanvas | null>(null);
   const [canvas, setCanvas] = useState<StaticCanvas | null>(null);
+  const [canvasEl, setCanvasEl] = useState<HTMLCanvasElement | null>(null);
+  const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
+
+  const canvasElRef = useCallback((node: HTMLCanvasElement | null) => setCanvasEl(node), []);
+  const containerRef = useCallback((node: HTMLDivElement | null) => setContainerEl(node), []);
 
   useEffect(() => {
-    if (!canvasElRef.current) return;
+    if (!canvasEl) return;
 
-    const instance = new StaticCanvas(canvasElRef.current, {
+    const instance = new StaticCanvas(canvasEl, {
       width: SLIDE_WIDTH,
       height: SLIDE_HEIGHT,
       backgroundColor,
@@ -37,7 +45,7 @@ export function useStaticFabricCanvas({ backgroundColor }: UseStaticFabricCanvas
     setCanvas(instance);
 
     let resizeObserver: ResizeObserver | null = null;
-    if (containerRef.current) {
+    if (containerEl) {
       resizeObserver = new ResizeObserver((entries) => {
         const entry = entries[0];
         if (!entry) return;
@@ -47,7 +55,7 @@ export function useStaticFabricCanvas({ backgroundColor }: UseStaticFabricCanvas
         instance.setDimensions({ width: SLIDE_WIDTH * scale, height: SLIDE_HEIGHT * scale });
         instance.setZoom(scale);
       });
-      resizeObserver.observe(containerRef.current);
+      resizeObserver.observe(containerEl);
     }
 
     if (typeof document !== 'undefined' && document.fonts) {
@@ -62,8 +70,7 @@ export function useStaticFabricCanvas({ backgroundColor }: UseStaticFabricCanvas
       setCanvas(null);
       void instance.dispose();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [canvasEl, containerEl, backgroundColor]);
 
   return { containerRef, canvasElRef, canvas };
 }
