@@ -17,8 +17,10 @@ export function SongsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [createOpen, setCreateOpen] = useState(false);
   const [newTitle, setNewTitle] = useState('');
+  const [newCategory, setNewCategory] = useState('');
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [renameTarget, setRenameTarget] = useState<SongWithCreator | null>(null);
@@ -61,7 +63,7 @@ export function SongsPage() {
 
     const { data, error: createErr } = await supabase
       .from('songs')
-      .insert({ title: newTitle.trim(), lyrics: { sections: [] } })
+      .insert({ title: newTitle.trim(), category: newCategory.trim() || null, lyrics: { sections: [] } })
       .select('id')
       .maybeSingle();
 
@@ -82,6 +84,7 @@ export function SongsPage() {
     const { error: dupError } = await supabase.from('songs').insert({
       title: `${song.title} (Copy)`,
       author: song.author,
+      category: song.category,
       key: song.key,
       tempo: song.tempo,
       lyrics: song.lyrics,
@@ -144,11 +147,15 @@ export function SongsPage() {
     fetchSongs();
   };
 
-  const filtered = songs.filter(
-    (s) =>
+  const categories = Array.from(new Set(songs.map((s) => s.category).filter((c): c is string => !!c))).sort();
+
+  const filtered = songs.filter((s) => {
+    if (categoryFilter !== 'all' && s.category !== categoryFilter) return false;
+    return (
       s.title.toLowerCase().includes(search.toLowerCase()) ||
       (s.author ?? '').toLowerCase().includes(search.toLowerCase())
-  );
+    );
+  });
 
   return (
     <div className="px-4 lg:px-8 py-6 lg:py-8 max-w-7xl mx-auto">
@@ -175,6 +182,20 @@ export function SongsPage() {
           className="w-full rounded-xl bg-zinc-900/80 border border-zinc-700/80 text-zinc-100 placeholder-zinc-500 pl-11 pr-4 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-maroon-500/40 focus:border-maroon-600/60"
         />
       </div>
+
+      {categories.length > 0 && (
+        <div className="mb-6 flex items-center gap-2 flex-wrap">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mr-1">Category</span>
+          <Button variant={categoryFilter === 'all' ? 'secondary' : 'ghost'} size="sm" onClick={() => setCategoryFilter('all')}>
+            All
+          </Button>
+          {categories.map((c) => (
+            <Button key={c} variant={categoryFilter === c ? 'secondary' : 'ghost'} size="sm" onClick={() => setCategoryFilter(c)}>
+              {c}
+            </Button>
+          ))}
+        </div>
+      )}
 
       {error && (
         <div className="mb-6">
@@ -253,6 +274,7 @@ export function SongsPage() {
                 <h3 className="text-base font-semibold text-zinc-100 mb-1 pr-6 truncate">{song.title}</h3>
                 <p className="text-xs text-zinc-500 mb-3 truncate">{song.author || 'Unknown artist'}</p>
                 <div className="flex items-center gap-2 flex-wrap">
+                  {song.category && <Badge variant="success">{song.category}</Badge>}
                   {song.key && <Badge variant="info">Key: {song.key}</Badge>}
                   {song.tempo && <Badge variant="default">{song.tempo}</Badge>}
                   <Badge variant="default">{song.lyrics?.sections?.length ?? 0} sections</Badge>
@@ -280,11 +302,11 @@ export function SongsPage() {
       {/* Create modal */}
       <Modal
         open={createOpen}
-        onClose={() => { setCreateOpen(false); setNewTitle(''); setCreateError(null); }}
+        onClose={() => { setCreateOpen(false); setNewTitle(''); setNewCategory(''); setCreateError(null); }}
         title="New Song"
         footer={
           <>
-            <Button variant="ghost" onClick={() => { setCreateOpen(false); setNewTitle(''); setCreateError(null); }}>
+            <Button variant="ghost" onClick={() => { setCreateOpen(false); setNewTitle(''); setNewCategory(''); setCreateError(null); }}>
               Cancel
             </Button>
             <Button variant="primary" onClick={handleCreate} disabled={!newTitle.trim() || creating}>
@@ -309,6 +331,13 @@ export function SongsPage() {
             onChange={(e) => setNewTitle(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleCreate(); }}
             autoFocus
+          />
+          <Input
+            label="Category (optional)"
+            placeholder="e.g. Worship, Hymn, Christmas"
+            value={newCategory}
+            onChange={(e) => setNewCategory(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleCreate(); }}
           />
         </div>
       </Modal>

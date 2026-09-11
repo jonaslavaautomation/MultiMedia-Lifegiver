@@ -81,6 +81,7 @@ export interface Song {
   id: string;
   title: string;
   author: string | null;
+  category: string | null;
   key: string | null;
   tempo: string | null;
   lyrics: SongLyrics;
@@ -105,6 +106,8 @@ export interface BibleVerse {
   created_at: string;
 }
 
+export type MediaFolder = 'images' | 'videos' | 'audio' | 'backgrounds' | 'logos';
+
 export interface MediaItem {
   id: string;
   name: string;
@@ -112,9 +115,11 @@ export interface MediaItem {
   url: string;
   thumbnail_url: string | null;
   file_size: number | null;
+  folder: string | null;
   metadata: Record<string, unknown>;
   uploaded_by: string | null;
   created_at: string;
+  updated_at: string;
 }
 
 export interface MediaItemWithUploader extends MediaItem {
@@ -125,9 +130,14 @@ export interface Template {
   id: string;
   name: string;
   category: string | null;
+  description: string | null;
   thumbnail_url: string | null;
   config: Record<string, unknown>;
   created_by: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface TemplateWithCreator extends Template {
+  creator?: Pick<Profile, 'full_name' | 'role'> | null;
 }
