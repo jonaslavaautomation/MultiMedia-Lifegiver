@@ -108,7 +108,7 @@ export function EditorToolbar({
               if (!Number.isFinite(size) || size <= 0) return;
               withActiveTextbox((tb) => tb.set({ fontSize: size }));
             }}
-            className="w-14 rounded-lg bg-zinc-950/80 border border-zinc-700/80 text-zinc-100 px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-maroon-500/40"
+            className="w-14 rounded-lg bg-zinc-950/80 border border-zinc-700/80 text-zinc-100 px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500/40"
           />
           <ColorPickerPopover
             value={selection.fill}

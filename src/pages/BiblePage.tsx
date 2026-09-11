@@ -10,6 +10,7 @@ import { createTextSlideContent } from '@/lib/slideContent';
 import { BIBLE_BOOKS } from '@/data/bibleBooks';
 import { parseReference, type ParsedReference } from '@/lib/bibleReference';
 import { BIBLE_TRANSLATIONS, DEFAULT_TRANSLATION } from '@/data/bibleTranslations';
+import { PageHeaderIcon } from '@/components/ui/PageHeaderIcon';
 
 function verseKey(book: string, chapter: number, verse: number): string {
   return `${book}|${chapter}|${verse}`;
@@ -120,12 +121,12 @@ export function BiblePage() {
   return (
     <div className="px-4 lg:px-8 py-6 lg:py-8 max-w-4xl mx-auto pb-28">
       <div className="mb-6 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold font-display text-zinc-100 flex items-center gap-2">
-            <BookOpen className="w-6 h-6 text-maroon-400" />
-            Bible
-          </h1>
-          <p className="text-sm text-zinc-500 mt-1">Browse a book and chapter, then add verses to a presentation.</p>
+        <div className="flex items-center gap-3.5">
+          <PageHeaderIcon icon={BookOpen} />
+          <div>
+            <h1 className="text-2xl font-bold font-display text-zinc-100">Bible</h1>
+            <p className="text-sm text-zinc-500 mt-1">Browse a book and chapter, then add verses to a presentation.</p>
+          </div>
         </div>
 
         <div className="relative shrink-0">
@@ -148,7 +149,7 @@ export function BiblePage() {
                       setTranslationMenuOpen(false);
                     }}
                     className={`w-full text-left px-3 py-2 text-sm transition-colors ${
-                      t.code === translation ? 'text-maroon-400 bg-maroon-950/30' : 'text-zinc-200 hover:bg-zinc-800'
+                      t.code === translation ? 'text-brand-400 bg-brand-950/30' : 'text-zinc-200 hover:bg-zinc-800'
                     }`}
                   >
                     <span className="font-medium">{t.code}</span>
@@ -179,7 +180,7 @@ export function BiblePage() {
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleReferenceSearch();
             }}
-            className="w-full rounded-xl bg-zinc-900/80 border border-zinc-700/80 text-zinc-100 placeholder-zinc-500 pl-11 pr-24 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-maroon-500/40 focus:border-maroon-600/60"
+            className="w-full rounded-xl bg-zinc-900/80 border border-zinc-700/80 text-zinc-100 placeholder-zinc-500 pl-11 pr-24 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-600/60"
           />
           <Button
             variant="secondary"

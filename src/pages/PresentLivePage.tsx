@@ -266,7 +266,7 @@ export function PresentLivePage() {
             <ArrowLeft className="w-4 h-4" />
           </Button>
           <div className="min-w-0">
-            <p className="text-xs text-maroon-400 font-semibold uppercase tracking-wider">Live</p>
+            <p className="text-xs text-brand-400 font-semibold uppercase tracking-wider">Live</p>
             <h1 className="text-sm font-semibold text-zinc-100 truncate">{title}</h1>
           </div>
         </div>
@@ -300,7 +300,7 @@ export function PresentLivePage() {
                 onClick={() => goToSlide(index)}
                 className={`shrink-0 w-40 lg:w-full text-left px-3 py-2.5 rounded-xl border transition-all ${
                   index === slideIndex
-                    ? 'border-maroon-500 bg-maroon-950/30 text-maroon-200'
+                    ? 'border-brand-500 bg-brand-950/30 text-brand-200'
                     : 'border-zinc-800/80 bg-zinc-900/40 text-zinc-400 hover:border-zinc-700'
                 }`}
               >
@@ -316,7 +316,7 @@ export function PresentLivePage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="sm:col-span-2">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mb-1.5">Current</p>
-              <SlideCanvasRenderer content={slides[slideIndex]?.content ?? null} className="rounded-2xl border border-maroon-700/50 overflow-hidden bg-zinc-900/40" />
+              <SlideCanvasRenderer content={slides[slideIndex]?.content ?? null} className="rounded-2xl border border-brand-700/50 overflow-hidden bg-zinc-900/40" />
             </div>
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mb-1.5">Next</p>

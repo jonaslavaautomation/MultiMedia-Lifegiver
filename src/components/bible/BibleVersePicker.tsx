@@ -102,7 +102,7 @@ export function BibleVersePicker({ isSelected, onToggleVerse, jumpTo, onJumped }
             placeholder="Search books…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-xl bg-zinc-900/80 border border-zinc-700/80 text-zinc-100 placeholder-zinc-500 pl-11 pr-4 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-maroon-500/40 focus:border-maroon-600/60"
+            className="w-full rounded-xl bg-zinc-900/80 border border-zinc-700/80 text-zinc-100 placeholder-zinc-500 pl-11 pr-4 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-600/60"
           />
         </div>
         <BookSection title="Old Testament" books={oldTestament} onPick={setBook} />
@@ -126,7 +126,7 @@ export function BibleVersePicker({ isSelected, onToggleVerse, jumpTo, onJumped }
             <button
               key={num}
               onClick={() => setChapter(num)}
-              className="aspect-square rounded-lg bg-zinc-900/60 border border-zinc-800/80 text-sm text-zinc-300 hover:border-maroon-600/60 hover:text-maroon-400 transition-all"
+              className="aspect-square rounded-lg bg-zinc-900/60 border border-zinc-800/80 text-sm text-zinc-300 hover:border-brand-600/60 hover:text-brand-400 transition-all"
             >
               {num}
             </button>
@@ -167,7 +167,7 @@ export function BibleVersePicker({ isSelected, onToggleVerse, jumpTo, onJumped }
                 type="checkbox"
                 checked={isSelected(book.name, chapter, v.verse)}
                 onChange={() => onToggleVerse({ book: book.name, chapter, verse: v.verse, text: v.text })}
-                className="mt-0.5 w-4 h-4 rounded border-zinc-600 bg-zinc-900 text-maroon-600 focus:ring-maroon-500/40 shrink-0"
+                className="mt-0.5 w-4 h-4 rounded border-zinc-600 bg-zinc-900 text-brand-600 focus:ring-brand-500/40 shrink-0"
               />
               <span className="text-zinc-300 leading-relaxed flex-1">
                 <span className="text-zinc-500 mr-1.5">{v.verse}</span>
@@ -207,7 +207,7 @@ function BookSection({
           <button
             key={b.id}
             onClick={() => onPick(b)}
-            className="text-left px-3 py-2.5 rounded-xl bg-zinc-900/60 border border-zinc-800/80 text-sm text-zinc-300 hover:border-maroon-600/60 hover:text-zinc-100 transition-all truncate"
+            className="text-left px-3 py-2.5 rounded-xl bg-zinc-900/60 border border-zinc-800/80 text-sm text-zinc-300 hover:border-brand-600/60 hover:text-zinc-100 transition-all truncate"
           >
             {b.name}
           </button>

@@ -29,6 +29,7 @@ import { useSignedUrl } from '@/components/media/useSignedUrl';
 import { MediaUploadModal } from '@/components/media/MediaUploadModal';
 import { deleteMediaObject, formatFileSize, getMediaSignedUrl, MEDIA_FOLDERS } from '@/lib/mediaStorage';
 import { createMediaBackgroundSlideContent } from '@/lib/slideContent';
+import { PageHeaderIcon } from '@/components/ui/PageHeaderIcon';
 import type { MediaItemWithUploader, MediaType } from '@/types';
 
 type TypeFilter = 'all' | MediaType;
@@ -210,9 +211,12 @@ export function MediaPage() {
     <div className="px-4 lg:px-8 py-6 lg:py-8 max-w-7xl mx-auto pb-28">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold font-display text-zinc-100">Media</h1>
-          <p className="text-sm text-zinc-500 mt-1">Upload and manage images, videos, and audio for your presentations.</p>
+        <div className="flex items-center gap-3.5">
+          <PageHeaderIcon icon={ImageIcon} />
+          <div>
+            <h1 className="text-2xl font-bold font-display text-zinc-100">Media</h1>
+            <p className="text-sm text-zinc-500 mt-1">Upload and manage images, videos, and audio for your presentations.</p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -239,7 +243,7 @@ export function MediaPage() {
             placeholder="Search media…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-xl bg-zinc-900/80 border border-zinc-700/80 text-zinc-100 placeholder-zinc-500 pl-11 pr-4 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-maroon-500/40 focus:border-maroon-600/60"
+            className="w-full rounded-xl bg-zinc-900/80 border border-zinc-700/80 text-zinc-100 placeholder-zinc-500 pl-11 pr-4 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-600/60"
           />
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -427,8 +431,8 @@ function MediaPreview({ item }: { item: MediaItemWithUploader }) {
   if (item.type === 'audio') {
     return (
       <div className="flex flex-col items-center gap-4 py-6">
-        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-maroon-900/40 to-maroon-950/20 border border-maroon-800/30 flex items-center justify-center">
-          <Music className="w-8 h-8 text-maroon-400" />
+        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-brand-900/40 to-brand-950/20 border border-brand-800/30 flex items-center justify-center">
+          <Music className="w-8 h-8 text-brand-400" />
         </div>
         <audio src={previewUrl} controls autoPlay className="w-full" />
       </div>
@@ -479,7 +483,7 @@ function MediaCard({
 
   return (
     <Card
-      className={`p-0 overflow-hidden relative transition-all ${selected ? 'border-maroon-500 ring-2 ring-maroon-500/30' : ''} ${!selectMode ? 'cursor-pointer' : ''}`}
+      className={`p-0 overflow-hidden relative transition-all ${selected ? 'border-brand-500 ring-2 ring-brand-500/30' : ''} ${!selectMode ? 'cursor-pointer' : ''}`}
       onClick={handleCardClick}
     >
       <div className="aspect-square bg-zinc-900/60 flex items-center justify-center relative">
@@ -504,7 +508,7 @@ function MediaCard({
         {canSelect && (
           <div
             className={`absolute top-2 left-2 w-5 h-5 rounded-full flex items-center justify-center border-2 ${
-              selected ? 'bg-maroon-600 border-maroon-600' : 'bg-black/40 border-white/60'
+              selected ? 'bg-brand-600 border-brand-600' : 'bg-black/40 border-white/60'
             }`}
           >
             {selected && <Check className="w-3 h-3 text-white" />}

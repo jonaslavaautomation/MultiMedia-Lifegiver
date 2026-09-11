@@ -8,7 +8,6 @@ import {
   LayoutTemplate,
   Users,
   Settings,
-  Church,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
@@ -43,16 +42,24 @@ export function Sidebar() {
       <NavLink
         key={item.to}
         to={item.to}
-        className={`group flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+        className={`group flex items-center gap-3 px-2.5 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
           active
-            ? 'bg-gradient-to-r from-maroon-900/50 to-transparent text-zinc-100 border-l-2 border-maroon-500'
+            ? 'bg-gradient-to-r from-brand-900/50 to-transparent text-zinc-100 border-l-2 border-brand-500'
             : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60 border-l-2 border-transparent'
         }`}
       >
-        <Icon
-          className={`w-[18px] h-[18px] transition-colors ${active ? 'text-maroon-400' : 'text-zinc-500 group-hover:text-zinc-300'}`}
-          strokeWidth={2}
-        />
+        <span
+          className={`flex items-center justify-center w-8 h-8 rounded-lg shrink-0 transition-all duration-200 ${
+            active
+              ? 'bg-gradient-to-br from-brand-500 to-brand-700 shadow-md shadow-brand-950/50'
+              : 'bg-zinc-900 border border-zinc-800/80 group-hover:border-zinc-700 group-hover:bg-zinc-800/80'
+          }`}
+        >
+          <Icon
+            className={`w-4 h-4 transition-colors ${active ? 'text-white' : 'text-zinc-500 group-hover:text-zinc-300'}`}
+            strokeWidth={2}
+          />
+        </span>
         {item.label}
       </NavLink>
     );
@@ -60,13 +67,9 @@ export function Sidebar() {
 
   return (
     <aside className="hidden lg:flex w-64 shrink-0 flex-col bg-zinc-950/95 border-r border-zinc-900 h-screen sticky top-0">
-      <div className="flex items-center gap-2.5 px-5 h-16 border-b border-zinc-900">
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-maroon-600 to-maroon-800 flex items-center justify-center shadow-lg shadow-maroon-950/40">
-          <Church className="w-5 h-5 text-white" strokeWidth={2.5} />
-        </div>
-        <div className="flex flex-col leading-tight">
-          <span className="text-sm font-bold font-display text-zinc-100 tracking-wide">LifeGiver</span>
-          <span className="text-[10px] text-zinc-500 uppercase tracking-[0.15em] font-medium">Media Studio</span>
+      <div className="px-5 py-4 border-b border-zinc-900">
+        <div className="rounded-xl bg-white shadow-lg shadow-black/30 p-2.5">
+          <img src="/lifegiver-logo.png" alt="LifeGiver Davao" className="w-full h-auto object-contain" />
         </div>
       </div>
 
@@ -88,7 +91,7 @@ export function Sidebar() {
 
       <div className="px-3 py-4 border-t border-zinc-900">
         <div className="flex items-center gap-3 px-3.5 py-2 rounded-xl bg-zinc-900/40">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-maroon-700 to-maroon-900 flex items-center justify-center text-xs font-bold text-white shrink-0">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-700 to-brand-900 flex items-center justify-center text-xs font-bold text-white shrink-0">
             {profile?.full_name?.charAt(0).toUpperCase() ?? '?'}
           </div>
           <div className="flex flex-col min-w-0">

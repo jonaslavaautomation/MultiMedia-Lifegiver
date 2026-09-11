@@ -40,7 +40,7 @@ export function ColorPickerPopover({ value, onChange, label = 'Color' }: ColorPi
                     setOpen(false);
                   }}
                   className={`w-7 h-7 rounded-full border-2 transition-all ${
-                    value.toLowerCase() === swatch.toLowerCase() ? 'border-maroon-500' : 'border-transparent'
+                    value.toLowerCase() === swatch.toLowerCase() ? 'border-brand-500' : 'border-transparent'
                   }`}
                   style={{ backgroundColor: swatch }}
                   title={swatch}
@@ -58,7 +58,7 @@ export function ColorPickerPopover({ value, onChange, label = 'Color' }: ColorPi
                 type="text"
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
-                className="flex-1 rounded-lg bg-zinc-950/80 border border-zinc-700/80 text-zinc-100 px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-maroon-500/40"
+                className="flex-1 rounded-lg bg-zinc-950/80 border border-zinc-700/80 text-zinc-100 px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500/40"
               />
             </div>
           </div>

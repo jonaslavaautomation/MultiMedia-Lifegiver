@@ -2,22 +2,26 @@ import { Settings as SettingsIcon, Shield, Church, Info } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
+import { PageHeaderIcon } from '@/components/ui/PageHeaderIcon';
 
 export function SettingsPage() {
   const { profile } = useAuth();
 
   return (
     <div className="px-4 lg:px-8 py-6 lg:py-8 max-w-4xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold font-display text-zinc-100">Settings</h1>
-        <p className="text-sm text-zinc-500 mt-1">Application configuration and preferences.</p>
+      <div className="flex items-center gap-3.5 mb-6">
+        <PageHeaderIcon icon={SettingsIcon} />
+        <div>
+          <h1 className="text-2xl font-bold font-display text-zinc-100">Settings</h1>
+          <p className="text-sm text-zinc-500 mt-1">Application configuration and preferences.</p>
+        </div>
       </div>
 
       <div className="flex flex-col gap-5">
         {/* Application info */}
         <Card className="p-6">
           <div className="flex items-center gap-3 mb-5">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-maroon-600 to-maroon-800 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-600 to-brand-800 flex items-center justify-center">
               <Church className="w-5 h-5 text-white" strokeWidth={2.5} />
             </div>
             <div>

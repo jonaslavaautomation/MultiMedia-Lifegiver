@@ -73,7 +73,7 @@ export function TimerControl({ timer, onChange }: TimerControlProps) {
             disabled={timer.running}
             value={Math.round((timer.durationMs ?? 0) / 60_000)}
             onChange={(e) => handleSetDurationMinutes(Number(e.target.value) || 0)}
-            className="w-16 rounded-lg bg-zinc-950/80 border border-zinc-700/80 text-zinc-100 px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-maroon-500/40"
+            className="w-16 rounded-lg bg-zinc-950/80 border border-zinc-700/80 text-zinc-100 px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500/40"
           />
         </div>
       )}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Presentation, Music4, Image, LayoutTemplate, Calendar, Clock, ArrowRight } from 'lucide-react';
+import { LayoutDashboard, Presentation, Music4, Image, LayoutTemplate, Calendar, Clock, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { StatCard } from '@/components/ui/StatCard';
@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Button } from '@/components/ui/Button';
 import { Reveal } from '@/components/ui/Reveal';
+import { PageHeaderIcon } from '@/components/ui/PageHeaderIcon';
 import type { Presentation as PresentationType } from '@/types';
 
 interface Stats {
@@ -63,27 +64,30 @@ export function DashboardPage() {
     <div className="px-4 lg:px-8 py-6 lg:py-8 max-w-7xl mx-auto">
       {/* Header */}
       <Reveal>
-        <div className="mb-8">
-          <p className="text-sm text-zinc-500 mb-1">{greeting},</p>
-          <h1 className="text-2xl lg:text-3xl font-bold font-display text-zinc-100">
-            Welcome back, {firstName}
-          </h1>
-          <p className="text-sm text-zinc-500 mt-1.5">
-            Here's an overview of your church media studio.
-          </p>
+        <div className="flex items-center gap-3.5 mb-8">
+          <PageHeaderIcon icon={LayoutDashboard} />
+          <div>
+            <p className="text-sm text-zinc-500 mb-1">{greeting},</p>
+            <h1 className="text-2xl lg:text-3xl font-bold font-display text-zinc-100">
+              Welcome back, {firstName}
+            </h1>
+            <p className="text-sm text-zinc-500 mt-1.5">
+              Here's an overview of your church media studio.
+            </p>
+          </div>
         </div>
       </Reveal>
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <Reveal delay={90} size="sm">
-          <StatCard label="Presentations" value={loading ? '—' : stats.presentations} icon={Presentation} accent="maroon" />
+          <StatCard label="Presentations" value={loading ? '—' : stats.presentations} icon={Presentation} accent="brand" />
         </Reveal>
         <Reveal delay={180} size="sm">
           <StatCard label="Songs" value={loading ? '—' : stats.songs} icon={Music4} accent="blue" />
         </Reveal>
         <Reveal delay={270} size="sm">
-          <StatCard label="Media Files" value={loading ? '—' : stats.media} icon={Image} accent="emerald" />
+          <StatCard label="Media Files" value={loading ? '—' : stats.media} icon={Image} accent="leaf" />
         </Reveal>
         <Reveal delay={360} size="sm">
           <StatCard label="Templates" value={loading ? '—' : stats.templates} icon={LayoutTemplate} accent="amber" />
@@ -164,8 +168,8 @@ export function DashboardPage() {
                     to={`/presentations/${p.id}/edit`}
                     className="flex items-center gap-4 px-4 py-3 rounded-xl bg-zinc-900/40 hover:bg-zinc-800/50 border border-zinc-800/50 hover:border-zinc-700 transition-all"
                   >
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-maroon-900/40 to-maroon-950/20 border border-maroon-800/30 flex flex-col items-center justify-center shrink-0">
-                      <span className="text-[10px] text-maroon-400 uppercase font-semibold">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-900/40 to-brand-950/20 border border-brand-800/30 flex flex-col items-center justify-center shrink-0">
+                      <span className="text-[10px] text-brand-400 uppercase font-semibold">
                         {p.service_date ? new Date(p.service_date).toLocaleDateString('en-US', { month: 'short' }) : '—'}
                       </span>
                       <span className="text-sm font-bold text-zinc-200">

@@ -353,7 +353,7 @@ export function SongDetailPage() {
       {/* Generate Slides */}
       <Card className="p-5">
         <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="w-4 h-4 text-maroon-400" />
+          <Sparkles className="w-4 h-4 text-brand-400" />
           <h2 className="text-base font-semibold text-zinc-100">Generate Slides</h2>
         </div>
         <p className="text-xs text-zinc-500 mb-4">
@@ -377,7 +377,7 @@ export function SongDetailPage() {
                 type="checkbox"
                 checked={selectedIds.has(section.id)}
                 onChange={() => toggleSelected(section.id)}
-                className="w-4 h-4 rounded border-zinc-600 bg-zinc-900 text-maroon-600 focus:ring-maroon-500/40"
+                className="w-4 h-4 rounded border-zinc-600 bg-zinc-900 text-brand-600 focus:ring-brand-500/40"
               />
               {section.label}
             </label>
@@ -399,7 +399,7 @@ export function SongDetailPage() {
               min={1}
               value={linesPerSlide}
               onChange={(e) => setLinesPerSlide(Math.max(1, Number(e.target.value) || 1))}
-              className="w-full rounded-xl bg-zinc-900/80 border border-zinc-700/80 text-zinc-100 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-maroon-500/40 focus:border-maroon-600/60"
+              className="w-full rounded-xl bg-zinc-900/80 border border-zinc-700/80 text-zinc-100 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-600/60"
             />
           </div>
           <Button

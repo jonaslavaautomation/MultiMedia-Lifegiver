@@ -58,7 +58,7 @@ export function SlideFilmstrip({ slides, currentSlideId, onSelect, onAdd, onDupl
             key={slide.id}
             className={`group relative shrink-0 w-28 lg:w-full rounded-xl border cursor-pointer transition-all overflow-hidden ${
               slide.id === currentSlideId
-                ? 'border-maroon-500 ring-2 ring-maroon-500/30'
+                ? 'border-brand-500 ring-2 ring-brand-500/30'
                 : 'border-zinc-800/80 hover:border-zinc-700'
             }`}
             onClick={() => onSelect(slide.id)}

@@ -36,7 +36,7 @@ export function FontFamilyPicker({ value, onChange }: FontFamilyPickerProps) {
                 }}
                 style={{ fontFamily: font }}
                 className={`w-full text-left px-3 py-2 text-sm transition-colors ${
-                  font === value ? 'text-maroon-400 bg-maroon-950/30' : 'text-zinc-200 hover:bg-zinc-800'
+                  font === value ? 'text-brand-400 bg-brand-950/30' : 'text-zinc-200 hover:bg-zinc-800'
                 }`}
               >
                 {font}

@@ -42,7 +42,7 @@ export function BackgroundPickerModal({ open, onClose, onPickColor, onPickMedia 
                     onPickColor(swatch);
                     onClose();
                   }}
-                  className="w-9 h-9 rounded-full border-2 border-transparent hover:border-maroon-500 transition-all"
+                  className="w-9 h-9 rounded-full border-2 border-transparent hover:border-brand-500 transition-all"
                   style={{ backgroundColor: swatch }}
                   title={swatch}
                 />
@@ -59,7 +59,7 @@ export function BackgroundPickerModal({ open, onClose, onPickColor, onPickMedia 
                 type="text"
                 value={customColor}
                 onChange={(e) => setCustomColor(e.target.value)}
-                className="flex-1 rounded-lg bg-zinc-950/80 border border-zinc-700/80 text-zinc-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-maroon-500/40"
+                className="flex-1 rounded-lg bg-zinc-950/80 border border-zinc-700/80 text-zinc-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40"
               />
               <Button
                 variant="primary"

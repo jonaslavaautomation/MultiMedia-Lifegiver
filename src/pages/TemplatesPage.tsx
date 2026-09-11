@@ -22,6 +22,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Alert } from '@/components/ui/Alert';
 import { MediaPicker } from '@/components/media/MediaPicker';
 import { useSignedUrl } from '@/components/media/useSignedUrl';
+import { PageHeaderIcon } from '@/components/ui/PageHeaderIcon';
 import type { TemplateWithCreator } from '@/types';
 
 /**
@@ -220,11 +221,14 @@ export function TemplatesPage() {
     <div className="px-4 lg:px-8 py-6 lg:py-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold font-display text-zinc-100">Templates</h1>
-          <p className="text-sm text-zinc-500 mt-1">
-            Reusable slide designs — the future Slide Editor will load these directly.
-          </p>
+        <div className="flex items-center gap-3.5">
+          <PageHeaderIcon icon={LayoutTemplate} />
+          <div>
+            <h1 className="text-2xl font-bold font-display text-zinc-100">Templates</h1>
+            <p className="text-sm text-zinc-500 mt-1">
+              Reusable slide designs, ready to load straight into the Slide Editor.
+            </p>
+          </div>
         </div>
         <Button variant="primary" onClick={openCreate}>
           <Plus className="w-4 h-4" />
@@ -240,7 +244,7 @@ export function TemplatesPage() {
           placeholder="Search templates…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-xl bg-zinc-900/80 border border-zinc-700/80 text-zinc-100 placeholder-zinc-500 pl-11 pr-4 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-maroon-500/40 focus:border-maroon-600/60"
+          className="w-full rounded-xl bg-zinc-900/80 border border-zinc-700/80 text-zinc-100 placeholder-zinc-500 pl-11 pr-4 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-600/60"
         />
       </div>
 
@@ -341,7 +345,7 @@ export function TemplatesPage() {
             <select
               value={form.category}
               onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-              className="w-full rounded-xl bg-zinc-900/80 border border-zinc-700/80 text-zinc-100 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-maroon-500/40 focus:border-maroon-600/60"
+              className="w-full rounded-xl bg-zinc-900/80 border border-zinc-700/80 text-zinc-100 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-600/60"
             >
               <option value="">No category</option>
               {TEMPLATE_CATEGORIES.map((c) => (
@@ -358,7 +362,7 @@ export function TemplatesPage() {
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
               placeholder="What this template is for…"
               rows={3}
-              className="w-full rounded-xl bg-zinc-900/80 border border-zinc-700/80 text-zinc-100 placeholder-zinc-500 px-4 py-2.5 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-maroon-500/40 focus:border-maroon-600/60"
+              className="w-full rounded-xl bg-zinc-900/80 border border-zinc-700/80 text-zinc-100 placeholder-zinc-500 px-4 py-2.5 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-600/60"
             />
           </div>
           <div>
@@ -440,7 +444,7 @@ function TemplatePreview({ template }: { template: TemplateWithCreator }) {
       {template.description && <p className="text-sm text-zinc-400 leading-relaxed">{template.description}</p>}
       <div>
         <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mb-1.5">
-          Template data (loaded directly by the future Slide Editor)
+          Template data (loaded directly by the Slide Editor)
         </p>
         <pre className="text-[11px] text-zinc-400 bg-zinc-950/60 border border-zinc-800/80 rounded-xl p-3 overflow-x-auto max-h-40">
           {JSON.stringify(template.config, null, 2)}
@@ -487,7 +491,7 @@ interface TemplateCardProps {
 
 function TemplateCard({ template, menuOpen, onToggleMenu, onCloseMenu, onPreview, onEdit, onDuplicate, onDelete }: TemplateCardProps) {
   return (
-    <Card className="p-0 overflow-hidden relative group hover:border-maroon-800/40 transition-all cursor-pointer" onClick={onPreview}>
+    <Card className="p-0 overflow-hidden relative group hover:border-brand-800/40 transition-all cursor-pointer" onClick={onPreview}>
       <div className="absolute top-2 right-2 z-10">
         <button
           onClick={(e) => { e.stopPropagation(); onToggleMenu(); }}
