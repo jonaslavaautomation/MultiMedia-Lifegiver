@@ -54,7 +54,7 @@ export function TimerControl({ timer, onChange }: TimerControlProps) {
   }
 
   return (
-    <div className="rounded-2xl bg-zinc-900/60 border border-zinc-800/80 p-4">
+    <div className="rounded-2xl bg-hud-panel/70 backdrop-blur-md border border-hud-border p-4">
       <div className="flex items-center gap-2 mb-3">
         <Button variant={timer.mode === 'stopwatch' ? 'primary' : 'outline'} size="sm" onClick={() => handleSetMode('stopwatch')} disabled={timer.running}>
           Stopwatch
@@ -73,14 +73,14 @@ export function TimerControl({ timer, onChange }: TimerControlProps) {
             disabled={timer.running}
             value={Math.round((timer.durationMs ?? 0) / 60_000)}
             onChange={(e) => handleSetDurationMinutes(Number(e.target.value) || 0)}
-            className="w-16 rounded-lg bg-zinc-950/80 border border-zinc-700/80 text-zinc-100 px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500/40"
+            className="w-16 rounded-lg bg-hud-bg/80 border border-hud-border text-zinc-100 px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-cyan-500/40"
           />
         </div>
       )}
 
       <p
         className={`text-4xl font-bold font-display tabular-nums mb-3 ${
-          isDone ? 'text-red-400' : isLow ? 'text-amber-400' : 'text-zinc-100'
+          isDone ? 'text-red-400' : isLow ? 'text-amber-400' : 'text-emerald-300'
         }`}
       >
         {formatDuration(displayMs)}
