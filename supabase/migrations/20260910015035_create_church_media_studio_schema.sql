@@ -120,25 +120,13 @@ CREATE TABLE IF NOT EXISTS profiles (
 
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "profiles_select_own_or_admin" ON profiles;
-CREATE POLICY "profiles_select_own_or_admin"
-  ON profiles FOR SELECT TO authenticated
-  USING (auth.uid() = id OR EXISTS (
-    SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role = 'admin'
-  ));
-
-DROP POLICY IF EXISTS "profiles_insert_self" ON profiles;
-CREATE POLICY "profiles_insert_self"
-  ON profiles FOR INSERT TO authenticated
-  WITH CHECK (auth.uid() = id);
-
-DROP POLICY IF EXISTS "profiles_update_own" ON profiles;
-CREATE POLICY "profiles_update_own"
-  ON profiles FOR UPDATE TO authenticated
-  USING (auth.uid() = id)
-  WITH CHECK (auth.uid() = id);
-
--- Helper function to check if current user is admin
+-- Helper function to check if current user is admin. SECURITY DEFINER so
+-- its internal query bypasses RLS — defined BEFORE any policy references
+-- it, specifically so a policy can NEVER be written as a self-referencing
+-- subquery on profiles (which causes "infinite recursion detected in
+-- policy for relation profiles", Postgres error 42P17, the moment two
+-- different users' rows need to be checked in the same query — e.g. any
+-- list page that joins to profiles for someone else's name).
 CREATE OR REPLACE FUNCTION is_admin()
 RETURNS boolean
 LANGUAGE sql
@@ -150,6 +138,22 @@ AS $$
     WHERE id = auth.uid() AND role = 'admin'
   );
 $$;
+
+DROP POLICY IF EXISTS "profiles_select_own_or_admin" ON profiles;
+CREATE POLICY "profiles_select_own_or_admin"
+  ON profiles FOR SELECT TO authenticated
+  USING (auth.uid() = id OR is_admin());
+
+DROP POLICY IF EXISTS "profiles_insert_self" ON profiles;
+CREATE POLICY "profiles_insert_self"
+  ON profiles FOR INSERT TO authenticated
+  WITH CHECK (auth.uid() = id);
+
+DROP POLICY IF EXISTS "profiles_update_own" ON profiles;
+CREATE POLICY "profiles_update_own"
+  ON profiles FOR UPDATE TO authenticated
+  USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id);
 
 -- Trigger: auto-create profile on user signup
 CREATE OR REPLACE FUNCTION handle_new_user()
