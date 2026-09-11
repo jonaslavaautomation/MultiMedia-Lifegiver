@@ -34,6 +34,12 @@ export interface SongLyrics {
 export interface SlideCanvasMeta {
   schemaVersion: 1;
   backgroundMediaId: string | null;
+  /**
+   * An externally-hosted video URL used as a live/motion background,
+   * pasted directly (not uploaded to the Media library). Mutually
+   * exclusive with backgroundMediaId in practice — only one is ever set.
+   */
+  backgroundVideoEmbedUrl?: string | null;
 }
 
 export interface SlideCanvasData {

@@ -25,6 +25,15 @@ export interface RenderSlideResult {
 export async function resolveAndRenderSlide(canvas: StaticCanvas, content: SlideCanvasData): Promise<RenderSlideResult> {
   await canvas.loadFromJSON(content);
 
+  // A pasted external video URL (not an uploaded Media item) takes priority
+  // — it needs no Supabase lookup, just point a <video> at it directly.
+  const embedUrl = content.meta?.backgroundVideoEmbedUrl ?? null;
+  if (embedUrl && !canvas.backgroundImage) {
+    canvas.backgroundColor = 'transparent';
+    canvas.requestRenderAll();
+    return { videoBackgroundUrl: embedUrl };
+  }
+
   const bgMediaId = content.meta?.backgroundMediaId ?? null;
   if (bgMediaId && !canvas.backgroundImage) {
     const info = await getMediaInfoById(bgMediaId);

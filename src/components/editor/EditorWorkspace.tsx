@@ -53,6 +53,7 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
   const isLoadingSlideRef = useRef(false);
   const dirtyRef = useRef(false);
   const backgroundMediaIdRef = useRef<string | null>(null);
+  const backgroundVideoEmbedUrlRef = useRef<string | null>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchSlides = useCallback(async () => {
@@ -93,7 +94,7 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
 
     setSaveStatus('saving');
     const slideId = currentSlideIdRef.current;
-    const content = serializeSlide(canvas, backgroundMediaIdRef.current);
+    const content = serializeSlide(canvas, backgroundMediaIdRef.current, backgroundVideoEmbedUrlRef.current);
 
     const { error } = await supabase
       .from('slides')
@@ -208,6 +209,7 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
       if (isEmptySlideContent(content)) {
         applySolidBackground(canvas!, DEFAULT_SLIDE_BACKGROUND_COLOR);
         backgroundMediaIdRef.current = null;
+        backgroundVideoEmbedUrlRef.current = null;
         setBackgroundVideoUrl(null);
       } else {
         // Shared with the read-only Present-mode renderer (src/lib/renderSlide.ts)
@@ -216,6 +218,7 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
         if (cancelled) return;
 
         backgroundMediaIdRef.current = content.meta?.backgroundMediaId ?? null;
+        backgroundVideoEmbedUrlRef.current = content.meta?.backgroundVideoEmbedUrl ?? null;
         setBackgroundVideoUrl(videoBackgroundUrl);
         canvas!.requestRenderAll();
       }
@@ -324,6 +327,7 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
     if (!canvas) return;
     applySolidBackground(canvas, hex);
     backgroundMediaIdRef.current = null;
+    backgroundVideoEmbedUrlRef.current = null;
     setBackgroundVideoUrl(null);
     markDirty();
   }
@@ -348,6 +352,18 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
     }
 
     backgroundMediaIdRef.current = item.id;
+    backgroundVideoEmbedUrlRef.current = null;
+    markDirty();
+  }
+
+  function handleBackgroundEmbedUrl(url: string) {
+    if (!canvas) return;
+    canvas.backgroundImage = undefined;
+    canvas.backgroundColor = 'transparent';
+    canvas.requestRenderAll();
+    setBackgroundVideoUrl(url);
+    backgroundMediaIdRef.current = null;
+    backgroundVideoEmbedUrlRef.current = url;
     markDirty();
   }
 
@@ -413,6 +429,7 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
         onClose={() => setBackgroundOpen(false)}
         onPickColor={handleBackgroundColor}
         onPickMedia={handleBackgroundMedia}
+        onPickEmbedUrl={handleBackgroundEmbedUrl}
       />
     </div>
   );
