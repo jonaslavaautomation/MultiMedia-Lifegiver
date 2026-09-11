@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Canvas } from 'fabric';
 import { SLIDE_HEIGHT, SLIDE_WIDTH } from '@/lib/editorConstants';
 
@@ -7,8 +7,8 @@ interface UseFabricCanvasParams {
 }
 
 interface UseFabricCanvasResult {
-  containerRef: React.RefObject<HTMLDivElement>;
-  canvasElRef: React.RefObject<HTMLCanvasElement>;
+  containerRef: (node: HTMLDivElement | null) => void;
+  canvasElRef: (node: HTMLCanvasElement | null) => void;
   canvas: Canvas | null;
 }
 
@@ -21,17 +21,30 @@ interface UseFabricCanvasResult {
  * Objects are always authored in a fixed SLIDE_WIDTH x SLIDE_HEIGHT logical
  * space; a ResizeObserver only adjusts on-screen zoom/dimensions, so stored
  * JSON stays resolution-independent regardless of the viewer's screen size.
+ *
+ * containerRef/canvasElRef are CALLBACK refs, not plain useRef objects —
+ * deliberately. A caller that only renders its canvas element behind a
+ * conditional (e.g. EditorWorkspace's own `if (loading) return <skeleton>`
+ * before it ever reaches the real markup with the canvas in it) means the
+ * DOM node isn't attached yet on this hook's very first effect run. A plain
+ * `useRef` + effect-with-empty-deps would see `.current === null` on that
+ * first run and then never run again, permanently leaving the canvas
+ * uninitialized. Callback refs fire exactly when the node actually mounts,
+ * however late that is, so initialization is never missed.
  */
 export function useFabricCanvas({ backgroundColor }: UseFabricCanvasParams): UseFabricCanvasResult {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const canvasElRef = useRef<HTMLCanvasElement>(null);
   const canvasInstanceRef = useRef<Canvas | null>(null);
   const [canvas, setCanvas] = useState<Canvas | null>(null);
+  const [canvasEl, setCanvasEl] = useState<HTMLCanvasElement | null>(null);
+  const [containerEl, setContainerEl] = useState<HTMLDivElement | null>(null);
+
+  const canvasElRef = useCallback((node: HTMLCanvasElement | null) => setCanvasEl(node), []);
+  const containerRef = useCallback((node: HTMLDivElement | null) => setContainerEl(node), []);
 
   useEffect(() => {
-    if (!canvasElRef.current) return;
+    if (!canvasEl) return;
 
-    const instance = new Canvas(canvasElRef.current, {
+    const instance = new Canvas(canvasEl, {
       width: SLIDE_WIDTH,
       height: SLIDE_HEIGHT,
       backgroundColor,
@@ -41,7 +54,7 @@ export function useFabricCanvas({ backgroundColor }: UseFabricCanvasParams): Use
     setCanvas(instance);
 
     let resizeObserver: ResizeObserver | null = null;
-    if (containerRef.current) {
+    if (containerEl) {
       resizeObserver = new ResizeObserver((entries) => {
         const entry = entries[0];
         if (!entry) return;
@@ -51,7 +64,7 @@ export function useFabricCanvas({ backgroundColor }: UseFabricCanvasParams): Use
         instance.setDimensions({ width: SLIDE_WIDTH * scale, height: SLIDE_HEIGHT * scale });
         instance.setZoom(scale);
       });
-      resizeObserver.observe(containerRef.current);
+      resizeObserver.observe(containerEl);
     }
 
     // Defensive repaint once curated fonts finish loading (guards against
@@ -68,8 +81,7 @@ export function useFabricCanvas({ backgroundColor }: UseFabricCanvasParams): Use
       setCanvas(null);
       void instance.dispose();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [canvasEl, containerEl, backgroundColor]);
 
   return { containerRef, canvasElRef, canvas };
 }
