@@ -68,6 +68,50 @@ export function createTextSlideContent(text: string, options: TextSlideOptions =
 }
 
 /**
+ * A verse text box plus a smaller reference caption (e.g. "Genesis 1:27")
+ * beneath it — used by Bible so the book/chapter/verse actually appears on
+ * the projected/stage output, not just as the slide's internal title (which
+ * is never itself painted onto the canvas).
+ */
+export function createVerseSlideContent(reference: string, text: string, options: TextSlideOptions = {}): SlideCanvasData {
+  const left = (SLIDE_WIDTH - DEFAULT_TEXT_PROPS.width) / 2;
+  const fontSize = options.fontSize ?? DEFAULT_TEXT_PROPS.fontSize;
+
+  return {
+    version: '6.9.1',
+    objects: [
+      {
+        type: 'Textbox',
+        id: nextObjectId(),
+        text,
+        left,
+        top: SLIDE_HEIGHT / 2 - 180,
+        width: DEFAULT_TEXT_PROPS.width,
+        fontFamily: options.fontFamily ?? DEFAULT_TEXT_PROPS.fontFamily,
+        fontSize,
+        fill: options.fill ?? DEFAULT_TEXT_PROPS.fill,
+        textAlign: options.textAlign ?? DEFAULT_TEXT_PROPS.textAlign,
+      },
+      {
+        type: 'Textbox',
+        id: nextObjectId(),
+        text: reference,
+        left,
+        top: SLIDE_HEIGHT - 170,
+        width: DEFAULT_TEXT_PROPS.width,
+        fontFamily: options.fontFamily ?? DEFAULT_TEXT_PROPS.fontFamily,
+        fontSize: Math.round(fontSize * 0.4),
+        fontStyle: 'italic',
+        fill: options.fill ?? DEFAULT_TEXT_PROPS.fill,
+        textAlign: 'center',
+      },
+    ],
+    background: options.backgroundColor ?? DEFAULT_SLIDE_BACKGROUND_COLOR,
+    meta: { schemaVersion: 1, backgroundMediaId: null },
+  };
+}
+
+/**
  * Splits lyrics text into slide-sized chunks (e.g. 4 lines each) instead of
  * one whole verse/chorus per slide — matches the "auto-split long lyrics"
  * behavior of tools like WorshipTools' Loop Connect. Blank lines are
