@@ -36,7 +36,7 @@ export function SongsPage() {
 
     const { data, error: fetchError } = await supabase
       .from('songs')
-      .select('*, creator:profiles!created_by(full_name, role)')
+      .select('*, creator:profiles!songs_created_by_fkey(full_name, role)')
       .order('title', { ascending: true });
 
     if (fetchError) {

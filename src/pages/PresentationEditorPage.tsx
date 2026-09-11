@@ -28,7 +28,7 @@ export function PresentationEditorPage() {
 
     const { data, error: fetchError } = await supabase
       .from('presentations')
-      .select('*, creator:profiles!created_by(full_name, role)')
+      .select('*, creator:profiles!presentations_created_by_fkey(full_name, role)')
       .eq('id', id)
       .maybeSingle();
 

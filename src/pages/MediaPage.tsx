@@ -62,7 +62,7 @@ export function MediaPage() {
 
     const { data, error: fetchError } = await supabase
       .from('media')
-      .select('*, uploader:profiles!uploaded_by(full_name, role)')
+      .select('*, uploader:profiles!media_uploaded_by_fkey(full_name, role)')
       .order('created_at', { ascending: false });
 
     if (fetchError) {
