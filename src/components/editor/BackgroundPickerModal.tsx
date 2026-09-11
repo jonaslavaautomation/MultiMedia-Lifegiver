@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link2 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { MediaPicker } from '@/components/media/MediaPicker';
@@ -11,13 +12,32 @@ interface BackgroundPickerModalProps {
   onPickColor: (hex: string) => void;
   /** Called with the picked item — may be an image or a video. */
   onPickMedia: (item: MediaItem) => void;
+  /** Called with a pasted direct video file URL (a "live motion" background not uploaded to Media). */
+  onPickEmbedUrl: (url: string) => void;
 }
 
-type Tab = 'color' | 'media';
+type Tab = 'color' | 'media' | 'embed';
 
-export function BackgroundPickerModal({ open, onClose, onPickColor, onPickMedia }: BackgroundPickerModalProps) {
+const VIDEO_URL_PATTERN = /\.(mp4|webm|ogg|mov)(\?.*)?$/i;
+
+export function BackgroundPickerModal({ open, onClose, onPickColor, onPickMedia, onPickEmbedUrl }: BackgroundPickerModalProps) {
   const [tab, setTab] = useState<Tab>('color');
   const [customColor, setCustomColor] = useState('#09090b');
+  const [embedUrl, setEmbedUrl] = useState('');
+  const [embedError, setEmbedError] = useState<string | null>(null);
+
+  function handleApplyEmbedUrl() {
+    const url = embedUrl.trim();
+    if (!url) return;
+    if (!VIDEO_URL_PATTERN.test(url)) {
+      setEmbedError('That doesn’t look like a direct video file link (must end in .mp4, .webm, .ogg, or .mov).');
+      return;
+    }
+    setEmbedError(null);
+    onPickEmbedUrl(url);
+    setEmbedUrl('');
+    onClose();
+  }
 
   return (
     <Modal open={open} onClose={onClose} title="Slide Background">
@@ -28,6 +48,9 @@ export function BackgroundPickerModal({ open, onClose, onPickColor, onPickMedia 
           </Button>
           <Button variant={tab === 'media' ? 'primary' : 'outline'} size="sm" onClick={() => setTab('media')}>
             Media
+          </Button>
+          <Button variant={tab === 'embed' ? 'primary' : 'outline'} size="sm" onClick={() => setTab('embed')}>
+            <Link2 className="w-3.5 h-3.5" /> Embed URL
           </Button>
         </div>
 
@@ -73,7 +96,7 @@ export function BackgroundPickerModal({ open, onClose, onPickColor, onPickMedia 
               </Button>
             </div>
           </div>
-        ) : (
+        ) : tab === 'media' ? (
           <MediaPicker
             accept={['image', 'video']}
             multiple={false}
@@ -85,6 +108,31 @@ export function BackgroundPickerModal({ open, onClose, onPickColor, onPickMedia 
             }}
             onCancel={onClose}
           />
+        ) : (
+          <div className="flex flex-col gap-3">
+            <p className="text-sm text-zinc-400 leading-relaxed">
+              Paste a direct link to a video file to use as a live, looping motion background — no upload needed.
+            </p>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={embedUrl}
+                onChange={(e) => {
+                  setEmbedUrl(e.target.value);
+                  setEmbedError(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleApplyEmbedUrl();
+                }}
+                placeholder="https://example.com/background.mp4"
+                className="flex-1 rounded-lg bg-zinc-950/80 border border-zinc-700/80 text-zinc-100 placeholder-zinc-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40"
+              />
+              <Button variant="primary" size="sm" onClick={handleApplyEmbedUrl} disabled={!embedUrl.trim()}>
+                Apply
+              </Button>
+            </div>
+            {embedError && <p className="text-xs text-red-400">{embedError}</p>}
+          </div>
         )}
       </div>
     </Modal>

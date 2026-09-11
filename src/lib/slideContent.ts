@@ -157,9 +157,9 @@ export function createBlankSlideContent(): SlideCanvasData {
   };
 }
 
-/** True if a slide's content has no visible objects and no background image/media. */
+/** True if a slide's content has no visible objects and no background image/media/embed. */
 export function isEmptySlideContent(content: SlideCanvasData | null | undefined): boolean {
   if (!content) return true;
   const objects = Array.isArray(content.objects) ? content.objects : [];
-  return objects.length === 0 && !content.meta?.backgroundMediaId;
+  return objects.length === 0 && !content.meta?.backgroundMediaId && !content.meta?.backgroundVideoEmbedUrl;
 }

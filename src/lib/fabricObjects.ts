@@ -107,10 +107,14 @@ export function clearBackgroundImage(canvas: StaticCanvas): void {
  * `toObject` (not the argument-less `toJSON`) so our custom `id`/`data`
  * object properties are preserved across reload.
  */
-export function serializeSlide(canvas: Canvas, backgroundMediaId: string | null): SlideCanvasData {
+export function serializeSlide(
+  canvas: Canvas,
+  backgroundMediaId: string | null,
+  backgroundVideoEmbedUrl: string | null = null
+): SlideCanvasData {
   const base = canvas.toObject(['id', 'data']) as SlideCanvasData;
   return {
     ...base,
-    meta: { schemaVersion: 1, backgroundMediaId },
+    meta: { schemaVersion: 1, backgroundMediaId, backgroundVideoEmbedUrl },
   };
 }
