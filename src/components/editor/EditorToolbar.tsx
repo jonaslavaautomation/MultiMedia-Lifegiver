@@ -1,4 +1,4 @@
-import { Type, ImagePlus, Palette, Copy, Trash2, Save } from 'lucide-react';
+import { Type, ImagePlus, Palette, Copy, Trash2, Save, Bold, Italic, Underline } from 'lucide-react';
 import type { Canvas, Textbox } from 'fabric';
 import { Button } from '@/components/ui/Button';
 import { ColorPickerPopover } from '@/components/editor/ColorPickerPopover';
@@ -119,6 +119,32 @@ export function EditorToolbar({
             value={selection.textAlign}
             onChange={(align: TextAlign) => withActiveTextbox((tb) => tb.set({ textAlign: align }))}
           />
+          <div className="flex items-center gap-0.5">
+            <Button
+              variant={selection.bold ? 'primary' : 'ghost'}
+              size="sm"
+              onClick={() => withActiveTextbox((tb) => tb.set({ fontWeight: selection.bold ? 'normal' : 'bold' }))}
+              title="Bold"
+            >
+              <Bold className="w-3.5 h-3.5" />
+            </Button>
+            <Button
+              variant={selection.italic ? 'primary' : 'ghost'}
+              size="sm"
+              onClick={() => withActiveTextbox((tb) => tb.set({ fontStyle: selection.italic ? 'normal' : 'italic' }))}
+              title="Italic"
+            >
+              <Italic className="w-3.5 h-3.5" />
+            </Button>
+            <Button
+              variant={selection.underline ? 'primary' : 'ghost'}
+              size="sm"
+              onClick={() => withActiveTextbox((tb) => tb.set({ underline: !selection.underline }))}
+              title="Underline"
+            >
+              <Underline className="w-3.5 h-3.5" />
+            </Button>
+          </div>
         </div>
       )}
 

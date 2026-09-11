@@ -14,6 +14,9 @@ function snapshotFor(object: FabricObject | undefined): SelectedObjectSnapshot |
       fontSize: textbox.fontSize ?? 72,
       fill: typeof textbox.fill === 'string' ? textbox.fill : '#ffffff',
       textAlign: (textbox.textAlign as 'left' | 'center' | 'right') ?? 'center',
+      bold: textbox.fontWeight === 'bold' || textbox.fontWeight === 700,
+      italic: textbox.fontStyle === 'italic',
+      underline: textbox.underline === true,
     };
   }
 

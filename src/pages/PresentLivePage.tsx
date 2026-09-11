@@ -318,7 +318,7 @@ export function PresentLivePage() {
         {/* Previews + controls */}
         <div className="flex-1 flex flex-col gap-4 min-w-0">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="sm:col-span-2">
+            <div className="sm:col-span-2 min-w-0">
               <div className="flex items-center gap-1.5 mb-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse-glow-red" />
                 <p className="text-[10px] font-bold uppercase tracking-wider text-red-400">Program — On Air</p>
@@ -328,7 +328,7 @@ export function PresentLivePage() {
                 className="rounded-2xl border-2 border-red-600/60 overflow-hidden bg-hud-panel shadow-[0_0_24px_-6px_rgba(239,68,68,0.35)]"
               />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-1.5 mb-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
                 <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-400">Preview — Next</p>
