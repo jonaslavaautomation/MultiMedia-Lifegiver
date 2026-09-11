@@ -16,10 +16,20 @@ function assignId(object: FabricObject): string {
   return id;
 }
 
-export function createTextObject(canvas: Canvas, text = 'Add your text'): Textbox {
+interface CreateTextOptions {
+  /** Center the new text box at this point (canvas logical coordinates) instead of the slide's center — used for click-to-add. */
+  centerAt?: { x: number; y: number };
+}
+
+export function createTextObject(canvas: Canvas, text = 'Add your text', options: CreateTextOptions = {}): Textbox {
+  const left = options.centerAt
+    ? options.centerAt.x - DEFAULT_TEXT_PROPS.width / 2
+    : (SLIDE_WIDTH - DEFAULT_TEXT_PROPS.width) / 2;
+  const top = options.centerAt ? options.centerAt.y - DEFAULT_TEXT_PROPS.fontSize / 2 : SLIDE_HEIGHT / 2 - 150;
+
   const textbox = new Textbox(text, {
-    left: (SLIDE_WIDTH - DEFAULT_TEXT_PROPS.width) / 2,
-    top: SLIDE_HEIGHT / 2 - 150,
+    left,
+    top,
     width: DEFAULT_TEXT_PROPS.width,
     fontFamily: DEFAULT_TEXT_PROPS.fontFamily,
     fontSize: DEFAULT_TEXT_PROPS.fontSize,

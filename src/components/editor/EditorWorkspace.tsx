@@ -6,6 +6,7 @@ import {
   applyImageBackground,
   applySolidBackground,
   createImageObjectFromUrl,
+  createTextObject,
   serializeSlide,
 } from '@/lib/fabricObjects';
 import { resolveAndRenderSlide } from '@/lib/renderSlide';
@@ -187,6 +188,43 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [canvas, markDirty, refreshSelection]);
+
+  // Canva-style click-to-add: clicking empty canvas (not an existing object,
+  // and not a rubber-band drag-select) drops a new text box right there,
+  // already in edit mode ready to type — instead of only being addable via
+  // the "Text" toolbar button.
+  useEffect(() => {
+    if (!canvas) return;
+    let downPoint: { x: number; y: number } | null = null;
+
+    function handleMouseDown(opt: { target?: unknown; scenePoint: { x: number; y: number } }) {
+      downPoint = opt.target ? null : { x: opt.scenePoint.x, y: opt.scenePoint.y };
+    }
+
+    function handleMouseUp(opt: { target?: unknown; scenePoint: { x: number; y: number } }) {
+      const start = downPoint;
+      downPoint = null;
+      if (!start || opt.target) return;
+
+      const dx = opt.scenePoint.x - start.x;
+      const dy = opt.scenePoint.y - start.y;
+      const isClick = Math.sqrt(dx * dx + dy * dy) < 6; // otherwise it was a rubber-band drag-select
+      if (!isClick) return;
+
+      const textbox = createTextObject(canvas!, undefined, { centerAt: { x: start.x, y: start.y } });
+      markDirty();
+      refreshSelection();
+      textbox.enterEditing();
+      textbox.selectAll();
+    }
+
+    canvas.on('mouse:down', handleMouseDown);
+    canvas.on('mouse:up', handleMouseUp);
+    return () => {
+      canvas.off('mouse:down', handleMouseDown);
+      canvas.off('mouse:up', handleMouseUp);
+    };
   }, [canvas, markDirty, refreshSelection]);
 
   // --- Slide hydration on switch ------------------------------------------
