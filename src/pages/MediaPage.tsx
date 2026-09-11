@@ -472,7 +472,9 @@ function MediaCard({
 
   function handleCardClick() {
     if (canSelect) onSelect();
-    else if (!selectMode) onPreview();
+    // Audio can't be a slide background, so it's never select-eligible —
+    // still let it be previewed even while Select mode is active.
+    else if (!selectMode || item.type === 'audio') onPreview();
   }
 
   return (
