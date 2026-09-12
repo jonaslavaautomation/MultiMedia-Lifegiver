@@ -153,7 +153,11 @@ export function PresentationEditorPage() {
             </div>
           </div>
         </div>
-        <Button variant="primary" onClick={() => navigate(`/presentations/${presentation.id}/present`)} className="shrink-0">
+        <Button
+          variant="primary"
+          onClick={() => navigate(`/presentations/${presentation.id}/present`)}
+          className="shrink-0 animate-pulse-glow-lime"
+        >
           <Play className="w-4 h-4" /> Go Live
         </Button>
       </div>
