@@ -27,6 +27,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Alert } from '@/components/ui/Alert';
 import { useSignedUrl } from '@/components/media/useSignedUrl';
 import { MediaUploadModal } from '@/components/media/MediaUploadModal';
+import { AudioVisualizer } from '@/components/media/AudioVisualizer';
 import { deleteMediaObject, formatFileSize, getMediaSignedUrl, MEDIA_FOLDERS } from '@/lib/mediaStorage';
 import { createMediaBackgroundSlideContent } from '@/lib/slideContent';
 import { PageHeaderIcon } from '@/components/ui/PageHeaderIcon';
@@ -436,17 +437,32 @@ function MediaPreview({ item }: { item: MediaItemWithUploader }) {
   }
 
   if (item.type === 'audio') {
-    return (
-      <div className="flex flex-col items-center gap-4 py-6">
-        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-brand-900/40 to-brand-950/20 border border-brand-800/30 flex items-center justify-center">
-          <Music className="w-8 h-8 text-brand-400" />
-        </div>
-        <audio src={previewUrl} controls autoPlay className="w-full" />
-      </div>
-    );
+    return <AudioPreview previewUrl={previewUrl} />;
   }
 
   return <img src={previewUrl} alt={item.name} className="w-full rounded-xl object-contain max-h-[70vh]" />;
+}
+
+/** Audio preview + a real-time VU meter driven by the actual playing <audio> element. */
+function AudioPreview({ previewUrl }: { previewUrl: string }) {
+  const [audioEl, setAudioEl] = useState<HTMLAudioElement | null>(null);
+
+  return (
+    <div className="flex flex-col items-center gap-4 py-6">
+      <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-brand-900/40 to-brand-950/20 border border-brand-800/30 flex items-center justify-center">
+        <Music className="w-8 h-8 text-brand-400" />
+      </div>
+      <AudioVisualizer audioEl={audioEl} className="max-w-md" />
+      <audio
+        ref={setAudioEl}
+        src={previewUrl}
+        controls
+        autoPlay
+        crossOrigin="anonymous"
+        className="w-full"
+      />
+    </div>
+  );
 }
 
 interface MediaCardProps {
