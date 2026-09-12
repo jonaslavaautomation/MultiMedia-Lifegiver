@@ -18,7 +18,7 @@ export function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-30 h-16 bg-zinc-950/90 backdrop-blur-md border-b border-zinc-900 flex items-center justify-between px-4 lg:px-6">
+      <header className="sticky top-0 z-30 h-16 bg-obsidian/90 backdrop-blur-md border-b border-white/10 flex items-center justify-between px-4 lg:px-6">
         <div className="flex items-center gap-3">
           <button
             className="lg:hidden p-2 -ml-2 text-zinc-400 hover:text-zinc-200"
@@ -29,7 +29,7 @@ export function Header() {
           <span className="lg:hidden text-sm font-bold font-display text-zinc-100">LifeGiver</span>
           <button
             onClick={openCommandPalette}
-            className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-900/60 border border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700 transition-all text-sm"
+            className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface/60 border border-white/10 text-zinc-500 hover:text-zinc-300 hover:border-lime-500/30 transition-all text-sm"
           >
             <Search className="w-4 h-4" />
             <span>Search…</span>
@@ -38,8 +38,8 @@ export function Header() {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-zinc-900/60 border border-zinc-800">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-brand-700 to-brand-900 flex items-center justify-center text-xs font-bold text-white">
+          <div className="hidden sm:flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-surface/60 border border-white/10">
+            <div className="w-7 h-7 rounded-full bg-lime-500 flex items-center justify-center text-xs font-bold text-obsidian">
               {profile?.full_name?.charAt(0).toUpperCase() ?? '?'}
             </div>
             <div className="flex flex-col leading-tight">

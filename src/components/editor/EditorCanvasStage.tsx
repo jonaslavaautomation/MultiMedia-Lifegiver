@@ -37,15 +37,15 @@ export function EditorCanvasStage({ containerRef, canvasElRef, saveStatus, loadi
 
       {/* Dotted-grid backdrop the 16:9 artboard sits on, Canva/Figma-style — gives the canvas a sense of "floating" on an infinite workspace. */}
       <div
-        className="flex-1 min-h-0 rounded-2xl border border-zinc-800/60 bg-zinc-950/40 p-4 sm:p-8 flex items-center justify-center"
+        className="flex-1 min-h-0 rounded-2xl border border-white/10 bg-obsidian/60 p-4 sm:p-8 flex items-center justify-center"
         style={{
-          backgroundImage: 'radial-gradient(rgba(47, 130, 113, 0.35) 1px, transparent 1px)',
+          backgroundImage: 'radial-gradient(rgba(182, 215, 47, 0.3) 1px, transparent 1px)',
           backgroundSize: '22px 22px',
         }}
       >
         <div
           ref={containerRef}
-          className="relative w-full max-w-full rounded-2xl border border-zinc-800/80 bg-zinc-900/40 overflow-hidden shadow-2xl shadow-black/40"
+          className="relative w-full max-w-full rounded-2xl border border-white/10 bg-surface/60 overflow-hidden shadow-2xl shadow-black/50"
           style={{ aspectRatio: '16 / 9' }}
         >
           {backgroundVideoUrl && (
