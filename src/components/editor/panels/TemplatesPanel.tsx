@@ -49,10 +49,10 @@ export function TemplatesPanel() {
             <div
               key={t.id}
               title="Applying templates directly isn't available yet"
-              className="flex flex-col items-center gap-2 py-4 rounded-xl bg-zinc-900/60 border border-zinc-800/80 opacity-70 cursor-not-allowed"
+              className="flex flex-col items-center gap-2 py-4 rounded-xl bg-white/60 border border-zinc-200/80 opacity-70 cursor-not-allowed"
             >
               <LayoutTemplate className="w-5 h-5 text-zinc-500" />
-              <span className="text-[11px] text-zinc-400 text-center px-1 truncate w-full">{t.name}</span>
+              <span className="text-[11px] text-zinc-600 text-center px-1 truncate w-full">{t.name}</span>
             </div>
           ))}
         </div>

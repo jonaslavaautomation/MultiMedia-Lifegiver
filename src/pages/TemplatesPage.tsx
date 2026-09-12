@@ -232,7 +232,7 @@ export function TemplatesPage() {
         <div className="flex items-center gap-3.5">
           <PageHeaderIcon icon={LayoutTemplate} />
           <div>
-            <h1 className="text-2xl font-bold font-display text-zinc-100">Templates</h1>
+            <h1 className="text-2xl font-bold font-display text-zinc-900">Templates</h1>
             <p className="text-sm text-zinc-500 mt-1">
               Reusable slide designs, ready to load straight into the Slide Editor.
             </p>
@@ -252,7 +252,7 @@ export function TemplatesPage() {
           placeholder="Search templates…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-xl bg-zinc-900/80 border border-zinc-700/80 text-zinc-100 placeholder-zinc-500 pl-11 pr-4 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-600/60"
+          className="w-full rounded-xl bg-white/80 border border-zinc-300/80 text-zinc-900 placeholder-zinc-500 pl-11 pr-4 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-600/60"
         />
       </div>
 
@@ -278,7 +278,7 @@ export function TemplatesPage() {
       {error ? null : loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(8)].map((_, i) => (
-            <div key={i} className="h-56 rounded-2xl bg-zinc-900/40 border border-zinc-800/50 animate-pulse" />
+            <div key={i} className="h-56 rounded-2xl bg-zinc-200 animate-pulse" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
@@ -349,11 +349,11 @@ export function TemplatesPage() {
             autoFocus
           />
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Category</label>
+            <label className="block text-sm font-medium text-zinc-700 mb-1.5">Category</label>
             <select
               value={form.category}
               onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-              className="w-full rounded-xl bg-zinc-900/80 border border-zinc-700/80 text-zinc-100 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-600/60"
+              className="w-full rounded-xl bg-white/80 border border-zinc-300/80 text-zinc-900 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-600/60"
             >
               <option value="">No category</option>
               {TEMPLATE_CATEGORIES.map((c) => (
@@ -364,17 +364,17 @@ export function TemplatesPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Description</label>
+            <label className="block text-sm font-medium text-zinc-700 mb-1.5">Description</label>
             <textarea
               value={form.description}
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
               placeholder="What this template is for…"
               rows={3}
-              className="w-full rounded-xl bg-zinc-900/80 border border-zinc-700/80 text-zinc-100 placeholder-zinc-500 px-4 py-2.5 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-600/60"
+              className="w-full rounded-xl bg-white/80 border border-zinc-300/80 text-zinc-900 placeholder-zinc-500 px-4 py-2.5 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-600/60"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Thumbnail</label>
+            <label className="block text-sm font-medium text-zinc-700 mb-1.5">Thumbnail</label>
             <div className="flex items-center gap-2">
               <Input
                 placeholder="Paste an image URL, or choose from Media"
@@ -423,8 +423,8 @@ export function TemplatesPage() {
       >
         <div className="flex flex-col gap-4">
           {deleteError && <Alert message={deleteError} />}
-          <p className="text-sm text-zinc-400 leading-relaxed">
-            Are you sure you want to delete <span className="font-semibold text-zinc-200">{deleteTarget?.name}</span>? This cannot be undone.
+          <p className="text-sm text-zinc-600 leading-relaxed">
+            Are you sure you want to delete <span className="font-semibold text-zinc-800">{deleteTarget?.name}</span>? This cannot be undone.
           </p>
         </div>
       </Modal>
@@ -449,12 +449,12 @@ function TemplatePreview({ template }: { template: TemplateWithCreator }) {
             : '1920×1080'}
         </Badge>
       </div>
-      {template.description && <p className="text-sm text-zinc-400 leading-relaxed">{template.description}</p>}
+      {template.description && <p className="text-sm text-zinc-600 leading-relaxed">{template.description}</p>}
       <div>
         <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mb-1.5">
           Template data (loaded directly by the Slide Editor)
         </p>
-        <pre className="text-[11px] text-zinc-400 bg-zinc-950/60 border border-zinc-800/80 rounded-xl p-3 overflow-x-auto max-h-40">
+        <pre className="text-[11px] text-zinc-600 bg-zinc-50 border border-zinc-200/80 rounded-xl p-3 overflow-x-auto max-h-40">
           {JSON.stringify(template.config, null, 2)}
         </pre>
       </div>
@@ -476,11 +476,11 @@ function TemplateThumbnail({
   const src = isExternal ? path : resolvedInternal;
 
   return (
-    <div className={`bg-zinc-900/60 flex items-center justify-center overflow-hidden ${className}`}>
+    <div className={`bg-white/60 flex items-center justify-center overflow-hidden ${className}`}>
       {src ? (
         <img src={src} alt="" className="w-full h-full object-cover" />
       ) : (
-        <LayoutTemplate className={iconSize === 'lg' ? 'w-10 h-10 text-zinc-700' : 'w-8 h-8 text-zinc-700'} />
+        <LayoutTemplate className={iconSize === 'lg' ? 'w-10 h-10 text-zinc-300' : 'w-8 h-8 text-zinc-300'} />
       )}
     </div>
   );
@@ -503,35 +503,35 @@ function TemplateCard({ template, menuOpen, onToggleMenu, onCloseMenu, onPreview
       <div className="absolute top-2 right-2 z-10">
         <button
           onClick={(e) => { e.stopPropagation(); onToggleMenu(); }}
-          className="p-1.5 rounded-lg bg-black/50 text-zinc-200 hover:bg-black/70 transition-all"
+          className="p-1.5 rounded-lg bg-black/50 text-zinc-800 hover:bg-black/70 transition-all"
         >
           <MoreVertical className="w-3.5 h-3.5" />
         </button>
         {menuOpen && (
           <>
             <div className="fixed inset-0 z-0" onClick={(e) => { e.stopPropagation(); onCloseMenu(); }} />
-            <div className="absolute right-0 mt-1 w-36 bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl z-20 py-1 overflow-hidden">
+            <div className="absolute right-0 mt-1 w-36 bg-white border border-zinc-200 rounded-xl shadow-xl z-20 py-1 overflow-hidden">
               <button
                 onClick={(e) => { e.stopPropagation(); onPreview(); onCloseMenu(); }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800 transition-colors"
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-zinc-700 hover:bg-zinc-100 transition-colors"
               >
                 <Eye className="w-3.5 h-3.5" /> Preview
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); onEdit(); }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800 transition-colors"
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-zinc-700 hover:bg-zinc-100 transition-colors"
               >
                 <Pencil className="w-3.5 h-3.5" /> Edit
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); onDuplicate(); }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800 transition-colors"
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-zinc-700 hover:bg-zinc-100 transition-colors"
               >
                 <Copy className="w-3.5 h-3.5" /> Duplicate
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-400 hover:bg-zinc-800 transition-colors"
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-600 hover:bg-zinc-100 transition-colors"
               >
                 <Trash2 className="w-3.5 h-3.5" /> Delete
               </button>
@@ -543,12 +543,12 @@ function TemplateCard({ template, menuOpen, onToggleMenu, onCloseMenu, onPreview
       <TemplateThumbnail path={template.thumbnail_url} className="aspect-video" />
 
       <div className="p-4">
-        <h3 className="text-sm font-semibold text-zinc-100 mb-1 truncate">{template.name}</h3>
+        <h3 className="text-sm font-semibold text-zinc-900 mb-1 truncate">{template.name}</h3>
         <div className="flex items-center gap-1.5 mb-2 flex-wrap">
           {template.category && <Badge variant="info">{template.category}</Badge>}
         </div>
         {template.description && <p className="text-xs text-zinc-500 mb-3 line-clamp-2">{template.description}</p>}
-        <div className="flex items-center gap-3 pt-3 border-t border-zinc-800/60 text-[11px] text-zinc-500">
+        <div className="flex items-center gap-3 pt-3 border-t border-zinc-200/60 text-[11px] text-zinc-500">
           <span className="flex items-center gap-1">
             <Calendar className="w-3 h-3" />
             {new Date(template.created_at).toLocaleDateString()}

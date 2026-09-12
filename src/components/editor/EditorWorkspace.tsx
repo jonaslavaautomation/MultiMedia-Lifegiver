@@ -457,8 +457,8 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
   if (loading) {
     return (
       <div className="mt-2">
-        <div className="h-12 rounded-2xl bg-zinc-900/40 border border-zinc-800/50 animate-pulse mb-3" />
-        <div className="aspect-video rounded-2xl bg-zinc-900/40 border border-zinc-800/50 animate-pulse" />
+        <div className="h-12 rounded-2xl bg-zinc-200 animate-pulse mb-3" />
+        <div className="aspect-video rounded-2xl bg-zinc-200 animate-pulse" />
       </div>
     );
   }

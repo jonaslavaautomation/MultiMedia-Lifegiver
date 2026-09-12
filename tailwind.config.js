@@ -48,6 +48,14 @@ export default {
         // but new UI should reach for these first.
         obsidian: '#081214',
         surface: '#0F1A1C',
+        // Light-theme pass: pale lime-green page background for the admin
+        // app (Dashboard/Presentations/Songs/Bible/Media/etc. + the editor
+        // chrome). NOT used on the live/broadcast output screens (Projector,
+        // Stage Display, Overlay, Operator console) — those stay on the dark
+        // `hud` palette since they're what's actually shown on stage/screen
+        // during a service, not admin chrome.
+        canvas: '#EAF5D2',
+        'canvas-subtle': '#F5FAEC',
         lime: {
           50: '#f9fce9',
           100: '#f0f8c9',

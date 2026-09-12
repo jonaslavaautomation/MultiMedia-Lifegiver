@@ -82,13 +82,13 @@ export function BiblePanel({ canvas, markDirty, refreshSelection }: BiblePanelPr
             if (e.key === 'Enter') void handleSearch();
           }}
           placeholder='e.g. "John 3:16"'
-          className="w-full rounded-xl bg-zinc-900/80 border border-zinc-700/80 text-zinc-100 placeholder-zinc-500 pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40"
+          className="w-full rounded-xl bg-white/80 border border-zinc-300/80 text-zinc-900 placeholder-zinc-500 pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40"
         />
       </div>
       <Button variant="primary" size="sm" className="justify-center" onClick={() => void handleSearch()} disabled={loading || !query.trim()}>
         {loading ? 'Loading…' : 'Add to Slide'}
       </Button>
-      {error && <p className="text-xs text-red-400">{error}</p>}
+      {error && <p className="text-xs text-red-600">{error}</p>}
       <p className="text-xs text-zinc-500">
         Drops the verse text onto the current slide, with a reference caption underneath — separate from the full Bible browser on the Bible page.
       </p>

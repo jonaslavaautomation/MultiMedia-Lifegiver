@@ -79,7 +79,7 @@ export function FloatingContextualToolbar({ canvas, selection, refreshSelection,
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.18 }}
-            className="flex flex-wrap items-center gap-1.5 px-3 py-2 rounded-2xl bg-zinc-900/90 backdrop-blur-md border border-zinc-800 shadow-xl shadow-black/30"
+            className="flex flex-wrap items-center gap-1.5 px-3 py-2 rounded-2xl bg-white/90 backdrop-blur-md border border-zinc-200 shadow-xl shadow-black/30"
           >
             {selection?.kind === 'textbox' && (
               <>
@@ -97,7 +97,7 @@ export function FloatingContextualToolbar({ canvas, selection, refreshSelection,
                     if (!Number.isFinite(size) || size <= 0) return;
                     withActiveTextbox((tb) => tb.set({ fontSize: size }));
                   }}
-                  className="w-14 rounded-lg bg-zinc-950/80 border border-zinc-700/80 text-zinc-100 px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500/40"
+                  className="w-14 rounded-lg bg-zinc-50 border border-zinc-300/80 text-zinc-900 px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500/40"
                 />
                 <ColorPickerPopover
                   value={selection.fill}
@@ -134,14 +134,14 @@ export function FloatingContextualToolbar({ canvas, selection, refreshSelection,
                     <Underline className="w-3.5 h-3.5" />
                   </Button>
                 </div>
-                <div className="w-px h-6 bg-zinc-800 mx-0.5" />
+                <div className="w-px h-6 bg-zinc-100 mx-0.5" />
               </>
             )}
 
             {selection?.kind === 'shape' && (
               <>
                 <ColorPickerPopover value={selection.fill} onChange={applyShapeFill} label="Fill Color" />
-                <div className="w-px h-6 bg-zinc-800 mx-0.5" />
+                <div className="w-px h-6 bg-zinc-100 mx-0.5" />
               </>
             )}
 
@@ -153,7 +153,7 @@ export function FloatingContextualToolbar({ canvas, selection, refreshSelection,
                 <Button variant="ghost" size="sm" onClick={() => handleReorder('backward')} title="Send Backward">
                   <SendToBack className="w-3.5 h-3.5" />
                 </Button>
-                <div className="w-px h-6 bg-zinc-800 mx-0.5" />
+                <div className="w-px h-6 bg-zinc-100 mx-0.5" />
                 <Button variant="ghost" size="sm" onClick={handleDuplicate} title="Duplicate">
                   <Copy className="w-3.5 h-3.5" />
                 </Button>

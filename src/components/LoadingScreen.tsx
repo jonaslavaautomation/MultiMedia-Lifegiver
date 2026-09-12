@@ -2,7 +2,7 @@ import { Church } from 'lucide-react';
 
 export function LoadingScreen() {
   return (
-    <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center gap-4">
+    <div className="min-h-screen bg-canvas flex flex-col items-center justify-center gap-4">
       <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-600 to-brand-800 flex items-center justify-center shadow-xl shadow-brand-950/40 animate-pulse">
         <Church className="w-7 h-7 text-white" strokeWidth={2.5} />
       </div>

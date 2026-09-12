@@ -35,13 +35,13 @@ export function EditorAssetDrawer({ activePanel, onClose, loadingSlide = false, 
           transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
           className="shrink-0 overflow-hidden"
         >
-          <div className="w-72 h-full rounded-2xl bg-surface/60 border border-lime-500/20 flex flex-col">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 shrink-0">
-              <h3 className="text-sm font-semibold text-zinc-100">{PANEL_TITLES[activePanel]}</h3>
+          <div className="w-72 h-full rounded-2xl bg-white border border-lime-300/50 flex flex-col">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 shrink-0">
+              <h3 className="text-sm font-semibold text-zinc-900">{PANEL_TITLES[activePanel]}</h3>
               <button
                 type="button"
                 onClick={onClose}
-                className="p-1 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-white/5 transition-colors"
+                className="p-1 rounded-lg text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -49,7 +49,7 @@ export function EditorAssetDrawer({ activePanel, onClose, loadingSlide = false, 
             <div className="relative flex-1 overflow-y-auto p-4">
               {children}
               {loadingSlide && (
-                <div className="absolute inset-0 flex items-center justify-center bg-zinc-900/70 backdrop-blur-[1px]">
+                <div className="absolute inset-0 flex items-center justify-center bg-white/70 backdrop-blur-[1px]">
                   <Loader2 className="w-5 h-5 text-zinc-500 animate-spin" />
                 </div>
               )}

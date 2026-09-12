@@ -68,7 +68,7 @@ export function DashboardPage() {
           <PageHeaderIcon icon={LayoutDashboard} />
           <div>
             <p className="text-sm text-zinc-500 mb-1">{greeting},</p>
-            <h1 className="text-2xl lg:text-3xl font-bold font-display text-zinc-100">
+            <h1 className="text-2xl lg:text-3xl font-bold font-display text-zinc-900">
               Welcome back, {firstName}
             </h1>
             <p className="text-sm text-zinc-500 mt-1.5">
@@ -99,7 +99,7 @@ export function DashboardPage() {
         <Reveal delay={450} size="sm">
         <Card className="p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-semibold text-zinc-100">Recent Presentations</h2>
+            <h2 className="text-base font-semibold text-zinc-900">Recent Presentations</h2>
             <Link to="/presentations">
               <Button variant="ghost" size="sm">
                 View all <ArrowRight className="w-3.5 h-3.5" />
@@ -124,10 +124,10 @@ export function DashboardPage() {
                 <Reveal key={p.id} delay={540 + i * 60} size="sm">
                   <Link
                     to={`/presentations/${p.id}/edit`}
-                    className="flex items-center justify-between px-4 py-3 rounded-xl bg-zinc-900/40 hover:bg-zinc-800/50 border border-zinc-800/50 hover:border-zinc-700 transition-all group"
+                    className="flex items-center justify-between px-4 py-3 rounded-xl bg-white/40 hover:bg-zinc-100/50 border border-zinc-200/50 hover:border-zinc-300 transition-all group"
                   >
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-zinc-200 truncate">{p.title}</p>
+                      <p className="text-sm font-medium text-zinc-800 truncate">{p.title}</p>
                       <p className="text-xs text-zinc-500 mt-0.5">
                         Updated {new Date(p.updated_at).toLocaleDateString()}
                       </p>
@@ -151,7 +151,7 @@ export function DashboardPage() {
         <Reveal delay={540} size="sm">
         <Card className="p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-semibold text-zinc-100">Upcoming Services</h2>
+            <h2 className="text-base font-semibold text-zinc-900">Upcoming Services</h2>
           </div>
 
           {upcomingServices.length === 0 && !loading ? (
@@ -166,18 +166,18 @@ export function DashboardPage() {
                 <Reveal key={p.id} delay={630 + i * 60} size="sm">
                   <Link
                     to={`/presentations/${p.id}/edit`}
-                    className="flex items-center gap-4 px-4 py-3 rounded-xl bg-zinc-900/40 hover:bg-zinc-800/50 border border-zinc-800/50 hover:border-zinc-700 transition-all"
+                    className="flex items-center gap-4 px-4 py-3 rounded-xl bg-white/40 hover:bg-zinc-100/50 border border-zinc-200/50 hover:border-zinc-300 transition-all"
                   >
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-900/40 to-brand-950/20 border border-brand-800/30 flex flex-col items-center justify-center shrink-0">
-                      <span className="text-[10px] text-brand-400 uppercase font-semibold">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-100/70 to-brand-50/40 border border-brand-200/60 flex flex-col items-center justify-center shrink-0">
+                      <span className="text-[10px] text-brand-600 uppercase font-semibold">
                         {p.service_date ? new Date(p.service_date).toLocaleDateString('en-US', { month: 'short' }) : '—'}
                       </span>
-                      <span className="text-sm font-bold text-zinc-200">
+                      <span className="text-sm font-bold text-zinc-800">
                         {p.service_date ? new Date(p.service_date).getDate() : '—'}
                       </span>
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-zinc-200 truncate">{p.title}</p>
+                      <p className="text-sm font-medium text-zinc-800 truncate">{p.title}</p>
                       <p className="text-xs text-zinc-500 mt-0.5 flex items-center gap-1.5">
                         <Clock className="w-3 h-3" />
                         {p.service_date ? new Date(p.service_date).toLocaleDateString('en-US', { weekday: 'long' }) : 'No date set'}

@@ -102,7 +102,7 @@ export function BibleVersePicker({ isSelected, onToggleVerse, jumpTo, onJumped }
             placeholder="Search books…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-xl bg-zinc-900/80 border border-zinc-700/80 text-zinc-100 placeholder-zinc-500 pl-11 pr-4 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-600/60"
+            className="w-full rounded-xl bg-white/80 border border-zinc-300/80 text-zinc-900 placeholder-zinc-500 pl-11 pr-4 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-600/60"
           />
         </div>
         <BookSection title="Old Testament" books={oldTestament} onPick={setBook} />
@@ -116,17 +116,17 @@ export function BibleVersePicker({ isSelected, onToggleVerse, jumpTo, onJumped }
       <div className="flex flex-col gap-4">
         <button
           onClick={() => setBook(null)}
-          className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-zinc-200 w-fit"
+          className="flex items-center gap-1.5 text-sm text-zinc-600 hover:text-zinc-900 w-fit"
         >
           <ArrowLeft className="w-4 h-4" /> Books
         </button>
-        <h3 className="text-lg font-semibold text-zinc-100">{book.name}</h3>
+        <h3 className="text-lg font-semibold text-zinc-900">{book.name}</h3>
         <div className="grid grid-cols-6 sm:grid-cols-8 gap-2">
           {Array.from({ length: book.chapters }, (_, i) => i + 1).map((num) => (
             <button
               key={num}
               onClick={() => setChapter(num)}
-              className="aspect-square rounded-lg bg-zinc-900/60 border border-zinc-800/80 text-sm text-zinc-300 hover:border-brand-600/60 hover:text-brand-400 transition-all"
+              className="aspect-square rounded-lg bg-white/60 border border-zinc-200/80 text-sm text-zinc-700 hover:border-brand-600/60 hover:text-brand-400 transition-all"
             >
               {num}
             </button>
@@ -140,11 +140,11 @@ export function BibleVersePicker({ isSelected, onToggleVerse, jumpTo, onJumped }
     <div className="flex flex-col gap-4">
       <button
         onClick={() => setChapter(null)}
-        className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-zinc-200 w-fit"
+        className="flex items-center gap-1.5 text-sm text-zinc-600 hover:text-zinc-900 w-fit"
       >
         <ArrowLeft className="w-4 h-4" /> {book.name}
       </button>
-      <h3 className="text-lg font-semibold text-zinc-100">
+      <h3 className="text-lg font-semibold text-zinc-900">
         {book.name} {chapter}
       </h3>
 
@@ -153,7 +153,7 @@ export function BibleVersePicker({ isSelected, onToggleVerse, jumpTo, onJumped }
       ) : loading ? (
         <div className="flex flex-col gap-2">
           {[...Array(8)].map((_, i) => (
-            <div key={i} className="h-10 rounded-lg bg-zinc-900/40 animate-pulse" />
+            <div key={i} className="h-10 rounded-lg bg-zinc-100 animate-pulse" />
           ))}
         </div>
       ) : (
@@ -161,15 +161,15 @@ export function BibleVersePicker({ isSelected, onToggleVerse, jumpTo, onJumped }
           {verses.map((v) => (
             <label
               key={v.verse}
-              className="group flex items-start gap-2.5 p-2 rounded-lg hover:bg-zinc-900/50 cursor-pointer text-sm transition-colors"
+              className="group flex items-start gap-2.5 p-2 rounded-lg hover:bg-zinc-100 cursor-pointer text-sm transition-colors"
             >
               <input
                 type="checkbox"
                 checked={isSelected(book.name, chapter, v.verse)}
                 onChange={() => onToggleVerse({ book: book.name, chapter, verse: v.verse, text: v.text })}
-                className="mt-0.5 w-4 h-4 rounded border-zinc-600 bg-zinc-900 text-brand-600 focus:ring-brand-500/40 shrink-0"
+                className="mt-0.5 w-4 h-4 rounded border-zinc-400 bg-white text-brand-600 focus:ring-brand-500/40 shrink-0"
               />
-              <span className="text-zinc-300 leading-relaxed flex-1">
+              <span className="text-zinc-700 leading-relaxed flex-1">
                 <span className="text-zinc-500 mr-1.5">{v.verse}</span>
                 {v.text}
               </span>
@@ -177,7 +177,7 @@ export function BibleVersePicker({ isSelected, onToggleVerse, jumpTo, onJumped }
                 type="button"
                 title="Copy verse"
                 onClick={(e) => handleCopyVerse(e, v)}
-                className="opacity-0 group-hover:opacity-100 shrink-0 p-1 rounded text-zinc-500 hover:text-zinc-200 transition-all"
+                className="opacity-0 group-hover:opacity-100 shrink-0 p-1 rounded text-zinc-500 hover:text-zinc-900 transition-all"
               >
                 {copiedVerse === v.verse ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
               </button>
@@ -207,7 +207,7 @@ function BookSection({
           <button
             key={b.id}
             onClick={() => onPick(b)}
-            className="text-left px-3 py-2.5 rounded-xl bg-zinc-900/60 border border-zinc-800/80 text-sm text-zinc-300 hover:border-brand-600/60 hover:text-zinc-100 transition-all truncate"
+            className="text-left px-3 py-2.5 rounded-xl bg-white/60 border border-zinc-200/80 text-sm text-zinc-700 hover:border-brand-600/60 hover:text-zinc-900 transition-all truncate"
           >
             {b.name}
           </button>

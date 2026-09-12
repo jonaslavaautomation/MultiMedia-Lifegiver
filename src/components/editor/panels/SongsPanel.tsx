@@ -47,11 +47,11 @@ export function SongsPanel({ canvas, markDirty, refreshSelection }: SongsPanelPr
         <button
           type="button"
           onClick={() => setOpenSong(null)}
-          className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-200"
+          className="flex items-center gap-1.5 text-xs text-zinc-600 hover:text-zinc-900"
         >
           <ArrowLeft className="w-3.5 h-3.5" /> Back to songs
         </button>
-        <p className="text-sm font-semibold text-zinc-100">{openSong.title}</p>
+        <p className="text-sm font-semibold text-zinc-900">{openSong.title}</p>
         {openSong.lyrics.sections.length === 0 ? (
           <p className="text-xs text-zinc-500">This song has no lyric sections yet.</p>
         ) : (
@@ -63,10 +63,10 @@ export function SongsPanel({ canvas, markDirty, refreshSelection }: SongsPanelPr
                   key={section.id}
                   type="button"
                   onClick={() => insertSection(section.text)}
-                  className="text-left px-3 py-2.5 rounded-xl bg-zinc-900/60 border border-zinc-800/80 hover:border-brand-600/60 hover:bg-brand-950/20 transition-all"
+                  className="text-left px-3 py-2.5 rounded-xl bg-white/60 border border-zinc-200/80 hover:border-brand-600/60 hover:bg-brand-50 transition-all"
                 >
                   <span className="block text-xs font-semibold uppercase tracking-wide text-brand-400 mb-1">{section.label}</span>
-                  <span className="block text-xs text-zinc-400 line-clamp-2">{section.text}</span>
+                  <span className="block text-xs text-zinc-600 line-clamp-2">{section.text}</span>
                 </button>
               ))}
           </div>
@@ -86,7 +86,7 @@ export function SongsPanel({ canvas, markDirty, refreshSelection }: SongsPanelPr
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search songs…"
-          className="w-full rounded-xl bg-zinc-900/80 border border-zinc-700/80 text-zinc-100 placeholder-zinc-500 pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40"
+          className="w-full rounded-xl bg-white/80 border border-zinc-300/80 text-zinc-900 placeholder-zinc-500 pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40"
         />
       </div>
 
@@ -101,9 +101,9 @@ export function SongsPanel({ canvas, markDirty, refreshSelection }: SongsPanelPr
               key={song.id}
               type="button"
               onClick={() => setOpenSong(song)}
-              className="text-left px-3 py-2.5 rounded-xl bg-zinc-900/60 border border-zinc-800/80 hover:border-brand-600/60 transition-all"
+              className="text-left px-3 py-2.5 rounded-xl bg-white/60 border border-zinc-200/80 hover:border-brand-600/60 transition-all"
             >
-              <span className="block text-sm text-zinc-200 truncate">{song.title}</span>
+              <span className="block text-sm text-zinc-800 truncate">{song.title}</span>
               {song.author && <span className="block text-xs text-zinc-500 truncate">{song.author}</span>}
             </button>
           ))}

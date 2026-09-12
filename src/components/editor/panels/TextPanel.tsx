@@ -36,11 +36,11 @@ export function TextPanel({ canvas, markDirty, refreshSelection }: TextPanelProp
         type="button"
         disabled
         title="AI text generation is coming soon — needs an AI provider connected first."
-        className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-dashed border-zinc-700/80 text-zinc-500 text-sm cursor-not-allowed opacity-70"
+        className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-dashed border-zinc-300/80 text-zinc-500 text-sm cursor-not-allowed opacity-70"
       >
         <Sparkles className="w-4 h-4 text-leaf-500" />
         <span className="flex-1 text-left">AI Auto-Generate lyric/scripture</span>
-        <span className="text-[10px] uppercase tracking-wide bg-zinc-800 rounded px-1.5 py-0.5">Soon</span>
+        <span className="text-[10px] uppercase tracking-wide bg-zinc-100 rounded px-1.5 py-0.5">Soon</span>
       </button>
 
       <div>
@@ -51,10 +51,10 @@ export function TextPanel({ canvas, markDirty, refreshSelection }: TextPanelProp
               key={preset.label}
               type="button"
               onClick={() => addPreset(preset)}
-              className="text-left px-3 py-2.5 rounded-xl bg-zinc-900/60 border border-zinc-800/80 hover:border-brand-600/60 hover:bg-brand-950/20 transition-all"
+              className="text-left px-3 py-2.5 rounded-xl bg-white/60 border border-zinc-200/80 hover:border-brand-600/60 hover:bg-brand-50 transition-all"
             >
               <span
-                className="block text-zinc-100 truncate"
+                className="block text-zinc-900 truncate"
                 style={{ fontSize: Math.min(preset.fontSize / 3, 22), fontWeight: preset.fontWeight === 'bold' ? 700 : 500 }}
               >
                 {preset.label}

@@ -9,7 +9,7 @@
 
 @layer base {
   body {
-    @apply bg-obsidian text-zinc-100 antialiased;
+    @apply bg-canvas text-zinc-900 antialiased;
     font-family: 'Inter', system-ui, sans-serif;
   }
 
@@ -18,13 +18,13 @@
     height: 8px;
   }
   ::-webkit-scrollbar-track {
-    @apply bg-obsidian;
+    @apply bg-canvas;
   }
   ::-webkit-scrollbar-thumb {
-    @apply bg-white/10 rounded-full;
+    @apply bg-zinc-300 rounded-full;
   }
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-lime-500/40;
+    @apply bg-lime-500/60;
   }
 }
 

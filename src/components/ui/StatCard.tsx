@@ -8,20 +8,20 @@ interface StatCardProps {
 }
 
 const accentClasses = {
-  brand: 'from-brand-900/40 to-brand-950/20 text-brand-400 border-brand-800/30',
-  leaf: 'from-leaf-900/40 to-leaf-950/20 text-leaf-400 border-leaf-800/30',
-  blue: 'from-sky-900/40 to-sky-950/20 text-sky-400 border-sky-800/30',
-  amber: 'from-amber-900/40 to-amber-950/20 text-amber-400 border-amber-800/30',
+  brand: 'from-brand-200/70 to-brand-100/40 text-brand-700 border-brand-300/60',
+  leaf: 'from-leaf-200/70 to-leaf-100/40 text-leaf-700 border-leaf-300/60',
+  blue: 'from-sky-200/70 to-sky-100/40 text-sky-700 border-sky-300/60',
+  amber: 'from-amber-200/70 to-amber-100/40 text-amber-700 border-amber-300/60',
 };
 
 export function StatCard({ label, value, icon: Icon, accent = 'brand' }: StatCardProps) {
   return (
-    <div className="relative bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-5 overflow-hidden shadow-lg shadow-black/20">
+    <div className="relative bg-white/60 border border-zinc-200/80 rounded-2xl p-5 overflow-hidden shadow-lg shadow-black/20">
       <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl ${accentClasses[accent]} blur-2xl opacity-50`} />
       <div className="relative flex items-start justify-between">
         <div>
           <p className="text-sm text-zinc-500 font-medium">{label}</p>
-          <p className="text-3xl font-bold text-zinc-100 mt-1.5">{value}</p>
+          <p className="text-3xl font-bold text-zinc-900 mt-1.5">{value}</p>
         </div>
         <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${accentClasses[accent]} border flex items-center justify-center shadow-inner`}>
           <Icon className="w-5 h-5" strokeWidth={2} />

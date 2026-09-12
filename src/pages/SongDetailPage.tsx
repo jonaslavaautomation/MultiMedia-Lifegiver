@@ -221,8 +221,8 @@ export function SongDetailPage() {
   if (loading) {
     return (
       <div className="px-4 lg:px-8 py-6 lg:py-8 max-w-4xl mx-auto">
-        <div className="h-8 w-48 bg-zinc-900/60 rounded-lg animate-pulse mb-6" />
-        <div className="h-64 bg-zinc-900/40 border border-zinc-800/50 rounded-2xl animate-pulse" />
+        <div className="h-8 w-48 bg-zinc-200 rounded-lg animate-pulse mb-6" />
+        <div className="h-64 bg-zinc-200 rounded-2xl animate-pulse" />
       </div>
     );
   }
@@ -242,8 +242,8 @@ export function SongDetailPage() {
     return (
       <div className="px-4 lg:px-8 py-6 lg:py-8 max-w-4xl mx-auto">
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <Music4 className="w-12 h-12 text-zinc-700 mb-4" />
-          <h2 className="text-lg font-semibold text-zinc-300 mb-1">Song not found</h2>
+          <Music4 className="w-12 h-12 text-zinc-300 mb-4" />
+          <h2 className="text-lg font-semibold text-zinc-700 mb-1">Song not found</h2>
           <p className="text-sm text-zinc-500 mb-4">This song may have been deleted.</p>
           <Button variant="secondary" onClick={() => navigate('/songs')}>
             <ArrowLeft className="w-4 h-4" /> Back to Songs
@@ -259,7 +259,7 @@ export function SongDetailPage() {
         <Button variant="ghost" size="icon" onClick={() => navigate('/songs')}>
           <ArrowLeft className="w-4 h-4" />
         </Button>
-        <h1 className="text-xl font-bold font-display text-zinc-100">Edit Song</h1>
+        <h1 className="text-xl font-bold font-display text-zinc-900">Edit Song</h1>
       </div>
 
       {lyricsError && (
@@ -311,7 +311,7 @@ export function SongDetailPage() {
 
       {/* Lyrics sections */}
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-base font-semibold text-zinc-100">Lyrics</h2>
+        <h2 className="text-base font-semibold text-zinc-900">Lyrics</h2>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => handleAddSection('verse')}>
             <Plus className="w-3.5 h-3.5" /> Add Verse
@@ -354,7 +354,7 @@ export function SongDetailPage() {
       <Card className="p-5">
         <div className="flex items-center gap-2 mb-3">
           <Sparkles className="w-4 h-4 text-brand-400" />
-          <h2 className="text-base font-semibold text-zinc-100">Generate Slides</h2>
+          <h2 className="text-base font-semibold text-zinc-900">Generate Slides</h2>
         </div>
         <p className="text-xs text-zinc-500 mb-4">
           Pick which sections to include, then generate a new presentation. Long sections are automatically
@@ -371,13 +371,13 @@ export function SongDetailPage() {
           {sections.map((section) => (
             <label
               key={section.id}
-              className="flex items-center gap-2.5 text-sm text-zinc-300 cursor-pointer select-none"
+              className="flex items-center gap-2.5 text-sm text-zinc-700 cursor-pointer select-none"
             >
               <input
                 type="checkbox"
                 checked={selectedIds.has(section.id)}
                 onChange={() => toggleSelected(section.id)}
-                className="w-4 h-4 rounded border-zinc-600 bg-zinc-900 text-brand-600 focus:ring-brand-500/40"
+                className="w-4 h-4 rounded border-zinc-400 bg-white text-brand-600 focus:ring-brand-500/40"
               />
               {section.label}
             </label>
@@ -393,13 +393,13 @@ export function SongDetailPage() {
             />
           </div>
           <div className="w-full sm:w-32">
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Lines per slide</label>
+            <label className="block text-sm font-medium text-zinc-700 mb-1.5">Lines per slide</label>
             <input
               type="number"
               min={1}
               value={linesPerSlide}
               onChange={(e) => setLinesPerSlide(Math.max(1, Number(e.target.value) || 1))}
-              className="w-full rounded-xl bg-zinc-900/80 border border-zinc-700/80 text-zinc-100 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-600/60"
+              className="w-full rounded-xl bg-white/80 border border-zinc-300/80 text-zinc-900 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-600/60"
             />
           </div>
           <Button
@@ -409,7 +409,7 @@ export function SongDetailPage() {
           >
             {generating ? (
               <>
-                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <span className="w-4 h-4 border-2 border-obsidian/30 border-t-obsidian rounded-full animate-spin" />
                 Generating…
               </>
             ) : (

@@ -135,7 +135,7 @@ export function BiblePage() {
         <div className="flex items-center gap-3.5">
           <PageHeaderIcon icon={BookOpen} />
           <div>
-            <h1 className="text-2xl font-bold font-display text-zinc-100">Bible</h1>
+            <h1 className="text-2xl font-bold font-display text-zinc-900">Bible</h1>
             <p className="text-sm text-zinc-500 mt-1">Browse a book and chapter, then add verses to a presentation.</p>
           </div>
         </div>
@@ -143,7 +143,7 @@ export function BiblePage() {
         <div className="relative shrink-0">
           <button
             onClick={() => setTranslationMenuOpen((o) => !o)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-900/80 border border-zinc-700/80 text-sm text-zinc-200 hover:border-zinc-600 transition-all"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/80 border border-zinc-300/80 text-sm text-zinc-800 hover:border-zinc-400 transition-all"
           >
             {translation}
             <ChevronDown className="w-3.5 h-3.5 text-zinc-500" />
@@ -151,7 +151,7 @@ export function BiblePage() {
           {translationMenuOpen && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setTranslationMenuOpen(false)} />
-              <div className="absolute right-0 mt-1 w-56 bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl z-50 py-1 overflow-hidden">
+              <div className="absolute right-0 mt-1 w-56 bg-white border border-zinc-200 rounded-xl shadow-xl z-50 py-1 overflow-hidden">
                 {BIBLE_TRANSLATIONS.map((t) => (
                   <button
                     key={t.code}
@@ -160,7 +160,7 @@ export function BiblePage() {
                       setTranslationMenuOpen(false);
                     }}
                     className={`w-full text-left px-3 py-2 text-sm transition-colors ${
-                      t.code === translation ? 'text-brand-400 bg-brand-950/30' : 'text-zinc-200 hover:bg-zinc-800'
+                      t.code === translation ? 'text-brand-600 bg-brand-100' : 'text-zinc-800 hover:bg-zinc-100'
                     }`}
                   >
                     <span className="font-medium">{t.code}</span>
@@ -191,7 +191,7 @@ export function BiblePage() {
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleReferenceSearch();
             }}
-            className="w-full rounded-xl bg-zinc-900/80 border border-zinc-700/80 text-zinc-100 placeholder-zinc-500 pl-11 pr-24 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-600/60"
+            className="w-full rounded-xl bg-white/80 border border-zinc-300/80 text-zinc-900 placeholder-zinc-500 pl-11 pr-24 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-600/60"
           />
           <Button
             variant="secondary"
@@ -203,7 +203,7 @@ export function BiblePage() {
           </Button>
         </div>
         {searchError && (
-          <p className="text-xs text-red-400 mt-1.5">{searchError}</p>
+          <p className="text-xs text-red-600 mt-1.5">{searchError}</p>
         )}
       </div>
 
@@ -217,10 +217,10 @@ export function BiblePage() {
       </Card>
 
       {selected.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 lg:left-64 z-30 border-t border-zinc-800 bg-zinc-950/95 backdrop-blur-md px-4 lg:px-8 py-4">
+        <div className="fixed bottom-0 left-0 right-0 lg:left-64 z-30 border-t border-zinc-200 bg-white/95 backdrop-blur-md px-4 lg:px-8 py-4">
           <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
             <div className="min-w-0">
-              <p className="text-sm font-medium text-zinc-200 truncate">{referenceLabel()}</p>
+              <p className="text-sm font-medium text-zinc-800 truncate">{referenceLabel()}</p>
               <p className="text-xs text-zinc-500">{selected.length} verse{selected.length === 1 ? '' : 's'} selected</p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -234,7 +234,7 @@ export function BiblePage() {
               <Button variant="primary" onClick={handleAddToSlide} disabled={generating}>
                 {generating ? (
                   <>
-                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span className="w-4 h-4 border-2 border-obsidian/30 border-t-obsidian rounded-full animate-spin" />
                     Adding…
                   </>
                 ) : (

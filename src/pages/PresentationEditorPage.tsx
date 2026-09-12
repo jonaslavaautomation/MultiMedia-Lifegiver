@@ -79,8 +79,8 @@ export function PresentationEditorPage() {
   if (loading) {
     return (
       <div className="px-4 lg:px-8 py-6 lg:py-8 max-w-7xl mx-auto">
-        <div className="h-8 w-48 bg-zinc-900/60 rounded-lg animate-pulse mb-6" />
-        <div className="h-96 bg-zinc-900/40 border border-zinc-800/50 rounded-2xl animate-pulse" />
+        <div className="h-8 w-48 bg-zinc-200 rounded-lg animate-pulse mb-6" />
+        <div className="h-96 bg-zinc-200 rounded-2xl animate-pulse" />
       </div>
     );
   }
@@ -100,8 +100,8 @@ export function PresentationEditorPage() {
     return (
       <div className="px-4 lg:px-8 py-6 lg:py-8 max-w-7xl mx-auto">
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <Presentation className="w-12 h-12 text-zinc-700 mb-4" />
-          <h2 className="text-lg font-semibold text-zinc-300 mb-1">Presentation not found</h2>
+          <Presentation className="w-12 h-12 text-zinc-300 mb-4" />
+          <h2 className="text-lg font-semibold text-zinc-700 mb-1">Presentation not found</h2>
           <p className="text-sm text-zinc-500 mb-4">This presentation may have been deleted.</p>
           <Button variant="secondary" onClick={() => navigate('/presentations')}>
             <ArrowLeft className="w-4 h-4" /> Back to Presentations
@@ -122,10 +122,10 @@ export function PresentationEditorPage() {
           </Button>
           <div className="min-w-0">
             <div className="flex items-center gap-2 group">
-              <h1 className="text-xl font-bold font-display text-zinc-100 truncate">{presentation.title}</h1>
+              <h1 className="text-xl font-bold font-display text-zinc-900 truncate">{presentation.title}</h1>
               <button
                 onClick={openRename}
-                className="p-1 rounded-lg text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-all shrink-0"
+                className="p-1 rounded-lg text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 transition-all shrink-0"
                 title="Rename presentation"
               >
                 <Pencil className="w-3.5 h-3.5" />
@@ -175,7 +175,7 @@ export function PresentationEditorPage() {
             <Button variant="primary" onClick={handleRename} disabled={!renameValue.trim() || renaming}>
               {renaming ? (
                 <>
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span className="w-4 h-4 border-2 border-obsidian/30 border-t-obsidian rounded-full animate-spin" />
                   Saving…
                 </>
               ) : (

@@ -89,7 +89,7 @@ export function MediaPicker({ accept, multiple = false, onSelect, onCancel, onUp
             placeholder="Search media…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-lg bg-zinc-900/80 border border-zinc-700/80 text-zinc-100 placeholder-zinc-500 pl-9 pr-3 py-2 text-xs transition-all focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-600/60"
+            className="w-full rounded-lg bg-white/80 border border-zinc-300/80 text-zinc-900 placeholder-zinc-500 pl-9 pr-3 py-2 text-xs transition-all focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-600/60"
           />
         </div>
         {onUploadNew && (
@@ -104,7 +104,7 @@ export function MediaPicker({ accept, multiple = false, onSelect, onCancel, onUp
       ) : loading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="aspect-square rounded-xl bg-zinc-900/40 border border-zinc-800/50 animate-pulse" />
+            <div key={i} className="aspect-square rounded-xl bg-zinc-200 animate-pulse" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
@@ -128,7 +128,7 @@ export function MediaPicker({ accept, multiple = false, onSelect, onCancel, onUp
       )}
 
       {multiple && (
-        <div className="flex items-center justify-between pt-3 border-t border-zinc-800">
+        <div className="flex items-center justify-between pt-3 border-t border-zinc-200">
           <span className="text-xs text-zinc-500">{selectedIds.size} selected</span>
           <div className="flex items-center gap-2">
             {onCancel && (
@@ -164,22 +164,22 @@ function MediaPickerCard({
       type="button"
       onClick={onClick}
       className={`relative aspect-square rounded-xl overflow-hidden border transition-all text-left ${
-        selected ? 'border-brand-500 ring-2 ring-brand-500/40' : 'border-zinc-800/80 hover:border-zinc-700'
+        selected ? 'border-brand-500 ring-2 ring-brand-500/40' : 'border-zinc-200/80 hover:border-zinc-300'
       }`}
     >
       {thumbUrl ? (
         <img src={thumbUrl} alt={item.name} className="w-full h-full object-cover" />
       ) : (
-        <div className="w-full h-full flex items-center justify-center bg-zinc-900/60">
+        <div className="w-full h-full flex items-center justify-center bg-white/60">
           {item.type === 'video' ? (
-            <Video className="w-6 h-6 text-zinc-600" />
+            <Video className="w-6 h-6 text-zinc-400" />
           ) : (
-            <ImageIcon className="w-6 h-6 text-zinc-600" />
+            <ImageIcon className="w-6 h-6 text-zinc-400" />
           )}
         </div>
       )}
       <div className="absolute inset-x-0 bottom-0 bg-black/70 px-2 py-1">
-        <p className="text-[10px] text-zinc-200 truncate">{item.name}</p>
+        <p className="text-[10px] text-zinc-800 truncate">{item.name}</p>
       </div>
       {multiple && selected && (
         <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-brand-600 flex items-center justify-center">

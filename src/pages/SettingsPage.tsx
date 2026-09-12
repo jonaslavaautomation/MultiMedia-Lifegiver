@@ -12,7 +12,7 @@ export function SettingsPage() {
       <div className="flex items-center gap-3.5 mb-6">
         <PageHeaderIcon icon={SettingsIcon} />
         <div>
-          <h1 className="text-2xl font-bold font-display text-zinc-100">Settings</h1>
+          <h1 className="text-2xl font-bold font-display text-zinc-900">Settings</h1>
           <p className="text-sm text-zinc-500 mt-1">Application configuration and preferences.</p>
         </div>
       </div>
@@ -25,18 +25,18 @@ export function SettingsPage() {
               <Church className="w-5 h-5 text-white" strokeWidth={2.5} />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-zinc-100">Application</h2>
+              <h2 className="text-base font-semibold text-zinc-900">Application</h2>
               <p className="text-xs text-zinc-500">LifeGiver Media Studio</p>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="rounded-xl bg-zinc-900/40 border border-zinc-800/50 p-4">
+            <div className="rounded-xl bg-white/40 border border-zinc-200/50 p-4">
               <p className="text-xs text-zinc-500 mb-1">Version</p>
-              <p className="text-sm font-medium text-zinc-200">Phase 3 — Live Presentation</p>
+              <p className="text-sm font-medium text-zinc-800">Phase 3 — Live Presentation</p>
             </div>
-            <div className="rounded-xl bg-zinc-900/40 border border-zinc-800/50 p-4">
+            <div className="rounded-xl bg-white/40 border border-zinc-200/50 p-4">
               <p className="text-xs text-zinc-500 mb-1">Current Phase</p>
-              <p className="text-sm font-medium text-zinc-200">3 of 3</p>
+              <p className="text-sm font-medium text-zinc-800">3 of 3</p>
             </div>
           </div>
         </Card>
@@ -44,26 +44,26 @@ export function SettingsPage() {
         {/* Your account */}
         <Card className="p-6">
           <div className="flex items-center gap-3 mb-5">
-            <div className="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center">
-              <SettingsIcon className="w-5 h-5 text-zinc-400" />
+            <div className="w-10 h-10 rounded-xl bg-zinc-100 flex items-center justify-center">
+              <SettingsIcon className="w-5 h-5 text-zinc-600" />
             </div>
-            <h2 className="text-base font-semibold text-zinc-100">Your Account</h2>
+            <h2 className="text-base font-semibold text-zinc-900">Your Account</h2>
           </div>
           <div className="space-y-3">
             <div className="flex items-center justify-between py-2">
-              <span className="text-sm text-zinc-400">Display Name</span>
-              <span className="text-sm font-medium text-zinc-200">{profile?.full_name ?? '—'}</span>
+              <span className="text-sm text-zinc-600">Display Name</span>
+              <span className="text-sm font-medium text-zinc-800">{profile?.full_name ?? '—'}</span>
             </div>
-            <div className="flex items-center justify-between py-2 border-t border-zinc-800/60">
-              <span className="text-sm text-zinc-400">Role</span>
+            <div className="flex items-center justify-between py-2 border-t border-zinc-200/60">
+              <span className="text-sm text-zinc-600">Role</span>
               <Badge variant={profile?.role === 'admin' ? 'danger' : 'info'}>
                 <Shield className="w-3 h-3" />
                 {profile?.role ?? 'media'}
               </Badge>
             </div>
-            <div className="flex items-center justify-between py-2 border-t border-zinc-800/60">
-              <span className="text-sm text-zinc-400">Account Created</span>
-              <span className="text-sm font-medium text-zinc-200">
+            <div className="flex items-center justify-between py-2 border-t border-zinc-200/60">
+              <span className="text-sm text-zinc-600">Account Created</span>
+              <span className="text-sm font-medium text-zinc-800">
                 {profile ? new Date(profile.created_at).toLocaleDateString() : '—'}
               </span>
             </div>
@@ -73,10 +73,10 @@ export function SettingsPage() {
         {/* Phase info */}
         <Card className="p-6">
           <div className="flex items-center gap-3 mb-5">
-            <div className="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center">
-              <Info className="w-5 h-5 text-zinc-400" />
+            <div className="w-10 h-10 rounded-xl bg-zinc-100 flex items-center justify-center">
+              <Info className="w-5 h-5 text-zinc-600" />
             </div>
-            <h2 className="text-base font-semibold text-zinc-100">Feature Phases</h2>
+            <h2 className="text-base font-semibold text-zinc-900">Feature Phases</h2>
           </div>
           <div className="space-y-3">
             {[
@@ -86,8 +86,8 @@ export function SettingsPage() {
             ].map((item) => (
               <div key={item.phase} className="flex items-center justify-between py-2">
                 <div className="flex items-center gap-3">
-                  <span className="text-xs font-semibold text-zinc-400 w-16">{item.phase}</span>
-                  <span className="text-sm text-zinc-300">{item.label}</span>
+                  <span className="text-xs font-semibold text-zinc-600 w-16">{item.phase}</span>
+                  <span className="text-sm text-zinc-700">{item.label}</span>
                 </div>
                 {item.done ? (
                   <Badge variant="success">Complete</Badge>
