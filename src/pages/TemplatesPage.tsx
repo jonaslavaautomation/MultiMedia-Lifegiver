@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   LayoutTemplate,
   Plus,
@@ -65,10 +66,17 @@ interface TemplateFormState {
 const EMPTY_FORM: TemplateFormState = { name: '', category: '', description: '', thumbnailPath: '' };
 
 export function TemplatesPage() {
+  const [searchParams] = useSearchParams();
   const [templates, setTemplates] = useState<TemplateWithCreator[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(() => searchParams.get('q') ?? '');
+
+  // Arriving from the Command Palette with a search term already chosen.
+  useEffect(() => {
+    const q = searchParams.get('q');
+    if (q) setSearch(q);
+  }, [searchParams]);
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
 

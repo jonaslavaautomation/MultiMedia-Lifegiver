@@ -1,9 +1,10 @@
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Menu } from 'lucide-react';
+import { LogOut, Menu, Search } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/Button';
 import { useState } from 'react';
 import { MobileNav } from '@/components/layout/MobileNav';
+import { openCommandPalette } from '@/lib/commandPaletteEvents';
 
 export function Header() {
   const { profile, signOut } = useAuth();
@@ -26,6 +27,14 @@ export function Header() {
             <Menu className="w-5 h-5" />
           </button>
           <span className="lg:hidden text-sm font-bold font-display text-zinc-100">LifeGiver</span>
+          <button
+            onClick={openCommandPalette}
+            className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-900/60 border border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700 transition-all text-sm"
+          >
+            <Search className="w-4 h-4" />
+            <span>Search…</span>
+            <kbd className="ml-3 text-[10px] border border-zinc-700 rounded px-1.5 py-0.5 text-zinc-600">⌘K</kbd>
+          </button>
         </div>
 
         <div className="flex items-center gap-3">

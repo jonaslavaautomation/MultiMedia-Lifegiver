@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Music4, Plus, Copy, Trash2, Search, MoreVertical, Calendar, Clock, User, Pencil } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
@@ -14,10 +14,17 @@ import type { SongWithCreator } from '@/types';
 
 export function SongsPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [songs, setSongs] = useState<SongWithCreator[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(() => searchParams.get('q') ?? '');
+
+  // Arriving from the Command Palette with a search term already chosen.
+  useEffect(() => {
+    const q = searchParams.get('q');
+    if (q) setSearch(q);
+  }, [searchParams]);
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [createOpen, setCreateOpen] = useState(false);
   const [newTitle, setNewTitle] = useState('');
