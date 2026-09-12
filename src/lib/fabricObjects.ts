@@ -201,11 +201,12 @@ export function clearBackgroundForVideo(canvas: StaticCanvas): void {
 export function serializeSlide(
   canvas: Canvas,
   backgroundMediaId: string | null,
-  backgroundVideoEmbedUrl: string | null = null
+  backgroundVideoEmbedUrl: string | null = null,
+  backgroundMotionId: string | null = null
 ): SlideCanvasData {
   const base = canvas.toObject(['id', 'data']) as SlideCanvasData;
   return {
     ...base,
-    meta: { schemaVersion: 1, backgroundMediaId, backgroundVideoEmbedUrl },
+    meta: { schemaVersion: 1, backgroundMediaId, backgroundVideoEmbedUrl, backgroundMotionId },
   };
 }

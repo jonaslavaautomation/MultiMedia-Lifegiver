@@ -179,7 +179,7 @@ function MediaPickerCard({
         </div>
       )}
       <div className="absolute inset-x-0 bottom-0 bg-black/70 px-2 py-1">
-        <p className="text-[10px] text-zinc-800 truncate">{item.name}</p>
+        <p className="text-[10px] text-zinc-100 truncate">{item.name}</p>
       </div>
       {multiple && selected && (
         <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-brand-600 flex items-center justify-center">

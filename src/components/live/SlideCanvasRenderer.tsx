@@ -4,7 +4,9 @@ import { applySolidBackground } from '@/lib/fabricObjects';
 import { resolveAndRenderSlide } from '@/lib/renderSlide';
 import { isEmptySlideContent } from '@/lib/slideContent';
 import { DEFAULT_SLIDE_BACKGROUND_COLOR } from '@/lib/editorConstants';
+import { MotionBackgroundPlayer } from '@/components/motion/MotionBackgroundPlayer';
 import type { SlideCanvasData } from '@/types';
+import type { MotionPreset } from '@/types/motion';
 
 interface SlideCanvasRendererProps {
   content: SlideCanvasData | null;
@@ -21,6 +23,7 @@ export function SlideCanvasRenderer({ content, className = '' }: SlideCanvasRend
     backgroundColor: DEFAULT_SLIDE_BACKGROUND_COLOR,
   });
   const [videoBackgroundUrl, setVideoBackgroundUrl] = useState<string | null>(null);
+  const [motionBackground, setMotionBackground] = useState<MotionPreset | null>(null);
 
   useEffect(() => {
     if (!canvas) return;
@@ -31,13 +34,17 @@ export function SlideCanvasRenderer({ content, className = '' }: SlideCanvasRend
 
       if (!content || isEmptySlideContent(content)) {
         applySolidBackground(canvas!, DEFAULT_SLIDE_BACKGROUND_COLOR);
-        if (!cancelled) setVideoBackgroundUrl(null);
+        if (!cancelled) {
+          setVideoBackgroundUrl(null);
+          setMotionBackground(null);
+        }
         return;
       }
 
-      const { videoBackgroundUrl: videoUrl } = await resolveAndRenderSlide(canvas!, content);
+      const { videoBackgroundUrl: videoUrl, motionBackground: motion } = await resolveAndRenderSlide(canvas!, content);
       if (cancelled) return;
       setVideoBackgroundUrl(videoUrl);
+      setMotionBackground(motion);
       canvas!.requestRenderAll();
     }
 
@@ -50,6 +57,9 @@ export function SlideCanvasRenderer({ content, className = '' }: SlideCanvasRend
 
   return (
     <div ref={containerRef} className={`relative ${className}`} style={{ aspectRatio: '16 / 9' }}>
+      {motionBackground && (
+        <MotionBackgroundPlayer key={motionBackground.id} preset={motionBackground} className="absolute inset-0" />
+      )}
       {videoBackgroundUrl && (
         <video
           key={videoBackgroundUrl}
@@ -61,7 +71,10 @@ export function SlideCanvasRenderer({ content, className = '' }: SlideCanvasRend
           className="absolute inset-0 w-full h-full object-cover"
         />
       )}
-      <canvas ref={canvasElRef} className="relative" />
+      {/* Isolated, structurally-static parent for the canvas — see the matching comment in EditorCanvasStage.tsx for why this can't just be a plain sibling of the motion/video layers. */}
+      <div className="absolute inset-0">
+        <canvas ref={canvasElRef} className="relative" />
+      </div>
     </div>
   );
 }

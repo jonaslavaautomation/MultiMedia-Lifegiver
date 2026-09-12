@@ -159,12 +159,15 @@ export function createBlankSlideContent(): SlideCanvasData {
 
 /**
  * True if a slide has no visible objects and no background image/media/
- * embed/custom color — i.e. there is genuinely nothing to render, so
+ * embed/motion/custom color — i.e. there is genuinely nothing to render, so
  * callers can skip loadFromJSON entirely and just paint the default
  * background. A slide with only a custom solid-color background (no
  * objects) is NOT empty — it must still go through resolveAndRenderSlide,
  * or its chosen color would be silently overwritten with the default on
- * every load/switch/present.
+ * every load/switch/present. Same reasoning applies to a motion-only
+ * background — miss it here and a slide that's "just a Motion Library
+ * preset behind some later-added text" would render as a plain default
+ * background instead, every time it's loaded/switched/presented.
  */
 export function isEmptySlideContent(content: SlideCanvasData | null | undefined): boolean {
   if (!content) return true;
@@ -175,6 +178,7 @@ export function isEmptySlideContent(content: SlideCanvasData | null | undefined)
     objects.length === 0 &&
     !content.meta?.backgroundMediaId &&
     !content.meta?.backgroundVideoEmbedUrl &&
+    !content.meta?.backgroundMotionId &&
     !hasCustomBackgroundColor
   );
 }
