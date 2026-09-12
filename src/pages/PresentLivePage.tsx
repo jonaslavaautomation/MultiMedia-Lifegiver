@@ -13,6 +13,7 @@ import {
   Copy,
   Check,
   Piano,
+  Layers,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
@@ -251,7 +252,7 @@ export function PresentLivePage() {
     saveHotkeyBindings(next);
   }
 
-  function openWindow(kind: 'projector' | 'stage') {
+  function openWindow(kind: 'projector' | 'stage' | 'overlay') {
     if (!id) return;
     const url = `${window.location.origin}/presentations/${id}/present/${kind}`;
     window.open(url, `lifegiver-${kind}-${id}`, 'popup=yes,width=1280,height=720');
@@ -317,6 +318,9 @@ export function PresentLivePage() {
           </Button>
           <Button variant="outline" size="sm" onClick={() => openWindow('stage')}>
             <Tv className="w-3.5 h-3.5" /> Open Stage Display
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => openWindow('overlay')} title="Transparent overlay for OBS/vMix/NDI">
+            <Layers className="w-3.5 h-3.5" /> Open Overlay
           </Button>
           <Button variant="outline" size="sm" onClick={() => setRemoteModalOpen(true)}>
             <Smartphone className="w-3.5 h-3.5" /> Remote Control

@@ -10,6 +10,7 @@ import { PresentLivePage } from '@/pages/PresentLivePage';
 import { ProjectorScreenPage } from '@/pages/ProjectorScreenPage';
 import { StageDisplayPage } from '@/pages/StageDisplayPage';
 import { RemoteControlPage } from '@/pages/RemoteControlPage';
+import { OverlayPage } from '@/pages/OverlayPage';
 import { LiveGuard } from '@/components/live/LiveGuard';
 import { SongsPage } from '@/pages/SongsPage';
 import { SongDetailPage } from '@/pages/SongDetailPage';
@@ -37,6 +38,7 @@ function ProtectedRoutes() {
       <Route path="/presentations/:id/present/projector" element={<LiveGuard><ProjectorScreenPage /></LiveGuard>} />
       <Route path="/presentations/:id/present/stage" element={<LiveGuard><StageDisplayPage /></LiveGuard>} />
       <Route path="/presentations/:id/present/remote" element={<LiveGuard><RemoteControlPage /></LiveGuard>} />
+      <Route path="/presentations/:id/present/overlay" element={<LiveGuard><OverlayPage /></LiveGuard>} />
       <Route path="/songs" element={<AppLayout><SongsPage /></AppLayout>} />
       <Route path="/songs/:id" element={<AppLayout><SongDetailPage /></AppLayout>} />
       <Route path="/bible" element={<AppLayout><BiblePage /></AppLayout>} />
