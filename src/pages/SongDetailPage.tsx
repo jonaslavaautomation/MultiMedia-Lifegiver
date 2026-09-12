@@ -1,16 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Music4, Plus, Sparkles } from 'lucide-react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { ArrowLeft, Music4, Play, Plus, Presentation as PresentationIcon, Sparkles, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
 import { Alert } from '@/components/ui/Alert';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SongSectionEditor } from '@/components/songs/SongSectionEditor';
 import { AddSectionModal } from '@/components/songs/AddSectionModal';
 import { createTextSlideContent, splitTextIntoChunks } from '@/lib/slideContent';
-import type { Song, SongSection, SongSectionType } from '@/types';
+import { SONG_THEMES, getSongThemeById, DEFAULT_SONG_THEME_ID } from '@/lib/songThemes';
+import { getMotionPresetById } from '@/lib/motionLibrary';
+import { MotionLibraryPanel } from '@/components/motion/MotionLibraryPanel';
+import type { Presentation, Song, SongSection, SongSectionType } from '@/types';
 
 function labelForNewSection(type: SongSectionType, existing: SongSection[]): string {
   const countOfType = existing.filter((s) => s.type === type).length;
@@ -41,8 +45,12 @@ export function SongDetailPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [presentationTitle, setPresentationTitle] = useState('');
   const [linesPerSlide, setLinesPerSlide] = useState(4);
+  const [themeId, setThemeId] = useState(DEFAULT_SONG_THEME_ID);
+  const [motionId, setMotionId] = useState<string | null>(null);
+  const [motionPickerOpen, setMotionPickerOpen] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
+  const [linkedPresentations, setLinkedPresentations] = useState<Presentation[]>([]);
 
   const fetchSong = useCallback(async () => {
     if (!id) return;
@@ -70,6 +78,17 @@ export function SongDetailPage() {
       setTempoValue(fetched.tempo ?? '');
       setPresentationTitle(fetched.title);
       setSelectedIds(new Set(fetchedSections.map((s) => s.id)));
+
+      const { data: presData, error: presError } = await supabase
+        .from('presentations')
+        .select('*')
+        .eq('source_song_id', fetched.id)
+        .order('created_at', { ascending: false });
+      if (presError) {
+        console.error('Error fetching linked presentations:', presError.message);
+      } else {
+        setLinkedPresentations((presData as Presentation[]) ?? []);
+      }
     }
     setLoading(false);
   }, [id]);
@@ -171,7 +190,11 @@ export function SongDetailPage() {
 
     const { data: presentation, error: presError } = await supabase
       .from('presentations')
-      .insert({ title: presentationTitle.trim() || song!.title })
+      .insert({
+        title: presentationTitle.trim() || song!.title,
+        status: 'ready', // generated slides are immediately Go-Live-ready, no manual status flip needed
+        source_song_id: song!.id,
+      })
       .select('id')
       .maybeSingle();
 
@@ -182,6 +205,17 @@ export function SongDetailPage() {
       return;
     }
 
+    const theme = getSongThemeById(themeId);
+    const motion = motionId ? getMotionPresetById(motionId) : undefined;
+    const textOptions = {
+      fontFamily: theme?.fontFamily,
+      fontSize: theme?.fontSize,
+      fill: theme?.fill,
+      textAlign: theme?.textAlign,
+      backgroundColor: theme?.backgroundColor,
+      backgroundMotionId: motion?.id ?? null,
+    };
+
     const slideRows: { presentation_id: string; title: string; content: ReturnType<typeof createTextSlideContent>; sort_order: number }[] = [];
     chosen.forEach((section) => {
       const chunks = splitTextIntoChunks(section.text, linesPerSlide);
@@ -190,7 +224,7 @@ export function SongDetailPage() {
         slideRows.push({
           presentation_id: presentation.id,
           title: section.label,
-          content: createTextSlideContent(section.label),
+          content: createTextSlideContent(section.label, textOptions),
           sort_order: slideRows.length,
         });
         return;
@@ -199,7 +233,7 @@ export function SongDetailPage() {
         slideRows.push({
           presentation_id: presentation.id,
           title: chunks.length > 1 ? `${section.label} (${chunkIndex + 1}/${chunks.length})` : section.label,
-          content: createTextSlideContent(chunkText),
+          content: createTextSlideContent(chunkText, textOptions),
           sort_order: slideRows.length,
         });
       });
@@ -384,6 +418,64 @@ export function SongDetailPage() {
           ))}
         </div>
 
+        <div className="mb-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">Slide theme</p>
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+            {SONG_THEMES.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setThemeId(t.id)}
+                title={t.description}
+                className={`aspect-video rounded-lg border-2 flex items-center justify-center text-[10px] font-medium transition-all ${
+                  themeId === t.id ? 'border-brand-500 ring-2 ring-brand-500/30' : 'border-zinc-200 hover:border-zinc-300'
+                }`}
+                style={{ backgroundColor: t.backgroundColor, color: t.fill, fontFamily: t.fontFamily }}
+              >
+                Aa
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Motion background (optional)</p>
+            {motionId && (
+              <button
+                type="button"
+                onClick={() => setMotionId(null)}
+                className="text-[11px] text-zinc-500 hover:text-red-600 flex items-center gap-1"
+              >
+                <X className="w-3 h-3" /> Remove
+              </button>
+            )}
+          </div>
+          {motionId ? (
+            <button
+              type="button"
+              onClick={() => setMotionPickerOpen((v) => !v)}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-lime-500/10 border border-lime-500/40 text-sm text-zinc-800"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-lime-700 shrink-0" /> {getMotionPresetById(motionId)?.name}
+            </button>
+          ) : (
+            <Button variant="outline" size="sm" onClick={() => setMotionPickerOpen((v) => !v)} className="w-full justify-center">
+              <Sparkles className="w-3.5 h-3.5" /> Choose a motion background
+            </Button>
+          )}
+          {motionPickerOpen && (
+            <div className="mt-2 rounded-xl border border-zinc-200 p-3">
+              <MotionLibraryPanel
+                onSelect={(id) => {
+                  setMotionId(id);
+                  setMotionPickerOpen(false);
+                }}
+              />
+            </div>
+          )}
+        </div>
+
         <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3">
           <div className="flex-1">
             <Input
@@ -421,6 +513,30 @@ export function SongDetailPage() {
           </Button>
         </div>
       </Card>
+
+      {linkedPresentations.length > 0 && (
+        <Card className="p-5 mt-6">
+          <div className="flex items-center gap-2 mb-3">
+            <PresentationIcon className="w-4 h-4 text-brand-400" />
+            <h2 className="text-base font-semibold text-zinc-900">Presentations from this song</h2>
+          </div>
+          <div className="flex flex-col gap-2">
+            {linkedPresentations.map((p) => (
+              <div key={p.id} className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl bg-white/60 border border-zinc-200/80">
+                <div className="min-w-0 flex items-center gap-2">
+                  <Badge variant={p.status === 'ready' ? 'success' : 'warning'}>{p.status}</Badge>
+                  <Link to={`/presentations/${p.id}/edit`} className="text-sm text-zinc-800 hover:text-brand-700 truncate">
+                    {p.title}
+                  </Link>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => navigate(`/presentations/${p.id}/present`)} className="shrink-0">
+                  <Play className="w-3.5 h-3.5" /> Go Live
+                </Button>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       <AddSectionModal open={addSectionOpen} onClose={() => setAddSectionOpen(false)} onAdd={handleAddSection} />
     </div>

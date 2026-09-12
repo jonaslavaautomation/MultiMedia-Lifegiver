@@ -9,6 +9,7 @@ export type SongSectionType =
   | 'verse'
   | 'pre-chorus'
   | 'chorus'
+  | 'refrain'
   | 'bridge'
   | 'tag'
   | 'outro';
@@ -70,6 +71,8 @@ export interface Presentation {
   service_date: string | null;
   created_by: string | null;
   slide_data: Record<string, unknown>;
+  /** The song this presentation was auto-generated from (Smart Import / Generate Slides), if any. */
+  source_song_id: string | null;
   created_at: string;
   updated_at: string;
 }

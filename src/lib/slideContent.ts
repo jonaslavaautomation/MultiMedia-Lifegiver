@@ -37,6 +37,8 @@ interface TextSlideOptions {
   fill?: string;
   textAlign?: 'left' | 'center' | 'right';
   backgroundColor?: string;
+  /** A built-in Motion Background Library preset id (src/lib/motionLibrary.ts) to use as this slide's background instead of a solid color. */
+  backgroundMotionId?: string | null;
 }
 
 /**
@@ -63,7 +65,7 @@ export function createTextSlideContent(text: string, options: TextSlideOptions =
       },
     ],
     background: options.backgroundColor ?? DEFAULT_SLIDE_BACKGROUND_COLOR,
-    meta: { schemaVersion: 1, backgroundMediaId: null },
+    meta: { schemaVersion: 1, backgroundMediaId: null, backgroundMotionId: options.backgroundMotionId ?? null },
   };
 }
 
@@ -107,7 +109,7 @@ export function createVerseSlideContent(reference: string, text: string, options
       },
     ],
     background: options.backgroundColor ?? DEFAULT_SLIDE_BACKGROUND_COLOR,
-    meta: { schemaVersion: 1, backgroundMediaId: null },
+    meta: { schemaVersion: 1, backgroundMediaId: null, backgroundMotionId: options.backgroundMotionId ?? null },
   };
 }
 
