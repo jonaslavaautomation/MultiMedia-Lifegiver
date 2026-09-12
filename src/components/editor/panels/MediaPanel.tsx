@@ -26,7 +26,7 @@ export function MediaPanel({ onInsertItem, onInsertUrl }: MediaPanelProps) {
       </p>
       <MediaPicker accept={['image']} multiple={false} onSelect={(items) => items[0] && onInsertItem(items[0])} />
 
-      <div className="pt-3 border-t border-zinc-800/80">
+      <div className="pt-3 border-t border-zinc-200/80">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mb-2">Or paste an image URL</p>
         <div className="flex items-center gap-2">
           <Input

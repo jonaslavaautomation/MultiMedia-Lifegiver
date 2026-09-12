@@ -24,10 +24,10 @@ export function EditorCanvasStage({ containerRef, canvasElRef, saveStatus, loadi
         <span
           className={`inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full border ${
             saveStatus === 'error'
-              ? 'bg-red-950/40 border-red-900/50 text-red-300'
+              ? 'bg-red-50 border-red-200 text-red-700'
               : saveStatus === 'pending' || saveStatus === 'saving'
-                ? 'bg-amber-950/40 border-amber-900/50 text-amber-300'
-                : 'bg-zinc-900/60 border-zinc-800 text-zinc-500'
+                ? 'bg-amber-50 border-amber-200 text-amber-700'
+                : 'bg-zinc-100 border-zinc-200 text-zinc-500'
           }`}
         >
           {saveStatus === 'saving' && <Loader2 className="w-3 h-3 animate-spin" />}
@@ -37,7 +37,7 @@ export function EditorCanvasStage({ containerRef, canvasElRef, saveStatus, loadi
 
       {/* Dotted-grid backdrop the 16:9 artboard sits on, Canva/Figma-style — gives the canvas a sense of "floating" on an infinite workspace. */}
       <div
-        className="flex-1 min-h-0 rounded-2xl border border-white/10 bg-obsidian/60 p-4 sm:p-8 flex items-center justify-center"
+        className="flex-1 min-h-0 rounded-2xl border border-zinc-200 bg-canvas/60 p-4 sm:p-8 flex items-center justify-center"
         style={{
           backgroundImage: 'radial-gradient(rgba(182, 215, 47, 0.3) 1px, transparent 1px)',
           backgroundSize: '22px 22px',
@@ -45,7 +45,7 @@ export function EditorCanvasStage({ containerRef, canvasElRef, saveStatus, loadi
       >
         <div
           ref={containerRef}
-          className="relative w-full max-w-full rounded-2xl border border-white/10 bg-surface/60 overflow-hidden shadow-2xl shadow-black/50"
+          className="relative w-full max-w-full rounded-2xl border border-zinc-200 bg-white overflow-hidden shadow-xl shadow-zinc-400/30"
           style={{ aspectRatio: '16 / 9' }}
         >
           {backgroundVideoUrl && (
@@ -61,7 +61,7 @@ export function EditorCanvasStage({ containerRef, canvasElRef, saveStatus, loadi
           )}
           <canvas ref={canvasElRef} className="relative" />
           {loadingSlide && (
-            <div className="absolute inset-0 flex items-center justify-center bg-zinc-950/60">
+            <div className="absolute inset-0 flex items-center justify-center bg-white/70">
               <Loader2 className="w-6 h-6 text-zinc-500 animate-spin" />
             </div>
           )}

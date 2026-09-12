@@ -172,7 +172,7 @@ export function SongsPage() {
         <div className="flex items-center gap-3.5">
           <PageHeaderIcon icon={Music4} />
           <div>
-            <h1 className="text-2xl font-bold font-display text-zinc-100">Songs</h1>
+            <h1 className="text-2xl font-bold font-display text-zinc-900">Songs</h1>
             <p className="text-sm text-zinc-500 mt-1">Manage your worship song library with lyrics and metadata.</p>
           </div>
         </div>
@@ -190,7 +190,7 @@ export function SongsPage() {
           placeholder="Search songs or artists…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-xl bg-zinc-900/80 border border-zinc-700/80 text-zinc-100 placeholder-zinc-500 pl-11 pr-4 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-600/60"
+          className="w-full rounded-xl bg-white/80 border border-zinc-300/80 text-zinc-900 placeholder-zinc-500 pl-11 pr-4 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-600/60"
         />
       </div>
 
@@ -218,7 +218,7 @@ export function SongsPage() {
       {error ? null : loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-40 rounded-2xl bg-zinc-900/40 border border-zinc-800/50 animate-pulse" />
+            <div key={i} className="h-40 rounded-2xl bg-zinc-200 animate-pulse" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
@@ -247,29 +247,29 @@ export function SongsPage() {
                     e.stopPropagation();
                     setMenuOpen(menuOpen === song.id ? null : song.id);
                   }}
-                  className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-all"
+                  className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 transition-all"
                 >
                   <MoreVertical className="w-4 h-4" />
                 </button>
                 {menuOpen === song.id && (
                   <>
                     <div className="fixed inset-0 z-0" onClick={() => setMenuOpen(null)} />
-                    <div className="absolute right-0 mt-1 w-40 bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl z-20 py-1 overflow-hidden">
+                    <div className="absolute right-0 mt-1 w-40 bg-white border border-zinc-200 rounded-xl shadow-xl z-20 py-1 overflow-hidden">
                       <button
                         onClick={(e) => { e.stopPropagation(); openRename(song); }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800 transition-colors"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-zinc-700 hover:bg-zinc-100 transition-colors"
                       >
                         <Pencil className="w-3.5 h-3.5" /> Rename
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); handleDuplicate(song); }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800 transition-colors"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-zinc-700 hover:bg-zinc-100 transition-colors"
                       >
                         <Copy className="w-3.5 h-3.5" /> Duplicate
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); setMenuOpen(null); setDeleteError(null); setDeleteTarget(song); }}
-                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-400 hover:bg-zinc-800 transition-colors"
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-600 hover:bg-zinc-100 transition-colors"
                       >
                         <Trash2 className="w-3.5 h-3.5" /> Delete
                       </button>
@@ -279,10 +279,10 @@ export function SongsPage() {
               </div>
 
               <div onClick={() => navigate(`/songs/${song.id}`)} className="cursor-pointer">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-900/40 to-brand-950/20 border border-brand-800/30 flex items-center justify-center mb-4">
-                  <Music4 className="w-5 h-5 text-brand-400" />
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-100/70 to-brand-50/40 border border-brand-200/60 flex items-center justify-center mb-4">
+                  <Music4 className="w-5 h-5 text-brand-600" />
                 </div>
-                <h3 className="text-base font-semibold text-zinc-100 mb-1 pr-6 truncate">{song.title}</h3>
+                <h3 className="text-base font-semibold text-zinc-900 mb-1 pr-6 truncate">{song.title}</h3>
                 <p className="text-xs text-zinc-500 mb-3 truncate">{song.author || 'Unknown artist'}</p>
                 <div className="flex items-center gap-2 flex-wrap">
                   {song.category && <Badge variant="success">{song.category}</Badge>}
@@ -290,7 +290,7 @@ export function SongsPage() {
                   {song.tempo && <Badge variant="default">{song.tempo}</Badge>}
                   <Badge variant="default">{song.lyrics?.sections?.length ?? 0} sections</Badge>
                 </div>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-3 pt-3 border-t border-zinc-800/60 text-[11px] text-zinc-500">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-3 pt-3 border-t border-zinc-200/60 text-[11px] text-zinc-500">
                   <span className="flex items-center gap-1" title="Created">
                     <Calendar className="w-3 h-3" />
                     {new Date(song.created_at).toLocaleDateString()}
@@ -323,7 +323,7 @@ export function SongsPage() {
             <Button variant="primary" onClick={handleCreate} disabled={!newTitle.trim() || creating}>
               {creating ? (
                 <>
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span className="w-4 h-4 border-2 border-obsidian/30 border-t-obsidian rounded-full animate-spin" />
                   Creating…
                 </>
               ) : (
@@ -366,7 +366,7 @@ export function SongsPage() {
             <Button variant="primary" onClick={handleRename} disabled={!renameValue.trim() || renaming}>
               {renaming ? (
                 <>
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span className="w-4 h-4 border-2 border-obsidian/30 border-t-obsidian rounded-full animate-spin" />
                   Saving…
                 </>
               ) : (
@@ -414,8 +414,8 @@ export function SongsPage() {
       >
         <div className="flex flex-col gap-4">
           {deleteError && <Alert message={deleteError} />}
-          <p className="text-sm text-zinc-400 leading-relaxed">
-            Are you sure you want to delete <span className="font-semibold text-zinc-200">{deleteTarget?.title}</span>? This action cannot be undone.
+          <p className="text-sm text-zinc-600 leading-relaxed">
+            Are you sure you want to delete <span className="font-semibold text-zinc-800">{deleteTarget?.title}</span>? This action cannot be undone.
           </p>
         </div>
       </Modal>

@@ -57,7 +57,7 @@ export function UsersPage() {
       <div className="flex items-center gap-3.5 mb-6">
         <PageHeaderIcon icon={UsersIcon} />
         <div>
-          <h1 className="text-2xl font-bold font-display text-zinc-100">Users</h1>
+          <h1 className="text-2xl font-bold font-display text-zinc-900">Users</h1>
           <p className="text-sm text-zinc-500 mt-1">Manage team members and their roles.</p>
         </div>
       </div>
@@ -69,7 +69,7 @@ export function UsersPage() {
           placeholder="Search users…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-xl bg-zinc-900/80 border border-zinc-700/80 text-zinc-100 placeholder-zinc-500 pl-11 pr-4 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-600/60"
+          className="w-full rounded-xl bg-white/80 border border-zinc-300/80 text-zinc-900 placeholder-zinc-500 pl-11 pr-4 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-600/60"
         />
       </div>
 
@@ -77,7 +77,7 @@ export function UsersPage() {
         {loading ? (
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-14 bg-zinc-900/40 rounded-xl animate-pulse" />
+              <div key={i} className="h-14 bg-zinc-200 rounded-xl animate-pulse" />
             ))}
           </div>
         ) : filtered.length === 0 ? (
@@ -90,7 +90,7 @@ export function UsersPage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-zinc-800">
+                <tr className="border-b border-zinc-200">
                   <th className="text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider py-3 px-2">User</th>
                   <th className="text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider py-3 px-2">Role</th>
                   <th className="text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider py-3 px-2 hidden sm:table-cell">Joined</th>
@@ -100,14 +100,14 @@ export function UsersPage() {
                 {filtered.map((p) => {
                   const RoleIcon = roleIcon[p.role] ?? UserIcon;
                   return (
-                    <tr key={p.id} className="border-b border-zinc-900 last:border-0 hover:bg-zinc-900/30 transition-colors">
+                    <tr key={p.id} className="border-b border-zinc-100 last:border-0 hover:bg-zinc-50 transition-colors">
                       <td className="py-3 px-2">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-700 to-brand-900 flex items-center justify-center text-sm font-bold text-white shrink-0">
                             {p.full_name?.charAt(0).toUpperCase() ?? '?'}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-medium text-zinc-200 truncate">{p.full_name ?? 'Unknown'}</p>
+                            <p className="text-sm font-medium text-zinc-800 truncate">{p.full_name ?? 'Unknown'}</p>
                             <p className="text-xs text-zinc-500 truncate">{p.id.slice(0, 8)}…</p>
                           </div>
                         </div>

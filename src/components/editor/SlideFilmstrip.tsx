@@ -60,18 +60,18 @@ export function SlideFilmstrip({ slides, currentSlideId, onSelect, onAdd, onDupl
             className={`group relative shrink-0 w-32 rounded-xl border cursor-pointer transition-all overflow-hidden ${
               slide.id === currentSlideId
                 ? 'border-brand-500 ring-2 ring-brand-500/30'
-                : 'border-zinc-800/80 hover:border-zinc-700'
+                : 'border-zinc-200/80 hover:border-zinc-300'
             }`}
             onClick={() => onSelect(slide.id)}
           >
             <div className="relative min-w-0">
-              <SlideCanvasRenderer content={slide.content} className="bg-zinc-900/60" />
-              <span className="absolute top-1 left-1.5 text-[10px] text-zinc-400 bg-zinc-950/70 rounded px-1 py-0.5 pointer-events-none">
+              <SlideCanvasRenderer content={slide.content} className="bg-white/60" />
+              <span className="absolute top-1 left-1.5 text-[10px] text-zinc-200 bg-zinc-950/70 rounded px-1 py-0.5 pointer-events-none">
                 {index + 1}
               </span>
             </div>
-            <div className="px-2 py-1 bg-zinc-950/80 flex items-center justify-between gap-1">
-              <p className="text-[10px] text-zinc-400 truncate flex-1">{slide.title}</p>
+            <div className="px-2 py-1 bg-white flex items-center justify-between gap-1">
+              <p className="text-[10px] text-zinc-600 truncate flex-1">{slide.title}</p>
               <div className="hidden group-hover:flex items-center gap-0.5">
                 <button
                   type="button"
@@ -81,7 +81,7 @@ export function SlideFilmstrip({ slides, currentSlideId, onSelect, onAdd, onDupl
                     run(() => onDuplicate(slide.id));
                   }}
                   disabled={busy}
-                  className="p-1 rounded text-zinc-500 hover:text-zinc-200"
+                  className="p-1 rounded text-zinc-500 hover:text-zinc-900"
                 >
                   <Copy className="w-3 h-3" />
                 </button>
@@ -93,7 +93,7 @@ export function SlideFilmstrip({ slides, currentSlideId, onSelect, onAdd, onDupl
                     if (slides.length > 1) setDeleteTarget(slide);
                   }}
                   disabled={busy || slides.length <= 1}
-                  className="p-1 rounded text-zinc-500 hover:text-red-400 disabled:opacity-30 disabled:hover:text-zinc-500"
+                  className="p-1 rounded text-zinc-500 hover:text-red-600 disabled:opacity-30 disabled:hover:text-zinc-800"
                 >
                   <Trash2 className="w-3 h-3" />
                 </button>
@@ -122,8 +122,8 @@ export function SlideFilmstrip({ slides, currentSlideId, onSelect, onAdd, onDupl
           </>
         }
       >
-        <p className="text-sm text-zinc-400 leading-relaxed">
-          Are you sure you want to delete <span className="font-semibold text-zinc-200">{deleteTarget?.title}</span>?
+        <p className="text-sm text-zinc-600 leading-relaxed">
+          Are you sure you want to delete <span className="font-semibold text-zinc-800">{deleteTarget?.title}</span>?
           This cannot be undone.
         </p>
       </Modal>

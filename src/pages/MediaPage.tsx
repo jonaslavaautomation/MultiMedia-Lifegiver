@@ -222,7 +222,7 @@ export function MediaPage() {
         <div className="flex items-center gap-3.5">
           <PageHeaderIcon icon={ImageIcon} />
           <div>
-            <h1 className="text-2xl font-bold font-display text-zinc-100">Media</h1>
+            <h1 className="text-2xl font-bold font-display text-zinc-900">Media</h1>
             <p className="text-sm text-zinc-500 mt-1">Upload and manage images, videos, and audio for your presentations.</p>
           </div>
         </div>
@@ -251,7 +251,7 @@ export function MediaPage() {
             placeholder="Search media…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-xl bg-zinc-900/80 border border-zinc-700/80 text-zinc-100 placeholder-zinc-500 pl-11 pr-4 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-600/60"
+            className="w-full rounded-xl bg-white/80 border border-zinc-300/80 text-zinc-900 placeholder-zinc-500 pl-11 pr-4 py-2.5 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-600/60"
           />
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -291,7 +291,7 @@ export function MediaPage() {
       {error ? null : loading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           {[...Array(8)].map((_, i) => (
-            <div key={i} className="aspect-square rounded-2xl bg-zinc-900/40 border border-zinc-800/50 animate-pulse" />
+            <div key={i} className="aspect-square rounded-2xl bg-zinc-200 animate-pulse" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
@@ -337,11 +337,11 @@ export function MediaPage() {
 
       {/* Select-mode sticky action bar */}
       {selectMode && selectedIds.size > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 lg:left-64 z-30 border-t border-zinc-800 bg-zinc-950/95 backdrop-blur-md px-4 lg:px-8 py-4">
+        <div className="fixed bottom-0 left-0 right-0 lg:left-64 z-30 border-t border-zinc-200 bg-white/95 backdrop-blur-md px-4 lg:px-8 py-4">
           <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-medium text-zinc-200">{selectedIds.size} selected</p>
-              {generateError && <p className="text-xs text-red-400 mt-0.5">{generateError}</p>}
+              <p className="text-sm font-medium text-zinc-800">{selectedIds.size} selected</p>
+              {generateError && <p className="text-xs text-red-600 mt-0.5">{generateError}</p>}
             </div>
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>
@@ -350,7 +350,7 @@ export function MediaPage() {
               <Button variant="primary" onClick={handleAddToSlide} disabled={generating}>
                 {generating ? (
                   <>
-                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span className="w-4 h-4 border-2 border-obsidian/30 border-t-obsidian rounded-full animate-spin" />
                     Adding…
                   </>
                 ) : (
@@ -411,8 +411,8 @@ export function MediaPage() {
       >
         <div className="flex flex-col gap-4">
           {deleteError && <Alert message={deleteError} />}
-          <p className="text-sm text-zinc-400 leading-relaxed">
-            Are you sure you want to delete <span className="font-semibold text-zinc-200">{deleteTarget?.name}</span>? This cannot be undone.
+          <p className="text-sm text-zinc-600 leading-relaxed">
+            Are you sure you want to delete <span className="font-semibold text-zinc-800">{deleteTarget?.name}</span>? This cannot be undone.
           </p>
         </div>
       </Modal>
@@ -429,7 +429,7 @@ function MediaPreview({ item }: { item: MediaItemWithUploader }) {
   const previewUrl = useSignedUrl(item.url);
 
   if (!previewUrl) {
-    return <div className="aspect-video rounded-xl bg-zinc-900/60 animate-pulse" />;
+    return <div className="aspect-video rounded-xl bg-zinc-200 animate-pulse" />;
   }
 
   if (item.type === 'video') {
@@ -449,8 +449,8 @@ function AudioPreview({ previewUrl }: { previewUrl: string }) {
 
   return (
     <div className="flex flex-col items-center gap-4 py-6">
-      <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-brand-900/40 to-brand-950/20 border border-brand-800/30 flex items-center justify-center">
-        <Music className="w-8 h-8 text-brand-400" />
+      <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-brand-100/70 to-brand-50/40 border border-brand-200/60 flex items-center justify-center">
+        <Music className="w-8 h-8 text-brand-600" />
       </div>
       <AudioVisualizer audioEl={audioEl} className="max-w-md" />
       <audio
@@ -509,15 +509,15 @@ function MediaCard({
       className={`p-0 overflow-hidden relative transition-all ${selected ? 'border-brand-500 ring-2 ring-brand-500/30' : ''} ${!selectMode ? 'cursor-pointer' : ''}`}
       onClick={handleCardClick}
     >
-      <div className="aspect-square bg-zinc-900/60 flex items-center justify-center relative">
+      <div className="aspect-square bg-white/60 flex items-center justify-center relative">
         {thumbUrl ? (
           <img src={thumbUrl} alt={item.name} className="w-full h-full object-cover" />
         ) : item.type === 'video' ? (
-          <Video className="w-8 h-8 text-zinc-600" />
+          <Video className="w-8 h-8 text-zinc-400" />
         ) : item.type === 'audio' ? (
-          <Music className="w-8 h-8 text-zinc-600" />
+          <Music className="w-8 h-8 text-zinc-400" />
         ) : (
-          <ImageIcon className="w-8 h-8 text-zinc-600" />
+          <ImageIcon className="w-8 h-8 text-zinc-400" />
         )}
 
         {copied && (
@@ -545,29 +545,29 @@ function MediaCard({
                 e.stopPropagation();
                 onToggleMenu();
               }}
-              className="p-1.5 rounded-lg bg-black/50 text-zinc-200 hover:bg-black/70 transition-all"
+              className="p-1.5 rounded-lg bg-black/50 text-zinc-800 hover:bg-black/70 transition-all"
             >
               <MoreVertical className="w-3.5 h-3.5" />
             </button>
             {menuOpen && (
               <>
                 <div className="fixed inset-0 z-0" onClick={(e) => { e.stopPropagation(); onCloseMenu(); }} />
-                <div className="absolute right-0 mt-1 w-36 bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl z-20 py-1 overflow-hidden">
+                <div className="absolute right-0 mt-1 w-36 bg-white border border-zinc-200 rounded-xl shadow-xl z-20 py-1 overflow-hidden">
                   <button
                     onClick={(e) => { e.stopPropagation(); onRename(); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800 transition-colors"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-zinc-700 hover:bg-zinc-100 transition-colors"
                   >
                     <Pencil className="w-3.5 h-3.5" /> Rename
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); onCopyUrl(); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800 transition-colors"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-zinc-700 hover:bg-zinc-100 transition-colors"
                   >
                     <LinkIcon className="w-3.5 h-3.5" /> Copy URL
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-400 hover:bg-zinc-800 transition-colors"
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-600 hover:bg-zinc-100 transition-colors"
                   >
                     <Trash2 className="w-3.5 h-3.5" /> Delete
                   </button>
@@ -579,7 +579,7 @@ function MediaCard({
       </div>
 
       <div className="p-3">
-        <p className="text-xs font-medium text-zinc-200 truncate mb-1">{item.name}</p>
+        <p className="text-xs font-medium text-zinc-800 truncate mb-1">{item.name}</p>
         <div className="flex items-center gap-1.5 mb-2 flex-wrap">
           <Badge variant={item.type === 'video' ? 'info' : item.type === 'audio' ? 'warning' : 'default'}>{item.type}</Badge>
           {item.folder && <Badge variant="default">{item.folder}</Badge>}

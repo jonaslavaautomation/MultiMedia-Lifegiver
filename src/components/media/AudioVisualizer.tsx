@@ -110,5 +110,5 @@ export function AudioVisualizer({ audioEl, className = '' }: AudioVisualizerProp
     };
   }, [audioEl]);
 
-  return <canvas ref={canvasRef} className={`w-full h-24 rounded-xl bg-zinc-950/60 ${className}`} />;
+  return <canvas ref={canvasRef} className={`w-full h-24 rounded-xl bg-zinc-100 ${className}`} />;
 }

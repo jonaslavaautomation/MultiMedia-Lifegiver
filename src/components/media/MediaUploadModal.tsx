@@ -88,7 +88,7 @@ export function MediaUploadModal({ open, onClose, onUploaded }: MediaUploadModal
     <Modal open={open} onClose={handleClose} title="Upload Media">
       <div className="flex flex-col gap-4">
         <div>
-          <label className="block text-sm font-medium text-zinc-300 mb-1.5">Folder</label>
+          <label className="block text-sm font-medium text-zinc-700 mb-1.5">Folder</label>
           <div className="flex flex-wrap gap-2">
             {MEDIA_FOLDERS.map((f) => (
               <Button
@@ -117,11 +117,11 @@ export function MediaUploadModal({ open, onClose, onUploaded }: MediaUploadModal
           }}
           onClick={() => inputRef.current?.click()}
           className={`flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-8 text-center cursor-pointer transition-all ${
-            dragOver ? 'border-brand-500 bg-brand-950/20' : 'border-zinc-800 hover:border-zinc-700'
+            dragOver ? 'border-brand-500 bg-brand-50' : 'border-zinc-200 hover:border-zinc-300'
           }`}
         >
           <Upload className="w-6 h-6 text-zinc-500" />
-          <p className="text-sm text-zinc-300">Drag & drop images, videos, or audio here</p>
+          <p className="text-sm text-zinc-700">Drag & drop images, videos, or audio here</p>
           <p className="text-xs text-zinc-500">
             or click to browse — images up to 10MB, video up to 200MB, audio up to 50MB
           </p>
@@ -141,7 +141,7 @@ export function MediaUploadModal({ open, onClose, onUploaded }: MediaUploadModal
         {queue.length > 0 && (
           <div className="flex flex-col gap-2 max-h-56 overflow-y-auto">
             {queue.map((item) => (
-              <div key={item.id} className="flex items-center gap-3 px-3 py-2 rounded-xl bg-zinc-900/60 border border-zinc-800/80">
+              <div key={item.id} className="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/60 border border-zinc-200/80">
                 {item.file.type.startsWith('video') ? (
                   <Video className="w-4 h-4 text-zinc-500 shrink-0" />
                 ) : item.file.type.startsWith('audio') ? (
@@ -150,8 +150,8 @@ export function MediaUploadModal({ open, onClose, onUploaded }: MediaUploadModal
                   <ImageIcon className="w-4 h-4 text-zinc-500 shrink-0" />
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs text-zinc-300 truncate">{item.file.name}</p>
-                  {item.status === 'error' && <p className="text-[11px] text-red-400 truncate">{item.error}</p>}
+                  <p className="text-xs text-zinc-700 truncate">{item.file.name}</p>
+                  {item.status === 'error' && <p className="text-[11px] text-red-600 truncate">{item.error}</p>}
                 </div>
                 {item.status === 'uploading' && <Loader2 className="w-4 h-4 text-zinc-500 animate-spin shrink-0" />}
                 {item.status === 'done' && <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />}

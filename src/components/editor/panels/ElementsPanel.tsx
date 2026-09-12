@@ -32,10 +32,10 @@ export function ElementsPanel({ canvas, markDirty, refreshSelection }: ElementsP
             key={shape.kind}
             type="button"
             onClick={() => addShape(shape.kind)}
-            className="flex flex-col items-center gap-2 py-5 rounded-xl bg-zinc-900/60 border border-zinc-800/80 hover:border-brand-600/60 hover:bg-brand-950/20 transition-all"
+            className="flex flex-col items-center gap-2 py-5 rounded-xl bg-white/60 border border-zinc-200/80 hover:border-brand-600/60 hover:bg-brand-50 transition-all"
           >
             <Icon className="w-6 h-6 text-brand-400" strokeWidth={1.75} />
-            <span className="text-xs text-zinc-400">{shape.label}</span>
+            <span className="text-xs text-zinc-600">{shape.label}</span>
           </button>
         );
       })}

@@ -14,7 +14,7 @@ const OPTIONS: { value: TextAlign; icon: typeof AlignLeft }[] = [
 
 export function AlignmentButtonGroup({ value, onChange }: AlignmentButtonGroupProps) {
   return (
-    <div className="flex items-center rounded-lg border border-zinc-800 overflow-hidden">
+    <div className="flex items-center rounded-lg border border-zinc-200 overflow-hidden">
       {OPTIONS.map(({ value: align, icon: Icon }) => (
         <button
           key={align}
@@ -22,7 +22,7 @@ export function AlignmentButtonGroup({ value, onChange }: AlignmentButtonGroupPr
           title={`Align ${align}`}
           onClick={() => onChange(align)}
           className={`p-1.5 transition-all ${
-            value === align ? 'bg-brand-900/50 text-brand-400' : 'text-zinc-400 hover:bg-zinc-800'
+            value === align ? 'bg-brand-100 text-brand-600' : 'text-zinc-600 hover:bg-zinc-100'
           }`}
         >
           <Icon className="w-3.5 h-3.5" />
