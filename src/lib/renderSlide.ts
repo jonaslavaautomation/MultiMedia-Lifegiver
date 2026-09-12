@@ -2,10 +2,14 @@ import type { StaticCanvas } from 'fabric';
 import type { SlideCanvasData } from '@/types';
 import { applyImageBackground, clearBackgroundForVideo } from '@/lib/fabricObjects';
 import { getMediaInfoById } from '@/lib/mediaStorage';
+import { getMotionPresetById } from '@/lib/motionLibrary';
+import type { MotionPreset } from '@/types/motion';
 
 export interface RenderSlideResult {
   /** Set when the slide's background is a video — the caller renders it as a real <video> element behind the canvas. */
   videoBackgroundUrl: string | null;
+  /** Set when the slide's background is a built-in Motion Background Library preset — the caller renders it via <MotionBackgroundPlayer> behind the canvas. */
+  motionBackground: MotionPreset | null;
 }
 
 /**
@@ -25,12 +29,23 @@ export interface RenderSlideResult {
 export async function resolveAndRenderSlide(canvas: StaticCanvas, content: SlideCanvasData): Promise<RenderSlideResult> {
   await canvas.loadFromJSON(content);
 
+  // A built-in Motion Background Library preset — no network lookup at
+  // all, just resolve the id against the bundled catalog.
+  const motionId = content.meta?.backgroundMotionId ?? null;
+  if (motionId && !canvas.backgroundImage) {
+    const preset = getMotionPresetById(motionId);
+    if (preset) {
+      clearBackgroundForVideo(canvas); // same "transparent canvas, something else paints behind it" treatment as video
+      return { videoBackgroundUrl: null, motionBackground: preset };
+    }
+  }
+
   // A pasted external video URL (not an uploaded Media item) takes priority
   // — it needs no Supabase lookup, just point a <video> at it directly.
   const embedUrl = content.meta?.backgroundVideoEmbedUrl ?? null;
   if (embedUrl && !canvas.backgroundImage) {
     clearBackgroundForVideo(canvas);
-    return { videoBackgroundUrl: embedUrl };
+    return { videoBackgroundUrl: embedUrl, motionBackground: null };
   }
 
   const bgMediaId = content.meta?.backgroundMediaId ?? null;
@@ -38,12 +53,12 @@ export async function resolveAndRenderSlide(canvas: StaticCanvas, content: Slide
     const info = await getMediaInfoById(bgMediaId);
     if (info?.type === 'video') {
       clearBackgroundForVideo(canvas);
-      return { videoBackgroundUrl: info.url };
+      return { videoBackgroundUrl: info.url, motionBackground: null };
     }
     if (info?.url) {
       await applyImageBackground(canvas, info.url);
     }
   }
 
-  return { videoBackgroundUrl: null };
+  return { videoBackgroundUrl: null, motionBackground: null };
 }

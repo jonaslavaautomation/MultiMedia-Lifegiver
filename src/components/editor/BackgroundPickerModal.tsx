@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Link2 } from 'lucide-react';
+import { Link2, Sparkles } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { MediaPicker } from '@/components/media/MediaPicker';
+import { MotionLibraryPanel } from '@/components/motion/MotionLibraryPanel';
 import { COLOR_SWATCHES } from '@/lib/editorConstants';
 import type { MediaItem } from '@/types';
 
@@ -14,13 +15,15 @@ interface BackgroundPickerModalProps {
   onPickMedia: (item: MediaItem) => void;
   /** Called with a pasted direct video file URL (a "live motion" background not uploaded to Media). */
   onPickEmbedUrl: (url: string) => void;
+  /** Called with a built-in Motion Background Library preset id. */
+  onPickMotion: (motionId: string) => void;
 }
 
-type Tab = 'color' | 'media' | 'embed';
+type Tab = 'color' | 'media' | 'motion' | 'embed';
 
 const VIDEO_URL_PATTERN = /\.(mp4|webm|ogg|mov)(\?.*)?$/i;
 
-export function BackgroundPickerModal({ open, onClose, onPickColor, onPickMedia, onPickEmbedUrl }: BackgroundPickerModalProps) {
+export function BackgroundPickerModal({ open, onClose, onPickColor, onPickMedia, onPickEmbedUrl, onPickMotion }: BackgroundPickerModalProps) {
   const [tab, setTab] = useState<Tab>('color');
   const [customColor, setCustomColor] = useState('#09090b');
   const [embedUrl, setEmbedUrl] = useState('');
@@ -48,6 +51,9 @@ export function BackgroundPickerModal({ open, onClose, onPickColor, onPickMedia,
           </Button>
           <Button variant={tab === 'media' ? 'primary' : 'outline'} size="sm" onClick={() => setTab('media')}>
             Media
+          </Button>
+          <Button variant={tab === 'motion' ? 'primary' : 'outline'} size="sm" onClick={() => setTab('motion')}>
+            <Sparkles className="w-3.5 h-3.5" /> Motion
           </Button>
           <Button variant={tab === 'embed' ? 'primary' : 'outline'} size="sm" onClick={() => setTab('embed')}>
             <Link2 className="w-3.5 h-3.5" /> Embed URL
@@ -107,6 +113,13 @@ export function BackgroundPickerModal({ open, onClose, onPickColor, onPickMedia,
               }
             }}
             onCancel={onClose}
+          />
+        ) : tab === 'motion' ? (
+          <MotionLibraryPanel
+            onSelect={(motionId) => {
+              onPickMotion(motionId);
+              onClose();
+            }}
           />
         ) : (
           <div className="flex flex-col gap-3">

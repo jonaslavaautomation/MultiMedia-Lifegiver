@@ -14,6 +14,8 @@ import {
 import { resolveAndRenderSlide } from '@/lib/renderSlide';
 import { createBlankSlideContent, isEmptySlideContent } from '@/lib/slideContent';
 import { getMediaSignedUrl } from '@/lib/mediaStorage';
+import { getMotionPresetById } from '@/lib/motionLibrary';
+import type { MotionPreset } from '@/types/motion';
 import { AUTOSAVE_DELAY_MS, DEFAULT_SLIDE_BACKGROUND_COLOR } from '@/lib/editorConstants';
 import { EditorToolbar } from '@/components/editor/EditorToolbar';
 import { EditorCanvasStage } from '@/components/editor/EditorCanvasStage';
@@ -47,6 +49,7 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [backgroundOpen, setBackgroundOpen] = useState(false);
   const [backgroundVideoUrl, setBackgroundVideoUrl] = useState<string | null>(null);
+  const [backgroundMotion, setBackgroundMotion] = useState<MotionPreset | null>(null);
   const [activePanel, setActivePanel] = useState<EditorPanelKind | null>(null);
 
   const { containerRef, canvasElRef, canvas } = useFabricCanvas({ backgroundColor: DEFAULT_SLIDE_BACKGROUND_COLOR });
@@ -67,6 +70,7 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
   const dirtyRef = useRef(false);
   const backgroundMediaIdRef = useRef<string | null>(null);
   const backgroundVideoEmbedUrlRef = useRef<string | null>(null);
+  const backgroundMotionIdRef = useRef<string | null>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchSlides = useCallback(async () => {
@@ -107,7 +111,7 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
 
     setSaveStatus('saving');
     const slideId = currentSlideIdRef.current;
-    const content = serializeSlide(canvas, backgroundMediaIdRef.current, backgroundVideoEmbedUrlRef.current);
+    const content = serializeSlide(canvas, backgroundMediaIdRef.current, backgroundVideoEmbedUrlRef.current, backgroundMotionIdRef.current);
 
     const { error } = await supabase
       .from('slides')
@@ -264,16 +268,20 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
         applySolidBackground(canvas!, DEFAULT_SLIDE_BACKGROUND_COLOR);
         backgroundMediaIdRef.current = null;
         backgroundVideoEmbedUrlRef.current = null;
+        backgroundMotionIdRef.current = null;
         setBackgroundVideoUrl(null);
+        setBackgroundMotion(null);
       } else {
         // Shared with the read-only Present-mode renderer (src/lib/renderSlide.ts)
         // so the two never render a slide differently from each other.
-        const { videoBackgroundUrl } = await resolveAndRenderSlide(canvas!, content);
+        const { videoBackgroundUrl, motionBackground } = await resolveAndRenderSlide(canvas!, content);
         if (cancelled) return;
 
         backgroundMediaIdRef.current = content.meta?.backgroundMediaId ?? null;
         backgroundVideoEmbedUrlRef.current = content.meta?.backgroundVideoEmbedUrl ?? null;
+        backgroundMotionIdRef.current = content.meta?.backgroundMotionId ?? null;
         setBackgroundVideoUrl(videoBackgroundUrl);
+        setBackgroundMotion(motionBackground);
         canvas!.requestRenderAll();
       }
 
@@ -350,7 +358,7 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
       if (canvas) {
         latestSource = {
           ...source,
-          content: serializeSlide(canvas, backgroundMediaIdRef.current, backgroundVideoEmbedUrlRef.current),
+          content: serializeSlide(canvas, backgroundMediaIdRef.current, backgroundVideoEmbedUrlRef.current, backgroundMotionIdRef.current),
           background_id: backgroundMediaIdRef.current,
         };
       }
@@ -417,7 +425,9 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
     applySolidBackground(canvas, hex);
     backgroundMediaIdRef.current = null;
     backgroundVideoEmbedUrlRef.current = null;
+    backgroundMotionIdRef.current = null;
     setBackgroundVideoUrl(null);
+    setBackgroundMotion(null);
     markDirty();
   }
 
@@ -440,6 +450,8 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
 
     backgroundMediaIdRef.current = item.id;
     backgroundVideoEmbedUrlRef.current = null;
+    backgroundMotionIdRef.current = null;
+    setBackgroundMotion(null);
     markDirty();
   }
 
@@ -449,6 +461,23 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
     setBackgroundVideoUrl(url);
     backgroundMediaIdRef.current = null;
     backgroundVideoEmbedUrlRef.current = url;
+    backgroundMotionIdRef.current = null;
+    setBackgroundMotion(null);
+    markDirty();
+  }
+
+  function handleBackgroundMotion(motionId: string) {
+    if (!canvas) return;
+    const preset = getMotionPresetById(motionId);
+    if (!preset) return;
+
+    clearBackgroundForVideo(canvas); // same "transparent canvas" treatment as video/embed backgrounds
+    setBackgroundMotion(preset);
+    setBackgroundVideoUrl(null);
+
+    backgroundMediaIdRef.current = null;
+    backgroundVideoEmbedUrlRef.current = null;
+    backgroundMotionIdRef.current = motionId;
     markDirty();
   }
 
@@ -516,6 +545,7 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
             saveStatus={saveStatus}
             loadingSlide={loadingSlide}
             backgroundVideoUrl={backgroundVideoUrl}
+            backgroundMotion={backgroundMotion}
           />
         </div>
       </div>
@@ -535,6 +565,7 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
         onPickColor={handleBackgroundColor}
         onPickMedia={handleBackgroundMedia}
         onPickEmbedUrl={handleBackgroundEmbedUrl}
+        onPickMotion={handleBackgroundMotion}
       />
     </div>
   );

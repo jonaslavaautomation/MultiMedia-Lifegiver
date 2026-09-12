@@ -1,5 +1,7 @@
 import { Loader2 } from 'lucide-react';
+import { MotionBackgroundPlayer } from '@/components/motion/MotionBackgroundPlayer';
 import type { SaveStatus } from '@/types/editor';
+import type { MotionPreset } from '@/types/motion';
 
 interface EditorCanvasStageProps {
   containerRef: (node: HTMLDivElement | null) => void;
@@ -7,6 +9,7 @@ interface EditorCanvasStageProps {
   saveStatus: SaveStatus;
   loadingSlide: boolean;
   backgroundVideoUrl?: string | null;
+  backgroundMotion?: MotionPreset | null;
 }
 
 const STATUS_LABEL: Record<SaveStatus, string> = {
@@ -17,7 +20,7 @@ const STATUS_LABEL: Record<SaveStatus, string> = {
   error: 'Failed to save',
 };
 
-export function EditorCanvasStage({ containerRef, canvasElRef, saveStatus, loadingSlide, backgroundVideoUrl }: EditorCanvasStageProps) {
+export function EditorCanvasStage({ containerRef, canvasElRef, saveStatus, loadingSlide, backgroundVideoUrl, backgroundMotion }: EditorCanvasStageProps) {
   return (
     <div className="flex-1 flex flex-col min-w-0">
       <div className="flex items-center justify-end px-1 pb-2">
@@ -48,6 +51,9 @@ export function EditorCanvasStage({ containerRef, canvasElRef, saveStatus, loadi
           className="relative w-full max-w-full rounded-2xl border border-zinc-200 bg-white overflow-hidden shadow-xl shadow-zinc-400/30"
           style={{ aspectRatio: '16 / 9' }}
         >
+          {backgroundMotion && (
+            <MotionBackgroundPlayer key={backgroundMotion.id} preset={backgroundMotion} className="absolute inset-0" />
+          )}
           {backgroundVideoUrl && (
             <video
               key={backgroundVideoUrl}
@@ -59,7 +65,23 @@ export function EditorCanvasStage({ containerRef, canvasElRef, saveStatus, loadi
               className="absolute inset-0 w-full h-full object-cover"
             />
           )}
-          <canvas ref={canvasElRef} className="relative" />
+          {/*
+            This inner div's child list is intentionally static (always
+            exactly one `<canvas>`, never conditional) — Fabric.js takes
+            over the canvas element's *direct parent*, silently replacing
+            its child list with its own wrapper + upper-canvas outside
+            React's knowledge. If a conditionally-rendered sibling (the
+            motion/video backgrounds above, or the loading overlay below)
+            lived in that same parent, React would eventually try to
+            insertBefore/removeChild against a reference node Fabric had
+            already moved, throwing "not a child of this node". Giving
+            canvas an isolated, structurally-never-changing parent sidesteps
+            that entirely — React never needs to reconcile siblings inside
+            a subtree Fabric has silently rewritten.
+          */}
+          <div className="absolute inset-0">
+            <canvas ref={canvasElRef} className="relative" />
+          </div>
           {loadingSlide && (
             <div className="absolute inset-0 flex items-center justify-center bg-white/70">
               <Loader2 className="w-6 h-6 text-zinc-500 animate-spin" />

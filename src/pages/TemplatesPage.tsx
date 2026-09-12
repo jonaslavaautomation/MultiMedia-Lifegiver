@@ -503,7 +503,7 @@ function TemplateCard({ template, menuOpen, onToggleMenu, onCloseMenu, onPreview
       <div className="absolute top-2 right-2 z-10">
         <button
           onClick={(e) => { e.stopPropagation(); onToggleMenu(); }}
-          className="p-1.5 rounded-lg bg-black/50 text-zinc-800 hover:bg-black/70 transition-all"
+          className="p-1.5 rounded-lg bg-black/50 text-zinc-100 hover:bg-black/70 transition-all"
         >
           <MoreVertical className="w-3.5 h-3.5" />
         </button>

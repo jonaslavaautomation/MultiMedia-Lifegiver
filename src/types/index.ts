@@ -40,6 +40,12 @@ export interface SlideCanvasMeta {
    * exclusive with backgroundMediaId in practice — only one is ever set.
    */
   backgroundVideoEmbedUrl?: string | null;
+  /**
+   * A built-in Motion Background Library preset id (see src/lib/motionLibrary.ts).
+   * Mutually exclusive with backgroundMediaId/backgroundVideoEmbedUrl —
+   * only one background source is ever set at a time.
+   */
+  backgroundMotionId?: string | null;
 }
 
 export interface SlideCanvasData {
