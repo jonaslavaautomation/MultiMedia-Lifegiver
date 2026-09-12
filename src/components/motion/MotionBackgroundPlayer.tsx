@@ -5,7 +5,7 @@ import type { MotionPreset } from '@/types/motion';
 interface MotionBackgroundPlayerProps {
   preset: MotionPreset;
   className?: string;
-  /** false freezes on the first frame — used for grid thumbnails until hovered, and for `prefers-reduced-motion`. */
+  /** false freezes on the first frame — used for grid thumbnails until hovered. */
   animate?: boolean;
 }
 
@@ -25,13 +25,26 @@ interface MotionBackgroundPlayerProps {
  *  - The rAF loop pauses whenever the document tab is hidden
  *    (visibilitychange) and resumes with a corrected clock offset so the
  *    animation doesn't jump.
- *  - `animate=false` (or the OS `prefers-reduced-motion` setting) paints
- *    exactly one real frame and then stops ticking — but it keeps ticking
- *    *until* that first real paint lands, since a canvas's on-screen size
- *    isn't known synchronously (ResizeObserver's first callback is always
- *    asynchronous), so the very first animation-frame tick can easily see
- *    a 0×0 box. Stopping unconditionally there would mean some fraction of
- *    reduced-motion viewers simply never seeing anything painted at all.
+ *  - `animate=false` paints exactly one real frame and then stops ticking
+ *    — but it keeps ticking *until* that first real paint lands, since a
+ *    canvas's on-screen size isn't known synchronously (ResizeObserver's
+ *    first callback is always asynchronous), so the very first
+ *    animation-frame tick can easily see a 0×0 box. Stopping unconditionally
+ *    there would mean some fraction of `animate=false` callers simply never
+ *    seeing anything painted at all.
+ *
+ * Deliberately NOT auto-honoring the OS `prefers-reduced-motion` setting:
+ * a motion background is broadcast content the operator explicitly chose
+ * for the congregation to see on Projector/Stage — editorial content, like
+ * a video background (which this app already autoplays unconditionally,
+ * with no such gating) — not app-chrome UI motion (drawer slides, hover
+ * transitions) that accessibility guidance is actually about. Auto-freezing
+ * it to a still frame because *some machine's* OS toggle happens to be on
+ * would silently override that choice for everyone watching, which is
+ * exactly the "Go Live and the background doesn't move" bug this was.
+ * Callers that DO want it to respect that preference (or freeze for any
+ * other reason, e.g. the picker grid's at-rest thumbnails) pass
+ * `animate={false}` explicitly instead.
  */
 export function MotionBackgroundPlayer({ preset, className = '', animate = true }: MotionBackgroundPlayerProps) {
   const canvasElRef = useRef<HTMLCanvasElement | null>(null);
@@ -60,8 +73,7 @@ export function MotionBackgroundPlayer({ preset, className = '', animate = true 
     });
     resizeObserver.observe(container);
 
-    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    const shouldAnimate = animate && !reduceMotion;
+    const shouldAnimate = animate; // the only thing that decides continuous vs. one-shot — see file header for why prefers-reduced-motion isn't consulted here
 
     let startPerfMs = performance.now();
     let pausedAtSeconds = 0;
