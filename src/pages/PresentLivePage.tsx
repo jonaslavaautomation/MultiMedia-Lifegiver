@@ -12,6 +12,7 @@ import {
   Smartphone,
   Copy,
   Check,
+  Piano,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
@@ -19,10 +20,13 @@ import { Alert } from '@/components/ui/Alert';
 import { Modal } from '@/components/ui/Modal';
 import { useLiveChannel } from '@/hooks/useLiveChannel';
 import { useRealtimeLiveChannel } from '@/hooks/useRealtimeLiveChannel';
+import { useMidiController } from '@/hooks/useMidiController';
 import { SlideCanvasRenderer } from '@/components/live/SlideCanvasRenderer';
 import { TimerControl } from '@/components/live/TimerControl';
 import { BroadcastTelemetryBar } from '@/components/live/BroadcastTelemetryBar';
+import { HotkeyBindingsModal } from '@/components/live/HotkeyBindingsModal';
 import { startTimer, pauseTimer, resetTimer, setTimerMode, setCountdownDuration } from '@/lib/liveTimer';
+import { findActionForKey, findActionForMidiNote, loadHotkeyBindings, saveHotkeyBindings, type HotkeyBindings } from '@/lib/hotkeyBindings';
 import { INITIAL_TIMER_STATE, type LiveState, type TimerState } from '@/types/live';
 import type { Slide } from '@/types';
 
@@ -47,6 +51,8 @@ export function PresentLivePage() {
 
   const [remoteModalOpen, setRemoteModalOpen] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [hotkeyModalOpen, setHotkeyModalOpen] = useState(false);
+  const [hotkeyBindings, setHotkeyBindings] = useState<HotkeyBindings>(() => loadHotkeyBindings());
 
   const restoredRef = useRef(false);
   const { post, lastMessage } = useLiveChannel(id ?? '');
@@ -198,11 +204,22 @@ export function PresentLivePage() {
     postRemote({ type: 'state', state });
   }, [post, postRemote, buildState]);
 
-  // Keyboard shortcuts: -> / Space next, <- previous, B blackout.
+  // Keyboard shortcuts: -> / Space next, <- previous, B blackout — always
+  // on, plus any custom key a user has bound in MIDI & Hotkeys (checked
+  // first, so a custom binding never double-fires alongside a default).
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       const tag = document.activeElement?.tagName.toLowerCase();
       if (tag === 'input' || tag === 'textarea') return;
+
+      const customAction = findActionForKey(hotkeyBindings, e.key);
+      if (customAction) {
+        e.preventDefault();
+        if (customAction === 'next') goNext();
+        else if (customAction === 'previous') goPrev();
+        else toggleBlackout();
+        return;
+      }
 
       if (e.key === 'ArrowRight' || e.key === ' ') {
         e.preventDefault();
@@ -216,7 +233,23 @@ export function PresentLivePage() {
     }
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [goNext, goPrev, toggleBlackout]);
+  }, [goNext, goPrev, toggleBlackout, hotkeyBindings]);
+
+  // MIDI: a bound pad/note triggers the same shared callbacks as the UI
+  // buttons, keyboard shortcuts, and remote commands.
+  useMidiController({
+    onNoteOn: (note) => {
+      const action = findActionForMidiNote(hotkeyBindings, note);
+      if (action === 'next') goNext();
+      else if (action === 'previous') goPrev();
+      else if (action === 'clear') toggleBlackout();
+    },
+  });
+
+  function handleHotkeyBindingsChange(next: HotkeyBindings) {
+    setHotkeyBindings(next);
+    saveHotkeyBindings(next);
+  }
 
   function openWindow(kind: 'projector' | 'stage') {
     if (!id) return;
@@ -287,6 +320,9 @@ export function PresentLivePage() {
           </Button>
           <Button variant="outline" size="sm" onClick={() => setRemoteModalOpen(true)}>
             <Smartphone className="w-3.5 h-3.5" /> Remote Control
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setHotkeyModalOpen(true)}>
+            <Piano className="w-3.5 h-3.5" /> MIDI & Hotkeys
           </Button>
         </div>
       </div>
@@ -386,6 +422,13 @@ export function PresentLivePage() {
           </p>
         </div>
       </Modal>
+
+      <HotkeyBindingsModal
+        open={hotkeyModalOpen}
+        onClose={() => setHotkeyModalOpen(false)}
+        bindings={hotkeyBindings}
+        onChange={handleHotkeyBindingsChange}
+      />
     </div>
   );
 }
