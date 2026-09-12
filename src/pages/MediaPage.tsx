@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Image as ImageIcon,
   Video,
@@ -37,10 +37,17 @@ type FolderFilter = 'all' | string;
 
 export function MediaPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [items, setItems] = useState<MediaItemWithUploader[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(() => searchParams.get('q') ?? '');
+
+  // Arriving from the Command Palette with a search term already chosen.
+  useEffect(() => {
+    const q = searchParams.get('q');
+    if (q) setSearch(q);
+  }, [searchParams]);
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [folderFilter, setFolderFilter] = useState<FolderFilter>('all');
   const [uploadOpen, setUploadOpen] = useState(false);

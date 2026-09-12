@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { BookOpen, Sparkles, X, Search, Copy, Check, ChevronDown } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Card } from '@/components/ui/Card';
@@ -18,6 +18,7 @@ function verseKey(book: string, chapter: number, verse: number): string {
 
 export function BiblePage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [selected, setSelected] = useState<SelectedVerse[]>([]);
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
@@ -29,8 +30,8 @@ export function BiblePage() {
   const [translationMenuOpen, setTranslationMenuOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  function handleReferenceSearch() {
-    const parsed = parseReference(searchRef, BIBLE_BOOKS);
+  function handleReferenceSearch(raw: string = searchRef) {
+    const parsed = parseReference(raw, BIBLE_BOOKS);
     if (!parsed) {
       setSearchError('Could not understand that reference. Try something like "John 3:16".');
       return;
@@ -38,6 +39,16 @@ export function BiblePage() {
     setSearchError(null);
     setJumpTo(parsed);
   }
+
+  // Arriving from the Command Palette (Cmd/Ctrl+K) with a reference already
+  // typed there — jump straight to it instead of making the user retype it.
+  useEffect(() => {
+    const incoming = (location.state as { query?: string } | null)?.query;
+    if (!incoming) return;
+    setSearchRef(incoming);
+    handleReferenceSearch(incoming);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function isSelected(book: string, chapter: number, verse: number): boolean {
     const key = verseKey(book, chapter, verse);
@@ -185,7 +196,7 @@ export function BiblePage() {
           <Button
             variant="secondary"
             size="sm"
-            onClick={handleReferenceSearch}
+            onClick={() => handleReferenceSearch()}
             className="absolute right-1.5 top-1/2 -translate-y-1/2"
           >
             Go
