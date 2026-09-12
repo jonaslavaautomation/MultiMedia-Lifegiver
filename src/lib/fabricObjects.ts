@@ -10,10 +10,28 @@ import { DEFAULT_SLIDE_BACKGROUND_COLOR, DEFAULT_TEXT_PROPS, SLIDE_HEIGHT, SLIDE
  */
 
 /** Every object we create gets a stable id so selection tracking survives serialize/reload. */
-function assignId(object: FabricObject): string {
+export function assignId(object: FabricObject): string {
   const id = crypto.randomUUID();
   object.set('id', id);
   return id;
+}
+
+/** Deletes the current selection (one or many objects) — shared by the Delete/Backspace shortcut and the floating toolbar's Delete button, so the two can never diverge in behavior. */
+export function deleteActiveObjects(canvas: Canvas): void {
+  const active = canvas.getActiveObjects();
+  if (active.length === 0) return;
+  active.forEach((obj) => canvas.remove(obj));
+  canvas.discardActiveObject();
+  canvas.requestRenderAll();
+}
+
+/** Applies a color to the current selection's fill (or stroke, for a Line) — shared by the Brand panel and the floating toolbar's shape color picker. */
+export function applyShapeColor(canvas: Canvas, hex: string): void {
+  const active = canvas.getActiveObject();
+  if (!active) return;
+  if (active.type === 'line') active.set({ stroke: hex });
+  else active.set({ fill: hex });
+  canvas.requestRenderAll();
 }
 
 interface CreateTextOptions {
@@ -159,6 +177,19 @@ export async function applyImageBackground(canvas: StaticCanvas, url: string): P
 export function clearBackgroundImage(canvas: StaticCanvas): void {
   canvas.backgroundImage = undefined;
   canvas.backgroundColor = DEFAULT_SLIDE_BACKGROUND_COLOR;
+  canvas.requestRenderAll();
+}
+
+/**
+ * Clears the canvas's own paintable background so a real <video> element
+ * stacked behind it (by the caller — EditorCanvasStage/SlideCanvasRenderer)
+ * shows through. Video isn't composited into the Fabric canvas itself (see
+ * renderSlide.ts), so every "this slide's background is a video" path needs
+ * this exact same transparent-canvas setup.
+ */
+export function clearBackgroundForVideo(canvas: StaticCanvas): void {
+  canvas.backgroundImage = undefined;
+  canvas.backgroundColor = 'transparent';
   canvas.requestRenderAll();
 }
 

@@ -1,8 +1,8 @@
 import { ImagePlus } from 'lucide-react';
-import type { Canvas, FabricObject } from 'fabric';
+import type { Canvas } from 'fabric';
 import { Button } from '@/components/ui/Button';
 import { COLOR_SWATCHES } from '@/lib/editorConstants';
-import { createImageObjectFromUrl } from '@/lib/fabricObjects';
+import { applyShapeColor, createImageObjectFromUrl } from '@/lib/fabricObjects';
 import type { SelectedObjectSnapshot } from '@/types/editor';
 
 interface BrandPanelProps {
@@ -18,15 +18,7 @@ export function BrandPanel({ canvas, selection, markDirty, refreshSelection }: B
 
   function applyColor(hex: string) {
     if (!canvas || !colorable) return;
-    const active = canvas.getActiveObject();
-    if (!active) return;
-
-    if (active.type === 'line') {
-      active.set({ stroke: hex });
-    } else {
-      (active as FabricObject & { fill?: string }).set({ fill: hex });
-    }
-    canvas.requestRenderAll();
+    applyShapeColor(canvas, hex);
     markDirty();
     refreshSelection();
   }

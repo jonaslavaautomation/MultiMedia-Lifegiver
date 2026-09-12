@@ -66,7 +66,13 @@ export function useMidiController({ onNoteOn }: UseMidiControllerParams = {}): U
           input.addEventListener('midimessage', handleMidiMessage);
           attachedInputs.add(input);
         }
-        list.push({ id: input.id, name: input.name ?? 'MIDI Device' });
+        // The Web MIDI spec never removes an unplugged port from
+        // `midiAccess.inputs` — it just flips to state 'disconnected'. Without
+        // this filter, unplugging a controller mid-service would leave the
+        // bindings modal claiming it's still connected indefinitely.
+        if (input.state === 'connected') {
+          list.push({ id: input.id, name: input.name ?? 'MIDI Device' });
+        }
       });
       if (!cancelled) setDevices(list);
     }

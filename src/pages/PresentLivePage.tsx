@@ -237,9 +237,15 @@ export function PresentLivePage() {
   }, [goNext, goPrev, toggleBlackout, hotkeyBindings]);
 
   // MIDI: a bound pad/note triggers the same shared callbacks as the UI
-  // buttons, keyboard shortcuts, and remote commands.
+  // buttons, keyboard shortcuts, and remote commands. Suppressed while the
+  // MIDI & Hotkeys modal is open — same class of bug as the keyboard
+  // double-fire fixed earlier (pressing a pad to *bind* it would also
+  // immediately trigger the action), but MIDI messages have no DOM event
+  // to stopPropagation on, so this listener just stands down entirely
+  // while the modal's own "learning" listener is the one that should react.
   useMidiController({
     onNoteOn: (note) => {
+      if (hotkeyModalOpen) return;
       const action = findActionForMidiNote(hotkeyBindings, note);
       if (action === 'next') goNext();
       else if (action === 'previous') goPrev();
