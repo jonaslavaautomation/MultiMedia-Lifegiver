@@ -17,6 +17,7 @@ const TYPE_BADGE_VARIANT: Record<SongSection['type'], 'default' | 'success' | 'w
   verse: 'info',
   'pre-chorus': 'warning',
   chorus: 'success',
+  refrain: 'success',
   bridge: 'danger',
   tag: 'default',
   outro: 'default',

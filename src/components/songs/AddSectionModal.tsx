@@ -8,7 +8,7 @@ interface AddSectionModalProps {
   onAdd: (type: SongSectionType) => void;
 }
 
-const SECTION_TYPES: SongSectionType[] = ['intro', 'verse', 'pre-chorus', 'chorus', 'bridge', 'tag', 'outro'];
+const SECTION_TYPES: SongSectionType[] = ['intro', 'verse', 'pre-chorus', 'chorus', 'refrain', 'bridge', 'tag', 'outro'];
 
 export function AddSectionModal({ open, onClose, onAdd }: AddSectionModalProps) {
   return (
