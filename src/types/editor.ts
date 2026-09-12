@@ -23,6 +23,11 @@ export type SelectedObjectSnapshot =
       id: string;
     }
   | {
+      kind: 'shape';
+      id: string;
+      fill: string;
+    }
+  | {
       kind: 'multiple';
       count: number;
     };

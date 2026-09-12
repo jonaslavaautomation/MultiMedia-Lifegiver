@@ -1,4 +1,4 @@
-import { Canvas, FabricImage, StaticCanvas, Textbox, type FabricObject } from 'fabric';
+import { Canvas, Circle, FabricImage, Line, Rect, StaticCanvas, Textbox, type FabricObject } from 'fabric';
 import type { SlideCanvasData } from '@/types';
 import { DEFAULT_SLIDE_BACKGROUND_COLOR, DEFAULT_TEXT_PROPS, SLIDE_HEIGHT, SLIDE_WIDTH } from '@/lib/editorConstants';
 
@@ -76,6 +76,56 @@ export async function createImageObjectFromUrl(
   canvas.setActiveObject(img);
   canvas.requestRenderAll();
   return img;
+}
+
+export type ShapeKind = 'rectangle' | 'circle' | 'line';
+
+/** Inserts a basic shape (Elements panel) centered on the slide, in the current brand accent color. */
+export function createShapeObject(canvas: Canvas, kind: ShapeKind): FabricObject {
+  let shape: FabricObject;
+
+  if (kind === 'rectangle') {
+    shape = new Rect({
+      left: SLIDE_WIDTH / 2 - 200,
+      top: SLIDE_HEIGHT / 2 - 120,
+      width: 400,
+      height: 240,
+      fill: '#2f8271',
+      rx: 12,
+      ry: 12,
+    });
+  } else if (kind === 'circle') {
+    shape = new Circle({
+      left: SLIDE_WIDTH / 2 - 150,
+      top: SLIDE_HEIGHT / 2 - 150,
+      radius: 150,
+      fill: '#2f8271',
+    });
+  } else {
+    shape = new Line([SLIDE_WIDTH / 2 - 250, SLIDE_HEIGHT / 2, SLIDE_WIDTH / 2 + 250, SLIDE_HEIGHT / 2], {
+      stroke: '#82b354',
+      strokeWidth: 8,
+    });
+  }
+
+  assignId(shape);
+  canvas.add(shape);
+  canvas.setActiveObject(shape);
+  canvas.requestRenderAll();
+  return shape;
+}
+
+/** Layer ordering for the currently-selected object(s) — Bring Forward / Send Backward / Front / Back. */
+export function reorderActiveObject(canvas: Canvas, direction: 'forward' | 'backward' | 'front' | 'back'): void {
+  const active = canvas.getActiveObject();
+  if (!active) return;
+
+  if (direction === 'forward') canvas.bringObjectForward(active);
+  else if (direction === 'backward') canvas.sendObjectBackwards(active);
+  else if (direction === 'front') canvas.bringObjectToFront(active);
+  else canvas.sendObjectToBack(active);
+
+  canvas.requestRenderAll();
 }
 
 // The next three operate on StaticCanvas (Fabric's non-interactive base

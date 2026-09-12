@@ -24,6 +24,15 @@ function snapshotFor(object: FabricObject | undefined): SelectedObjectSnapshot |
     return { kind: 'image', id: String(object.get('id') ?? '') };
   }
 
+  if (object.type === 'rect' || object.type === 'circle' || object.type === 'line') {
+    const fill = 'stroke' in object && object.type === 'line' ? object.stroke : object.fill;
+    return {
+      kind: 'shape',
+      id: String(object.get('id') ?? ''),
+      fill: typeof fill === 'string' ? fill : '#2f8271',
+    };
+  }
+
   return null;
 }
 

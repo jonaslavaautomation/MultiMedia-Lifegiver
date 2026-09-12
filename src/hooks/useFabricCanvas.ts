@@ -1,6 +1,26 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Canvas } from 'fabric';
+import { Canvas, FabricObject } from 'fabric';
 import { SLIDE_HEIGHT, SLIDE_WIDTH } from '@/lib/editorConstants';
+
+// Brand-teal selection styling (Canva-style accent outline + solid square
+// corner handles) instead of Fabric's default pale-blue look. A one-time
+// static default — safe to set globally since it only affects the visual
+// selection UI on an *interactive* Canvas; StaticCanvas (Present-mode,
+// filmstrip thumbnails) never shows selection controls regardless.
+let selectionStyleApplied = false;
+function applyBrandSelectionStyle() {
+  if (selectionStyleApplied) return;
+  selectionStyleApplied = true;
+  Object.assign(FabricObject.ownDefaults, {
+    borderColor: '#2f8271', // brand-500
+    cornerColor: '#2f8271',
+    cornerStrokeColor: '#ffffff',
+    cornerStyle: 'rect',
+    cornerSize: 10,
+    transparentCorners: false,
+    borderScaleFactor: 2,
+  });
+}
 
 interface UseFabricCanvasParams {
   backgroundColor: string;
@@ -43,6 +63,7 @@ export function useFabricCanvas({ backgroundColor }: UseFabricCanvasParams): Use
 
   useEffect(() => {
     if (!canvasEl) return;
+    applyBrandSelectionStyle();
 
     const instance = new Canvas(canvasEl, {
       width: SLIDE_WIDTH,

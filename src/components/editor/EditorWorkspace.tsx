@@ -16,8 +16,17 @@ import { AUTOSAVE_DELAY_MS, DEFAULT_SLIDE_BACKGROUND_COLOR } from '@/lib/editorC
 import { EditorToolbar } from '@/components/editor/EditorToolbar';
 import { EditorCanvasStage } from '@/components/editor/EditorCanvasStage';
 import { SlideFilmstrip } from '@/components/editor/SlideFilmstrip';
-import { AddImageModal } from '@/components/editor/AddImageModal';
 import { BackgroundPickerModal } from '@/components/editor/BackgroundPickerModal';
+import { EditorNavRail, type EditorPanelKind } from '@/components/editor/EditorNavRail';
+import { EditorAssetDrawer } from '@/components/editor/EditorAssetDrawer';
+import { FloatingContextualToolbar } from '@/components/editor/FloatingContextualToolbar';
+import { TemplatesPanel } from '@/components/editor/panels/TemplatesPanel';
+import { BiblePanel } from '@/components/editor/panels/BiblePanel';
+import { SongsPanel } from '@/components/editor/panels/SongsPanel';
+import { ElementsPanel } from '@/components/editor/panels/ElementsPanel';
+import { TextPanel } from '@/components/editor/panels/TextPanel';
+import { MediaPanel } from '@/components/editor/panels/MediaPanel';
+import { BrandPanel } from '@/components/editor/panels/BrandPanel';
 import { Alert } from '@/components/ui/Alert';
 import type { MediaItem, Slide } from '@/types';
 import type { SaveStatus } from '@/types/editor';
@@ -34,9 +43,9 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
   const [loadingSlide, setLoadingSlide] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [addImageOpen, setAddImageOpen] = useState(false);
   const [backgroundOpen, setBackgroundOpen] = useState(false);
   const [backgroundVideoUrl, setBackgroundVideoUrl] = useState<string | null>(null);
+  const [activePanel, setActivePanel] = useState<EditorPanelKind | null>(null);
 
   const { containerRef, canvasElRef, canvas } = useFabricCanvas({ backgroundColor: DEFAULT_SLIDE_BACKGROUND_COLOR });
   const { selection, refreshSelection } = useSelectedObject(canvas);
@@ -361,6 +370,16 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
     refreshSelection();
   }
 
+  async function handleInsertMediaItem(item: MediaItem) {
+    const signedUrl = await getMediaSignedUrl(item.url);
+    if (!signedUrl) {
+      setSaveError('Failed to load that image.');
+      setSaveStatus('error');
+      return;
+    }
+    await handleInsertImage(signedUrl, item.id);
+  }
+
   function handleBackgroundColor(hex: string) {
     if (!canvas) return;
     applySolidBackground(canvas, hex);
@@ -424,44 +443,64 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
     );
   }
 
+  function togglePanel(kind: EditorPanelKind) {
+    setActivePanel((current) => (current === kind ? null : kind));
+  }
+
+  function renderActivePanel() {
+    switch (activePanel) {
+      case 'templates':
+        return <TemplatesPanel />;
+      case 'bible':
+        return <BiblePanel canvas={canvas} markDirty={markDirty} refreshSelection={refreshSelection} />;
+      case 'songs':
+        return <SongsPanel canvas={canvas} markDirty={markDirty} refreshSelection={refreshSelection} />;
+      case 'elements':
+        return <ElementsPanel canvas={canvas} markDirty={markDirty} refreshSelection={refreshSelection} />;
+      case 'text':
+        return <TextPanel canvas={canvas} markDirty={markDirty} refreshSelection={refreshSelection} />;
+      case 'media':
+        return <MediaPanel onInsertItem={(item) => void handleInsertMediaItem(item)} onInsertUrl={(url) => void handleInsertImage(url)} />;
+      case 'brand':
+        return <BrandPanel canvas={canvas} selection={selection} markDirty={markDirty} refreshSelection={refreshSelection} />;
+      default:
+        return null;
+    }
+  }
+
   return (
-    <div className="mt-2 w-full">
-      <EditorToolbar
-        canvas={canvas}
-        selection={selection}
-        refreshSelection={refreshSelection}
-        markDirty={markDirty}
-        onOpenAddImage={() => setAddImageOpen(true)}
-        onOpenBackground={() => setBackgroundOpen(true)}
-        onSave={() => void flushSave()}
-        saving={saveStatus === 'saving'}
-      />
+    <div className="mt-2 w-full flex flex-col gap-4">
+      <EditorToolbar onOpenBackground={() => setBackgroundOpen(true)} onSave={() => void flushSave()} saving={saveStatus === 'saving'} />
 
-      {saveStatus === 'error' && (
-        <div className="mb-3">
-          <Alert message={saveError ?? 'Failed to save.'} onRetry={() => void flushSave()} />
+      {saveStatus === 'error' && <Alert message={saveError ?? 'Failed to save.'} onRetry={() => void flushSave()} />}
+
+      <div className="flex-1 flex gap-4 min-h-[560px]">
+        <EditorNavRail active={activePanel} onSelect={togglePanel} />
+        <EditorAssetDrawer activePanel={activePanel} onClose={() => setActivePanel(null)}>
+          {renderActivePanel()}
+        </EditorAssetDrawer>
+
+        <div className="flex-1 flex flex-col min-w-0">
+          <FloatingContextualToolbar canvas={canvas} selection={selection} refreshSelection={refreshSelection} markDirty={markDirty} />
+          <EditorCanvasStage
+            containerRef={containerRef}
+            canvasElRef={canvasElRef}
+            saveStatus={saveStatus}
+            loadingSlide={loadingSlide}
+            backgroundVideoUrl={backgroundVideoUrl}
+          />
         </div>
-      )}
-
-      <div className="flex flex-col lg:flex-row gap-4">
-        <EditorCanvasStage
-          containerRef={containerRef}
-          canvasElRef={canvasElRef}
-          saveStatus={saveStatus}
-          loadingSlide={loadingSlide}
-          backgroundVideoUrl={backgroundVideoUrl}
-        />
-        <SlideFilmstrip
-          slides={slides}
-          currentSlideId={currentSlideId}
-          onSelect={switchToSlide}
-          onAdd={handleAddSlide}
-          onDuplicate={handleDuplicateSlide}
-          onDelete={handleDeleteSlide}
-        />
       </div>
 
-      <AddImageModal open={addImageOpen} onClose={() => setAddImageOpen(false)} onInsert={handleInsertImage} />
+      <SlideFilmstrip
+        slides={slides}
+        currentSlideId={currentSlideId}
+        onSelect={switchToSlide}
+        onAdd={handleAddSlide}
+        onDuplicate={handleDuplicateSlide}
+        onDelete={handleDeleteSlide}
+      />
+
       <BackgroundPickerModal
         open={backgroundOpen}
         onClose={() => setBackgroundOpen(false)}

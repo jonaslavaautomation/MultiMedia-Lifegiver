@@ -35,28 +35,37 @@ export function EditorCanvasStage({ containerRef, canvasElRef, saveStatus, loadi
         </span>
       </div>
 
+      {/* Dotted-grid backdrop the 16:9 artboard sits on, Canva/Figma-style — gives the canvas a sense of "floating" on an infinite workspace. */}
       <div
-        ref={containerRef}
-        className="relative w-full rounded-2xl border border-zinc-800/80 bg-zinc-900/40 overflow-hidden"
-        style={{ aspectRatio: '16 / 9' }}
+        className="flex-1 min-h-0 rounded-2xl border border-zinc-800/60 bg-zinc-950/40 p-4 sm:p-8 flex items-center justify-center"
+        style={{
+          backgroundImage: 'radial-gradient(rgba(47, 130, 113, 0.35) 1px, transparent 1px)',
+          backgroundSize: '22px 22px',
+        }}
       >
-        {backgroundVideoUrl && (
-          <video
-            key={backgroundVideoUrl}
-            src={backgroundVideoUrl}
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-        )}
-        <canvas ref={canvasElRef} className="relative" />
-        {loadingSlide && (
-          <div className="absolute inset-0 flex items-center justify-center bg-zinc-950/60">
-            <Loader2 className="w-6 h-6 text-zinc-500 animate-spin" />
-          </div>
-        )}
+        <div
+          ref={containerRef}
+          className="relative w-full max-w-full rounded-2xl border border-zinc-800/80 bg-zinc-900/40 overflow-hidden shadow-2xl shadow-black/40"
+          style={{ aspectRatio: '16 / 9' }}
+        >
+          {backgroundVideoUrl && (
+            <video
+              key={backgroundVideoUrl}
+              src={backgroundVideoUrl}
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          )}
+          <canvas ref={canvasElRef} className="relative" />
+          {loadingSlide && (
+            <div className="absolute inset-0 flex items-center justify-center bg-zinc-950/60">
+              <Loader2 className="w-6 h-6 text-zinc-500 animate-spin" />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

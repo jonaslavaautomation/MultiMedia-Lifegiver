@@ -50,14 +50,14 @@ export function SlideFilmstrip({ slides, currentSlideId, onSelect, onAdd, onDupl
   }
 
   return (
-    <div className="flex flex-col gap-3 lg:w-44 lg:shrink-0">
+    <div className="flex items-center gap-3">
       {error && <Alert message={error} />}
 
-      <div className="flex lg:flex-col gap-3 overflow-x-auto lg:overflow-x-visible lg:overflow-y-auto lg:max-h-[560px] pb-1 lg:pb-0">
+      <div className="flex-1 flex gap-3 overflow-x-auto pb-1">
         {slides.map((slide, index) => (
           <div
             key={slide.id}
-            className={`group relative shrink-0 w-28 lg:w-full rounded-xl border cursor-pointer transition-all overflow-hidden ${
+            className={`group relative shrink-0 w-32 rounded-xl border cursor-pointer transition-all overflow-hidden ${
               slide.id === currentSlideId
                 ? 'border-brand-500 ring-2 ring-brand-500/30'
                 : 'border-zinc-800/80 hover:border-zinc-700'
@@ -103,7 +103,7 @@ export function SlideFilmstrip({ slides, currentSlideId, onSelect, onAdd, onDupl
         ))}
       </div>
 
-      <Button variant="outline" size="sm" onClick={() => run(onAdd)} disabled={busy} className="justify-center">
+      <Button variant="outline" size="sm" onClick={() => run(onAdd)} disabled={busy} className="shrink-0 justify-center">
         <Plus className="w-3.5 h-3.5" /> Add Slide
       </Button>
 
