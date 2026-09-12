@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { ColorPickerPopover } from '@/components/editor/ColorPickerPopover';
 import { FontFamilyPicker } from '@/components/editor/FontFamilyPicker';
 import { AlignmentButtonGroup } from '@/components/editor/AlignmentButtonGroup';
-import { reorderActiveObject } from '@/lib/fabricObjects';
+import { applyShapeColor, assignId, deleteActiveObjects, reorderActiveObject } from '@/lib/fabricObjects';
 import type { SelectedObjectSnapshot, TextAlign } from '@/types/editor';
 
 interface FloatingContextualToolbarProps {
@@ -36,11 +36,7 @@ export function FloatingContextualToolbar({ canvas, selection, refreshSelection,
 
   function applyShapeFill(hex: string) {
     if (!canvas || selection?.kind !== 'shape') return;
-    const active = canvas.getActiveObject();
-    if (!active) return;
-    if (active.type === 'line') active.set({ stroke: hex });
-    else active.set({ fill: hex });
-    canvas.requestRenderAll();
+    applyShapeColor(canvas, hex);
     markDirty();
     refreshSelection();
   }
@@ -51,7 +47,7 @@ export function FloatingContextualToolbar({ canvas, selection, refreshSelection,
     if (!active) return;
     const clone = await active.clone();
     clone.set({ left: (active.left ?? 0) + 40, top: (active.top ?? 0) + 40 });
-    clone.set('id', crypto.randomUUID());
+    assignId(clone);
     canvas.add(clone);
     canvas.setActiveObject(clone);
     canvas.requestRenderAll();
@@ -61,11 +57,7 @@ export function FloatingContextualToolbar({ canvas, selection, refreshSelection,
 
   function handleDelete() {
     if (!canvas) return;
-    const active = canvas.getActiveObjects();
-    if (active.length === 0) return;
-    active.forEach((obj) => canvas.remove(obj));
-    canvas.discardActiveObject();
-    canvas.requestRenderAll();
+    deleteActiveObjects(canvas);
     markDirty();
     refreshSelection();
   }

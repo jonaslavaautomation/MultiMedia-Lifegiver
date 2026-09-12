@@ -1,6 +1,6 @@
 import type { StaticCanvas } from 'fabric';
 import type { SlideCanvasData } from '@/types';
-import { applyImageBackground } from '@/lib/fabricObjects';
+import { applyImageBackground, clearBackgroundForVideo } from '@/lib/fabricObjects';
 import { getMediaInfoById } from '@/lib/mediaStorage';
 
 export interface RenderSlideResult {
@@ -29,8 +29,7 @@ export async function resolveAndRenderSlide(canvas: StaticCanvas, content: Slide
   // — it needs no Supabase lookup, just point a <video> at it directly.
   const embedUrl = content.meta?.backgroundVideoEmbedUrl ?? null;
   if (embedUrl && !canvas.backgroundImage) {
-    canvas.backgroundColor = 'transparent';
-    canvas.requestRenderAll();
+    clearBackgroundForVideo(canvas);
     return { videoBackgroundUrl: embedUrl };
   }
 
@@ -38,8 +37,7 @@ export async function resolveAndRenderSlide(canvas: StaticCanvas, content: Slide
   if (bgMediaId && !canvas.backgroundImage) {
     const info = await getMediaInfoById(bgMediaId);
     if (info?.type === 'video') {
-      canvas.backgroundColor = 'transparent';
-      canvas.requestRenderAll();
+      clearBackgroundForVideo(canvas);
       return { videoBackgroundUrl: info.url };
     }
     if (info?.url) {

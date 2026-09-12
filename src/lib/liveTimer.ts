@@ -35,8 +35,17 @@ export function resetTimer(timer: TimerState): TimerState {
   return { ...timer, running: false, startedAt: null, accumulatedMs: 0 };
 }
 
+/**
+ * Switches stopwatch/countdown mode, always stopping the timer in the
+ * process (not just clearing startedAt) — otherwise a caller that doesn't
+ * separately guard against changing mode while running (the local
+ * TimerControl UI does; the remote-command path in PresentLivePage does
+ * not) can end up with `running: true` and `startedAt: null`, which
+ * getElapsedMs reads as "stopped" while the state still claims to be
+ * running — the display freezes and a later pause loses time bookkeeping.
+ */
 export function setTimerMode(timer: TimerState, mode: TimerMode): TimerState {
-  return { ...timer, mode, startedAt: null, accumulatedMs: 0 };
+  return { ...timer, mode, running: false, startedAt: null, accumulatedMs: 0 };
 }
 
 export function setCountdownDuration(timer: TimerState, minutes: number): TimerState {

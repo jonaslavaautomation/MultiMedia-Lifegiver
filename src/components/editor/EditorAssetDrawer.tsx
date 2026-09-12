@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { X } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 import type { EditorPanelKind } from '@/components/editor/EditorNavRail';
 
 const PANEL_TITLES: Record<EditorPanelKind, string> = {
@@ -16,11 +16,14 @@ const PANEL_TITLES: Record<EditorPanelKind, string> = {
 interface EditorAssetDrawerProps {
   activePanel: EditorPanelKind | null;
   onClose: () => void;
+  /** True while a slide is mid-hydration — panel actions are blocked, since anything added to the
+   * canvas in that window would be silently discarded the instant the new slide's JSON finishes loading. */
+  loadingSlide?: boolean;
   children: ReactNode;
 }
 
 /** Collapsible secondary panel next to the Nav Rail — slides open/closed with the active tool's content. */
-export function EditorAssetDrawer({ activePanel, onClose, children }: EditorAssetDrawerProps) {
+export function EditorAssetDrawer({ activePanel, onClose, loadingSlide = false, children }: EditorAssetDrawerProps) {
   return (
     <AnimatePresence initial={false}>
       {activePanel && (
@@ -43,7 +46,14 @@ export function EditorAssetDrawer({ activePanel, onClose, children }: EditorAsse
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4">{children}</div>
+            <div className="relative flex-1 overflow-y-auto p-4">
+              {children}
+              {loadingSlide && (
+                <div className="absolute inset-0 flex items-center justify-center bg-zinc-900/70 backdrop-blur-[1px]">
+                  <Loader2 className="w-5 h-5 text-zinc-500 animate-spin" />
+                </div>
+              )}
+            </div>
           </div>
         </motion.div>
       )}

@@ -5,8 +5,10 @@ import { useSelectedObject } from '@/hooks/useSelectedObject';
 import {
   applyImageBackground,
   applySolidBackground,
+  clearBackgroundForVideo,
   createImageObjectFromUrl,
   createTextObject,
+  deleteActiveObjects,
   serializeSlide,
 } from '@/lib/fabricObjects';
 import { resolveAndRenderSlide } from '@/lib/renderSlide';
@@ -61,6 +63,7 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
   }, [currentSlideId]);
 
   const isLoadingSlideRef = useRef(false);
+  const switchingSlideRef = useRef(false);
   const dirtyRef = useRef(false);
   const backgroundMediaIdRef = useRef<string | null>(null);
   const backgroundVideoEmbedUrlRef = useRef<string | null>(null);
@@ -188,9 +191,7 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
       if (tag === 'input' || tag === 'textarea') return;
 
       e.preventDefault();
-      canvas.getActiveObjects().forEach((obj) => canvas.remove(obj));
-      canvas.discardActiveObject();
-      canvas.requestRenderAll();
+      deleteActiveObjects(canvas);
       markDirty();
       refreshSelection();
     }
@@ -215,6 +216,12 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
       const start = downPoint;
       downPoint = null;
       if (!start || opt.target) return;
+      // Guard against a click landing between hydrate()'s canvas.clear() and
+      // its loadFromJSON finishing — the loading overlay covers the canvas
+      // for this in the common case, but this is a cheap, direct guard
+      // against the underlying race (an object added here would otherwise
+      // be silently wiped out the instant the new slide's JSON loads).
+      if (isLoadingSlideRef.current) return;
 
       const dx = opt.scenePoint.x - start.x;
       const dy = opt.scenePoint.y - start.y;
@@ -291,9 +298,19 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
   // --- Slide navigation / CRUD ---------------------------------------------
 
   async function switchToSlide(nextId: string) {
-    if (nextId === currentSlideId) return;
-    if (dirtyRef.current) await flushSave();
-    setCurrentSlideId(nextId);
+    // Re-entrancy guard: without it, two quick clicks on different filmstrip
+    // thumbnails could both read the same stale dirtyRef.current === true and
+    // both call flushSave() concurrently (duplicate writes to the same slide
+    // row), with the final currentSlideId decided by whichever finishes last
+    // rather than the user's actual last click.
+    if (nextId === currentSlideId || switchingSlideRef.current) return;
+    switchingSlideRef.current = true;
+    try {
+      if (dirtyRef.current) await flushSave();
+      setCurrentSlideId(nextId);
+    } finally {
+      switchingSlideRef.current = false;
+    }
   }
 
   async function handleAddSlide() {
@@ -321,10 +338,25 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
   async function handleDuplicateSlide(id: string) {
     const source = slides.find((s) => s.id === id);
     if (!source) return;
-    if (id === currentSlideId && dirtyRef.current) await flushSave();
+
+    let latestSource = source;
+    if (id === currentSlideId) {
+      if (dirtyRef.current) await flushSave();
+      // Read straight off the live canvas rather than slidesRef.current —
+      // that ref is only kept in sync by a separate effect, which may not
+      // have committed yet by the time this awaited flushSave() resolves,
+      // so it can serve stale (pre-edit) content. Serializing directly here
+      // can never be stale.
+      if (canvas) {
+        latestSource = {
+          ...source,
+          content: serializeSlide(canvas, backgroundMediaIdRef.current, backgroundVideoEmbedUrlRef.current),
+          background_id: backgroundMediaIdRef.current,
+        };
+      }
+    }
 
     const maxOrder = slides.reduce((max, s) => Math.max(max, s.sort_order), -1);
-    const latestSource = id === currentSlideId ? slidesRef.current.find((s) => s.id === id) ?? source : source;
 
     const { data, error } = await supabase
       .from('slides')
@@ -399,9 +431,7 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
     }
 
     if (item.type === 'video') {
-      canvas.backgroundImage = undefined;
-      canvas.backgroundColor = 'transparent';
-      canvas.requestRenderAll();
+      clearBackgroundForVideo(canvas);
       setBackgroundVideoUrl(signedUrl);
     } else {
       await applyImageBackground(canvas, signedUrl);
@@ -415,9 +445,7 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
 
   function handleBackgroundEmbedUrl(url: string) {
     if (!canvas) return;
-    canvas.backgroundImage = undefined;
-    canvas.backgroundColor = 'transparent';
-    canvas.requestRenderAll();
+    clearBackgroundForVideo(canvas);
     setBackgroundVideoUrl(url);
     backgroundMediaIdRef.current = null;
     backgroundVideoEmbedUrlRef.current = url;
@@ -476,7 +504,7 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
 
       <div className="flex-1 flex gap-4 min-h-[560px]">
         <EditorNavRail active={activePanel} onSelect={togglePanel} />
-        <EditorAssetDrawer activePanel={activePanel} onClose={() => setActivePanel(null)}>
+        <EditorAssetDrawer activePanel={activePanel} onClose={() => setActivePanel(null)} loadingSlide={loadingSlide}>
           {renderActivePanel()}
         </EditorAssetDrawer>
 
