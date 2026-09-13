@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Maximize, Clock as ClockIcon, Radio } from 'lucide-react';
+import { Maximize, Clock as ClockIcon, Radio, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLiveChannel } from '@/hooks/useLiveChannel';
 import { SlideCanvasRenderer } from '@/components/live/SlideCanvasRenderer';
+import { Button } from '@/components/ui/Button';
 import { getDisplayMs, formatDuration } from '@/lib/liveTimer';
 import type { LiveState } from '@/types/live';
 
@@ -12,12 +13,25 @@ import type { LiveState } from '@/types/live';
  * during blackout — the audience-facing Projector does, this doesn't.
  * Cyber-Broadcast HUD look, matching the Operator console (Phase 1) —
  * this is a broadcast surface, not the main admin UI.
+ *
+ * Unlike the Projector, this isn't audience-facing, so it gets full
+ * Previous/Next buttons — they post commands back to the operator
+ * (src/pages/PresentLivePage.tsx) over the same local BroadcastChannel used
+ * for state, so this window can drive the presentation on its own if
+ * that's the one someone's actually at.
  */
 export function StageDisplayPage() {
   const { id } = useParams<{ id: string }>();
   const [state, setState] = useState<LiveState | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const { post, lastMessage } = useLiveChannel(id ?? '');
+
+  function goPrev() {
+    post({ type: 'command', action: 'previous' });
+  }
+  function goNext() {
+    post({ type: 'command', action: 'next' });
+  }
 
   useEffect(() => {
     post({ type: 'request-state' });
@@ -110,6 +124,20 @@ export function StageDisplayPage() {
               Slide {state.slideIndex + 1} of {state.totalSlides}
             </p>
           )}
+
+          <div className="flex items-center gap-2">
+            <Button variant="outline" className="flex-1 justify-center" onClick={goPrev} disabled={!connected || state?.slideIndex === 0}>
+              <ChevronLeft className="w-4 h-4" /> Previous
+            </Button>
+            <Button
+              variant="outline"
+              className="flex-1 justify-center"
+              onClick={goNext}
+              disabled={!connected || (state ? state.slideIndex >= state.totalSlides - 1 : true)}
+            >
+              Next <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </div>
 

@@ -28,7 +28,7 @@ import { BroadcastTelemetryBar } from '@/components/live/BroadcastTelemetryBar';
 import { HotkeyBindingsModal } from '@/components/live/HotkeyBindingsModal';
 import { startTimer, pauseTimer, resetTimer, setTimerMode, setCountdownDuration } from '@/lib/liveTimer';
 import { findActionForKey, findActionForMidiNote, loadHotkeyBindings, saveHotkeyBindings, type HotkeyBindings } from '@/lib/hotkeyBindings';
-import { INITIAL_TIMER_STATE, type LiveState, type TimerState } from '@/types/live';
+import { INITIAL_TIMER_STATE, type LiveState, type TimerState, type RemoteCommand } from '@/types/live';
 import type { Slide } from '@/types';
 
 interface StoredLiveState {
@@ -145,27 +145,14 @@ export function PresentLivePage() {
   );
   const toggleBlackout = useCallback(() => setBlackout((b) => !b), []);
 
-  // Answer late-joining Projector/Stage windows (same-computer, BroadcastChannel).
-  useEffect(() => {
-    if (lastMessage?.type === 'request-state') {
-      post({ type: 'state', state: buildState() });
-    }
-  }, [lastMessage, post, buildState]);
-
-  // Handle Realtime traffic: request-state from a newly-opened remote, or a
-  // command it sent. Commands are applied via the exact same functions the
-  // local UI uses, so a phone tapping "Next" behaves identically to
-  // clicking Next here.
-  useEffect(() => {
-    if (!lastRemoteMessage) return;
-
-    if (lastRemoteMessage.type === 'request-state') {
-      postRemote({ type: 'state', state: buildState() });
-      return;
-    }
-
-    if (lastRemoteMessage.type === 'command') {
-      switch (lastRemoteMessage.action) {
+  // Applies a RemoteCommand via the exact same functions the local UI
+  // buttons/keyboard shortcuts use, so a phone tapping "Next" — or a
+  // Projector/Stage Display window's own Next button — behaves identically
+  // to clicking Next here. Shared by both channels below so they can never
+  // diverge in behavior.
+  const applyCommand = useCallback(
+    (command: RemoteCommand) => {
+      switch (command.action) {
         case 'next':
           goNext();
           break;
@@ -173,7 +160,7 @@ export function PresentLivePage() {
           goPrev();
           break;
         case 'goto':
-          goToSlide(lastRemoteMessage.slideIndex);
+          goToSlide(command.slideIndex);
           break;
         case 'toggle-blackout':
           toggleBlackout();
@@ -188,14 +175,46 @@ export function PresentLivePage() {
           setTimer((t) => resetTimer(t));
           break;
         case 'timer-set-mode':
-          setTimer((t) => setTimerMode(t, lastRemoteMessage.mode));
+          setTimer((t) => setTimerMode(t, command.mode));
           break;
         case 'timer-set-duration':
-          setTimer((t) => setCountdownDuration(t, lastRemoteMessage.minutes));
+          setTimer((t) => setCountdownDuration(t, command.minutes));
           break;
       }
+    },
+    [goNext, goPrev, goToSlide, toggleBlackout]
+  );
+
+  // Answer late-joining Projector/Stage windows (same-computer,
+  // BroadcastChannel) — request-state, or a command one of their own
+  // Next/Previous buttons sent.
+  useEffect(() => {
+    if (!lastMessage) return;
+
+    if (lastMessage.type === 'request-state') {
+      post({ type: 'state', state: buildState() });
+      return;
     }
-  }, [lastRemoteMessage, postRemote, buildState, goNext, goPrev, goToSlide, toggleBlackout]);
+
+    if (lastMessage.type === 'command') {
+      applyCommand(lastMessage);
+    }
+  }, [lastMessage, post, buildState, applyCommand]);
+
+  // Handle Realtime traffic: request-state from a newly-opened remote, or a
+  // command it sent.
+  useEffect(() => {
+    if (!lastRemoteMessage) return;
+
+    if (lastRemoteMessage.type === 'request-state') {
+      postRemote({ type: 'state', state: buildState() });
+      return;
+    }
+
+    if (lastRemoteMessage.type === 'command') {
+      applyCommand(lastRemoteMessage);
+    }
+  }, [lastRemoteMessage, postRemote, buildState, applyCommand]);
 
   // Broadcast on every state change — over both the local BroadcastChannel
   // (Projector/Stage on this computer) and Realtime (a connected remote).
