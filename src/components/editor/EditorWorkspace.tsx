@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useFabricCanvas } from '@/hooks/useFabricCanvas';
 import { useSelectedObject } from '@/hooks/useSelectedObject';
+import { useEditorHistory } from '@/hooks/useEditorHistory';
 import {
   applyImageBackground,
   applySolidBackground,
@@ -16,7 +17,7 @@ import { createBlankSlideContent, isEmptySlideContent } from '@/lib/slideContent
 import { getMediaSignedUrl } from '@/lib/mediaStorage';
 import { getMotionPresetById } from '@/lib/motionLibrary';
 import type { MotionPreset } from '@/types/motion';
-import { AUTOSAVE_DELAY_MS, DEFAULT_SLIDE_BACKGROUND_COLOR } from '@/lib/editorConstants';
+import { AUTOSAVE_DELAY_MS, HISTORY_DEBOUNCE_MS, DEFAULT_SLIDE_BACKGROUND_COLOR } from '@/lib/editorConstants';
 import { EditorToolbar } from '@/components/editor/EditorToolbar';
 import { EditorCanvasStage } from '@/components/editor/EditorCanvasStage';
 import { SlideFilmstrip } from '@/components/editor/SlideFilmstrip';
@@ -32,7 +33,7 @@ import { TextPanel } from '@/components/editor/panels/TextPanel';
 import { MediaPanel } from '@/components/editor/panels/MediaPanel';
 import { BrandPanel } from '@/components/editor/panels/BrandPanel';
 import { Alert } from '@/components/ui/Alert';
-import type { MediaItem, Slide } from '@/types';
+import type { MediaItem, Slide, SlideCanvasData } from '@/types';
 import type { SaveStatus } from '@/types/editor';
 
 interface EditorWorkspaceProps {
@@ -54,6 +55,7 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
 
   const { containerRef, canvasElRef, canvas } = useFabricCanvas({ backgroundColor: DEFAULT_SLIDE_BACKGROUND_COLOR });
   const { selection, refreshSelection } = useSelectedObject(canvas);
+  const { canUndo, canRedo, push: pushHistory, reset: resetHistory, undo: undoHistory, redo: redoHistory } = useEditorHistory();
 
   const slidesRef = useRef<Slide[]>([]);
   useEffect(() => {
@@ -72,6 +74,11 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
   const backgroundVideoEmbedUrlRef = useRef<string | null>(null);
   const backgroundMotionIdRef = useRef<string | null>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // True only while an undo/redo is itself applying a snapshot — suppresses
+  // the object:added/etc. events that generates from being recorded as a
+  // *new* history entry (which would otherwise corrupt the undo/redo stack).
+  const isRestoringHistoryRef = useRef(false);
+  const historyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchSlides = useCallback(async () => {
     setLoading(true);
@@ -148,12 +155,30 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
     }, AUTOSAVE_DELAY_MS);
   }, []);
 
-  // Canvas mutation -> dirty. loadFromJSON also fires object:added, but the
-  // isLoadingSlideRef guard inside markDirty prevents that from triggering
-  // a spurious autosave while hydrating a slide.
+  // Canvas mutation -> dirty + a debounced undo/redo step. loadFromJSON also
+  // fires object:added, but the isLoadingSlideRef guard (initial slide
+  // hydration) and isRestoringHistoryRef guard (an undo/redo applying its
+  // own snapshot) keep either of those from being recorded as a spurious
+  // autosave or a new history entry that would corrupt the undo/redo stack.
+  //
+  // History is debounced (unlike markDirty firing immediately) so a burst of
+  // keystrokes or a drag-then-release collapses into one undo step instead
+  // of one per event — see HISTORY_DEBOUNCE_MS.
   useEffect(() => {
     if (!canvas) return;
-    const handler = () => markDirty();
+
+    function commitHistory() {
+      if (isLoadingSlideRef.current || isRestoringHistoryRef.current) return;
+      pushHistory(serializeSlide(canvas!, backgroundMediaIdRef.current, backgroundVideoEmbedUrlRef.current, backgroundMotionIdRef.current));
+    }
+
+    function handler() {
+      markDirty();
+      if (isLoadingSlideRef.current || isRestoringHistoryRef.current) return;
+      if (historyTimerRef.current) clearTimeout(historyTimerRef.current);
+      historyTimerRef.current = setTimeout(commitHistory, HISTORY_DEBOUNCE_MS);
+    }
+
     canvas.on('object:added', handler);
     canvas.on('object:removed', handler);
     canvas.on('object:modified', handler);
@@ -163,8 +188,9 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
       canvas.off('object:removed', handler);
       canvas.off('object:modified', handler);
       canvas.off('text:changed', handler);
+      if (historyTimerRef.current) clearTimeout(historyTimerRef.current);
     };
-  }, [canvas, markDirty]);
+  }, [canvas, markDirty, pushHistory]);
 
   // Best-effort save on unmount and on tab close.
   useEffect(() => {
@@ -249,6 +275,42 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
 
   // --- Slide hydration on switch ------------------------------------------
 
+  // Populates the canvas (objects + background) from a slide-content
+  // snapshot — shared by the slide-switch hydration effect below AND by
+  // undo/redo (applyHistorySnapshot), so restoring a history step can never
+  // behave differently from loading a slide fresh. `shouldAbort` lets a
+  // caller bail after the async background-resolution gap (only the slide
+  // switch effect needs this, to avoid a stale/superseded hydration writing
+  // state after a fast slide-to-slide switch); undo/redo has nothing to race
+  // against, so it just omits it.
+  async function applySnapshotToCanvas(content: SlideCanvasData, shouldAbort: () => boolean = () => false) {
+    if (!canvas) return;
+    canvas.discardActiveObject();
+    canvas.clear();
+
+    if (isEmptySlideContent(content)) {
+      applySolidBackground(canvas, DEFAULT_SLIDE_BACKGROUND_COLOR);
+      backgroundMediaIdRef.current = null;
+      backgroundVideoEmbedUrlRef.current = null;
+      backgroundMotionIdRef.current = null;
+      setBackgroundVideoUrl(null);
+      setBackgroundMotion(null);
+      return;
+    }
+
+    // Shared with the read-only Present-mode renderer (src/lib/renderSlide.ts)
+    // so the two never render a slide differently from each other.
+    const { videoBackgroundUrl, motionBackground } = await resolveAndRenderSlide(canvas, content);
+    if (shouldAbort()) return;
+
+    backgroundMediaIdRef.current = content.meta?.backgroundMediaId ?? null;
+    backgroundVideoEmbedUrlRef.current = content.meta?.backgroundVideoEmbedUrl ?? null;
+    backgroundMotionIdRef.current = content.meta?.backgroundMotionId ?? null;
+    setBackgroundVideoUrl(videoBackgroundUrl);
+    setBackgroundMotion(motionBackground);
+    canvas.requestRenderAll();
+  }
+
   useEffect(() => {
     if (!canvas || !currentSlideId) return;
     const slide = slidesRef.current.find((s) => s.id === currentSlideId);
@@ -259,40 +321,17 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
     async function hydrate() {
       isLoadingSlideRef.current = true;
       setLoadingSlide(true);
-      canvas!.discardActiveObject();
-      canvas!.clear();
 
-      const content = slide!.content;
+      await applySnapshotToCanvas(slide!.content, () => cancelled);
+      if (cancelled) return;
 
-      if (isEmptySlideContent(content)) {
-        applySolidBackground(canvas!, DEFAULT_SLIDE_BACKGROUND_COLOR);
-        backgroundMediaIdRef.current = null;
-        backgroundVideoEmbedUrlRef.current = null;
-        backgroundMotionIdRef.current = null;
-        setBackgroundVideoUrl(null);
-        setBackgroundMotion(null);
-      } else {
-        // Shared with the read-only Present-mode renderer (src/lib/renderSlide.ts)
-        // so the two never render a slide differently from each other.
-        const { videoBackgroundUrl, motionBackground } = await resolveAndRenderSlide(canvas!, content);
-        if (cancelled) return;
-
-        backgroundMediaIdRef.current = content.meta?.backgroundMediaId ?? null;
-        backgroundVideoEmbedUrlRef.current = content.meta?.backgroundVideoEmbedUrl ?? null;
-        backgroundMotionIdRef.current = content.meta?.backgroundMotionId ?? null;
-        setBackgroundVideoUrl(videoBackgroundUrl);
-        setBackgroundMotion(motionBackground);
-        canvas!.requestRenderAll();
-      }
-
-      if (!cancelled) {
-        dirtyRef.current = false;
-        setSaveStatus('idle');
-        setSaveError(null);
-        isLoadingSlideRef.current = false;
-        setLoadingSlide(false);
-        refreshSelection();
-      }
+      dirtyRef.current = false;
+      setSaveStatus('idle');
+      setSaveError(null);
+      isLoadingSlideRef.current = false;
+      setLoadingSlide(false);
+      refreshSelection();
+      resetHistory(slide!.content); // fresh, independent undo/redo stack per slide
     }
 
     hydrate();
@@ -302,6 +341,56 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSlideId, canvas]);
+
+  // --- Undo / redo -----------------------------------------------------------
+
+  async function applyHistorySnapshot(content: SlideCanvasData) {
+    isRestoringHistoryRef.current = true;
+    try {
+      await applySnapshotToCanvas(content);
+      refreshSelection();
+      markDirty(); // undo/redo is itself an edit — it still needs to be (auto)saved
+    } finally {
+      isRestoringHistoryRef.current = false;
+    }
+  }
+
+  function handleUndo() {
+    const target = undoHistory();
+    if (target) void applyHistorySnapshot(target);
+  }
+
+  function handleRedo() {
+    const target = redoHistory();
+    if (target) void applyHistorySnapshot(target);
+  }
+
+  // Ctrl/Cmd+Z to undo, Ctrl/Cmd+Shift+Z (or Ctrl+Y) to redo — mirrors the
+  // Delete/Backspace handler's guards: skip while actively typing in a
+  // Fabric textbox (its own in-progress edit should use the browser's native
+  // undo) or while focus is in a plain input/textarea elsewhere on the page.
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (!canvas) return;
+      const isUndoKey = (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z' && !e.shiftKey;
+      const isRedoKey = (e.metaKey || e.ctrlKey) && ((e.key.toLowerCase() === 'z' && e.shiftKey) || e.key.toLowerCase() === 'y');
+      if (!isUndoKey && !isRedoKey) return;
+
+      const active = canvas.getActiveObject();
+      if (active && 'isEditing' in active && (active as { isEditing?: boolean }).isEditing) return;
+
+      const tag = document.activeElement?.tagName.toLowerCase();
+      if (tag === 'input' || tag === 'textarea') return;
+
+      e.preventDefault();
+      if (isUndoKey) handleUndo();
+      else handleRedo();
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canvas, undoHistory, redoHistory, markDirty, refreshSelection]);
 
   // --- Slide navigation / CRUD ---------------------------------------------
 
@@ -527,7 +616,15 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
 
   return (
     <div className="mt-2 w-full flex flex-col gap-4">
-      <EditorToolbar onOpenBackground={() => setBackgroundOpen(true)} onSave={() => void flushSave()} saving={saveStatus === 'saving'} />
+      <EditorToolbar
+        onOpenBackground={() => setBackgroundOpen(true)}
+        onSave={() => void flushSave()}
+        saving={saveStatus === 'saving'}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        canUndo={canUndo}
+        canRedo={canRedo}
+      />
 
       {saveStatus === 'error' && <Alert message={saveError ?? 'Failed to save.'} onRetry={() => void flushSave()} />}
 

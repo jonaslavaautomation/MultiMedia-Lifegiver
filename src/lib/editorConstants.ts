@@ -10,6 +10,13 @@ export const DEFAULT_SLIDE_BACKGROUND_COLOR = '#09090b'; // zinc-950, matches ap
 // Debounce delay before an in-progress edit triggers an autosave.
 export const AUTOSAVE_DELAY_MS = 1500;
 
+// Debounce delay before a settled canvas mutation is committed as one
+// undo/redo step — shorter than AUTOSAVE_DELAY_MS so undo feels responsive,
+// but long enough that a burst of keystrokes (many text:changed events) or
+// a drag-then-release (object:modified) collapses into a single step
+// instead of one per event.
+export const HISTORY_DEBOUNCE_MS = 500;
+
 // Curated font list. All of these are requested up front via the Google
 // Fonts @import in src/index.css (alongside Inter/Poppins) so they're
 // virtually always loaded before a user opens the font picker — Fabric
