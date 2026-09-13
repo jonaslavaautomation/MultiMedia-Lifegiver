@@ -66,8 +66,21 @@ export function LoginPage() {
       <div className="relative z-10 w-full max-w-md">
         <Reveal>
           <div className="flex flex-col items-center text-center mb-8">
-            <div className="w-40 h-20 sm:w-48 sm:h-24 rounded-2xl bg-white flex items-center justify-center shadow-2xl shadow-black/40 p-3 mb-5">
-              <img src="/lifegiver-logo.png" alt="LifeGiver Davao" className="w-full h-full object-contain" />
+            <div className="w-40 h-20 sm:w-48 sm:h-24 rounded-2xl bg-white flex items-center justify-center shadow-2xl shadow-black/40 p-3 mb-5 overflow-hidden">
+              {/* Animated logo — autoplays regardless of the OS's reduced-motion
+                  setting, matching how video/motion backgrounds already behave
+                  elsewhere in this app (see MotionBackgroundPlayer.tsx): this is
+                  editorial branding content, not incidental UI chrome motion. */}
+              <video
+                src="/lifegiver-logo.mp4"
+                poster="/lifegiver-logo.png"
+                autoPlay
+                muted
+                loop
+                playsInline
+                aria-label="LifeGiver Davao"
+                className="w-full h-full object-contain"
+              />
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold font-display text-zinc-100">LifeGiver Media Studio</h1>
             <p className="text-sm text-zinc-400 mt-2 max-w-xs">
