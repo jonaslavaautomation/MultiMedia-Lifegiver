@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { createTextObject } from '@/lib/fabricObjects';
 import { BIBLE_BOOKS } from '@/data/bibleBooks';
 import { parseReference } from '@/lib/bibleReference';
-import { fetchAndCacheChapter, NLT_ATTRIBUTION } from '@/lib/bibleApi';
+import { fetchAndCacheChapter, NLT_ATTRIBUTION, NIV_ATTRIBUTION } from '@/lib/bibleApi';
 import { BIBLE_TRANSLATIONS, DEFAULT_TRANSLATION } from '@/data/bibleTranslations';
 
 interface BiblePanelProps {
@@ -135,6 +135,7 @@ export function BiblePanel({ canvas, markDirty, refreshSelection }: BiblePanelPr
         Drops the verse text onto the current slide, with a reference caption underneath — separate from the full Bible browser on the Bible page.
       </p>
       {translation === 'NLT' && <p className="text-[10px] text-zinc-400">{NLT_ATTRIBUTION}</p>}
+      {translation === 'NIV' && <p className="text-[10px] text-zinc-400">{NIV_ATTRIBUTION}</p>}
     </div>
   );
 }

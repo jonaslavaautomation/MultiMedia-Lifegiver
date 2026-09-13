@@ -10,7 +10,7 @@ import { createVerseSlideContent } from '@/lib/slideContent';
 import { BIBLE_BOOKS } from '@/data/bibleBooks';
 import { parseReference, type ParsedReference } from '@/lib/bibleReference';
 import { BIBLE_TRANSLATIONS, DEFAULT_TRANSLATION } from '@/data/bibleTranslations';
-import { NLT_ATTRIBUTION } from '@/lib/bibleApi';
+import { NLT_ATTRIBUTION, NIV_ATTRIBUTION } from '@/lib/bibleApi';
 import { PageHeaderIcon } from '@/components/ui/PageHeaderIcon';
 
 function verseKey(book: string, chapter: number, verse: number): string {
@@ -226,6 +226,9 @@ export function BiblePage() {
 
       {translation === 'NLT' && (
         <p className="text-[11px] text-zinc-500 mt-3 max-w-4xl">{NLT_ATTRIBUTION}</p>
+      )}
+      {translation === 'NIV' && (
+        <p className="text-[11px] text-zinc-500 mt-3 max-w-4xl">{NIV_ATTRIBUTION}</p>
       )}
 
       {selected.length > 0 && (

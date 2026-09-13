@@ -22,6 +22,13 @@ interface ApiChapterResponse {
 export const NLT_ATTRIBUTION =
   'Scripture quotations are taken from the Holy Bible, New Living Translation, copyright ©1996, 2004, 2015 by Tyndale House Foundation. Used by permission of Tyndale House Publishers, Inc., Carol Stream, Illinois 60188. All rights reserved.';
 
+/** Required by Biblica's NIV terms wherever NIV verse text is displayed — matches the `copyright` field api.bible returns alongside NIV text. */
+export const NIV_ATTRIBUTION =
+  'The Holy Bible, New International Version® NIV® Copyright © 1973, 1978, 1984, 2011 by Biblica, Inc.® Used by Permission of Biblica, Inc.® All rights reserved worldwide.';
+
+/** api.bible's Bible ID for the NIV (2011 text) — confirmed against the live API. */
+const NIV_BIBLE_ID = '78a9f6124f344018-01';
+
 /** Checks the bible_verses cache table for a previously-fetched chapter. */
 export async function getCachedChapter(
   book: string,
@@ -116,6 +123,73 @@ async function fetchChapterFromNltApi(book: BibleBookMeta, chapter: number): Pro
   return verses;
 }
 
+interface ApiBibleContentNode {
+  type?: string;
+  name?: string;
+  text?: string;
+  attrs?: { verseId?: string; number?: string };
+  items?: ApiBibleContentNode[];
+}
+
+/**
+ * api.bible (rest.api.bible) returns a chapter as a JSON content tree —
+ * confirmed against the live API. Text nodes carry the verse they belong to
+ * directly as `attrs.verseId` (e.g. "JHN.3.16"), so verses are bucketed by
+ * that id rather than by document structure — this sidesteps the kind of
+ * malformed-markup corruption fetchChapterFromNltApi has to work around.
+ * Section-heading text and the verse-number marker's own text carry no
+ * verseId and are naturally skipped; footnote ("note") nodes are skipped
+ * explicitly in case a given Bible/chapter includes them.
+ */
+async function fetchChapterFromApiBible(
+  book: BibleBookMeta,
+  chapter: number,
+  bibleId: string
+): Promise<ChapterVerse[]> {
+  const key = import.meta.env.VITE_API_BIBLE_KEY as string | undefined;
+  if (!key) {
+    throw new Error('NIV requires an api.bible API key — set VITE_API_BIBLE_KEY.');
+  }
+
+  const chapterId = `${book.usfmId}.${chapter}`;
+  const response = await fetch(
+    `https://api.scripture.api.bible/v1/bibles/${bibleId}/chapters/${chapterId}?content-type=json`,
+    { headers: { 'api-key': key } }
+  );
+  if (!response.ok) {
+    throw new Error(`api.bible request failed (${response.status})`);
+  }
+
+  const data = (await response.json()) as { data?: { content?: ApiBibleContentNode[] } };
+  const content = data.data?.content;
+  if (!content) {
+    throw new Error('No verses returned for that chapter.');
+  }
+
+  const buffers = new Map<number, string>();
+  function walk(nodes: ApiBibleContentNode[]) {
+    for (const node of nodes) {
+      if (node.name === 'note') continue;
+      if (node.type === 'text' && node.attrs?.verseId) {
+        const verse = Number(node.attrs.verseId.split('.').pop());
+        buffers.set(verse, (buffers.get(verse) ?? '') + (node.text ?? ''));
+      }
+      if (node.items) walk(node.items);
+    }
+  }
+  walk(content);
+
+  const verses = Array.from(buffers.entries())
+    .map(([verse, text]) => ({ verse, text: text.replace(/\s+/g, ' ').trim() }))
+    .filter((v) => Number.isFinite(v.verse) && v.text.length > 0)
+    .sort((a, b) => a.verse - b.verse);
+
+  if (verses.length === 0) {
+    throw new Error('No verses returned for that chapter.');
+  }
+  return verses;
+}
+
 async function fetchChapterFromApi(
   book: BibleBookMeta,
   chapter: number,
@@ -126,6 +200,8 @@ async function fetchChapterFromApi(
       return fetchChapterFromKjvApi(book, chapter);
     case 'NLT':
       return fetchChapterFromNltApi(book, chapter);
+    case 'NIV':
+      return fetchChapterFromApiBible(book, chapter, NIV_BIBLE_ID);
     default: {
       const meta = BIBLE_TRANSLATIONS.find((t) => t.code === translation);
       throw new Error(
