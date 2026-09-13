@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
@@ -13,13 +13,14 @@ interface AppLayoutProps {
 
 export function AppLayout({ children, requireAdmin = false }: AppLayoutProps) {
   const { user, profile, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return <LoadingScreen />;
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
   if (requireAdmin && profile?.role !== 'admin') {
