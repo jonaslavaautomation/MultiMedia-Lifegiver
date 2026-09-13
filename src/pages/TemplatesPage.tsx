@@ -24,37 +24,9 @@ import { Alert } from '@/components/ui/Alert';
 import { MediaPicker } from '@/components/media/MediaPicker';
 import { useSignedUrl } from '@/components/media/useSignedUrl';
 import { PageHeaderIcon } from '@/components/ui/PageHeaderIcon';
+import { TEMPLATE_CATEGORIES, SLIDE_WIDTH, SLIDE_HEIGHT } from '@/lib/editorConstants';
+import { createBlankSlideContent } from '@/lib/slideContent';
 import type { TemplateWithCreator } from '@/types';
-
-/**
- * Fixed category list per the Phase 2 spec — unlike Songs (free-text
- * category), Templates use a curated set so the library stays organized.
- */
-const TEMPLATE_CATEGORIES = [
-  'Worship',
-  'Sermon',
-  'Bible',
-  'Announcement',
-  'Offering',
-  'Welcome',
-  'Christmas',
-  'Easter',
-  'Prayer',
-  'General',
-];
-
-/**
- * Seed shape for `template_data` (stored in the `config` column). Phase 2
- * only manages template *metadata* — the actual visual editor that reads
- * and writes into this structure belongs to Phase 3's slide editor.
- */
-function defaultTemplateData(): Record<string, unknown> {
-  return {
-    canvas: { width: 1920, height: 1080 },
-    background: {},
-    objects: [],
-  };
-}
 
 interface TemplateFormState {
   name: string;
@@ -155,7 +127,7 @@ export function TemplatesPage() {
     if (formMode === 'create') {
       const { error: createErr } = await supabase.from('templates').insert({
         ...payload,
-        config: defaultTemplateData(),
+        config: createBlankSlideContent(),
       });
 
       if (createErr) {
@@ -443,11 +415,9 @@ function TemplatePreview({ template }: { template: TemplateWithCreator }) {
       <TemplateThumbnail path={template.thumbnail_url} className="w-full aspect-video rounded-xl" iconSize="lg" />
       <div className="flex items-center gap-2 flex-wrap">
         {template.category && <Badge variant="info">{template.category}</Badge>}
-        <Badge variant="default">
-          {typeof (template.config as { canvas?: { width?: number; height?: number } })?.canvas?.width === 'number'
-            ? `${(template.config as { canvas: { width: number; height: number } }).canvas.width}×${(template.config as { canvas: { width: number; height: number } }).canvas.height}`
-            : '1920×1080'}
-        </Badge>
+        {/* Every slide (and therefore every template) is authored in this
+            one fixed logical size — see SLIDE_WIDTH/SLIDE_HEIGHT. */}
+        <Badge variant="default">{SLIDE_WIDTH}×{SLIDE_HEIGHT}</Badge>
       </div>
       {template.description && <p className="text-sm text-zinc-600 leading-relaxed">{template.description}</p>}
       <div>

@@ -35,6 +35,23 @@ export const EDITOR_FONTS = [
 
 export type EditorFont = (typeof EDITOR_FONTS)[number];
 
+// Fixed category list for Templates — unlike Songs (free-text category),
+// Templates use a curated set so the library stays organized. Shared by the
+// Templates page (management) and the editor's Templates panel (Save as
+// Template) so the two can never drift apart.
+export const TEMPLATE_CATEGORIES = [
+  'Worship',
+  'Sermon',
+  'Bible',
+  'Announcement',
+  'Offering',
+  'Welcome',
+  'Christmas',
+  'Easter',
+  'Prayer',
+  'General',
+];
+
 // Curated color swatches for the color picker popover, in addition to a
 // free-form hex input.
 export const COLOR_SWATCHES = [
