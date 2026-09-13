@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { QRCodeSVG } from 'qrcode.react';
 import {
   ArrowLeft,
   Monitor,
@@ -431,9 +432,14 @@ export function PresentLivePage() {
       <Modal open={remoteModalOpen} onClose={() => setRemoteModalOpen(false)} title="Remote Control">
         <div className="flex flex-col gap-4">
           <p className="text-sm text-zinc-400 leading-relaxed">
-            Open this link on a phone or tablet to control this presentation remotely — next/previous, blackout, and
-            the timer all sync back here in real time.
+            Scan this on a phone or tablet to control this presentation remotely — next/previous, blackout, and the
+            timer all sync back here in real time. Requires signing in with the same account.
           </p>
+          {remoteUrl && (
+            <div className="flex justify-center p-4 bg-white rounded-xl">
+              <QRCodeSVG value={remoteUrl} size={180} marginSize={2} />
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <input
               readOnly
