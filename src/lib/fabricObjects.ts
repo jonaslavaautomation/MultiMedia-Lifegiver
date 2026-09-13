@@ -1,4 +1,4 @@
-import { Canvas, Circle, FabricImage, Line, Rect, StaticCanvas, Textbox, type FabricObject } from 'fabric';
+import { Canvas, Circle, FabricImage, Line, Rect, Shadow, StaticCanvas, Textbox, type FabricObject } from 'fabric';
 import type { SlideCanvasData } from '@/types';
 import { DEFAULT_SLIDE_BACKGROUND_COLOR, DEFAULT_TEXT_PROPS, SLIDE_HEIGHT, SLIDE_WIDTH } from '@/lib/editorConstants';
 
@@ -31,6 +31,24 @@ export function applyShapeColor(canvas: Canvas, hex: string): void {
   if (!active) return;
   if (active.type === 'line') active.set({ stroke: hex });
   else active.set({ fill: hex });
+  canvas.requestRenderAll();
+}
+
+/** Sets the current selection's opacity (0-1) — same control for any object kind. */
+export function applyOpacity(canvas: Canvas, opacity: number): void {
+  const active = canvas.getActiveObject();
+  if (!active) return;
+  active.set({ opacity: Math.min(Math.max(opacity, 0), 1) });
+  canvas.requestRenderAll();
+}
+
+/** One preset drop shadow, toggled on/off — deliberately not a full shadow-customization UI, which would be a lot of surface area for how rarely it's tweaked beyond "on or off". */
+export const SHAPE_SHADOW_PRESET = { color: 'rgba(0,0,0,0.4)', blur: 20, offsetX: 6, offsetY: 6 };
+
+export function toggleShadow(canvas: Canvas, enabled: boolean): void {
+  const active = canvas.getActiveObject();
+  if (!active) return;
+  active.set({ shadow: enabled ? new Shadow(SHAPE_SHADOW_PRESET) : null });
   canvas.requestRenderAll();
 }
 

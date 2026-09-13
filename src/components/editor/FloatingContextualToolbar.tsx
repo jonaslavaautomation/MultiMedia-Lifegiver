@@ -1,11 +1,11 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { Bold, Italic, Underline, Copy, Trash2, BringToFront, SendToBack } from 'lucide-react';
+import { Bold, Italic, Underline, Copy, Trash2, BringToFront, SendToBack, ChevronsUp, ChevronsDown, SquareStack } from 'lucide-react';
 import type { Canvas, Textbox } from 'fabric';
 import { Button } from '@/components/ui/Button';
 import { ColorPickerPopover } from '@/components/editor/ColorPickerPopover';
 import { FontFamilyPicker } from '@/components/editor/FontFamilyPicker';
 import { AlignmentButtonGroup } from '@/components/editor/AlignmentButtonGroup';
-import { applyShapeColor, assignId, deleteActiveObjects, reorderActiveObject } from '@/lib/fabricObjects';
+import { applyShapeColor, applyOpacity, toggleShadow, assignId, deleteActiveObjects, reorderActiveObject } from '@/lib/fabricObjects';
 import type { SelectedObjectSnapshot, TextAlign } from '@/types/editor';
 
 interface FloatingContextualToolbarProps {
@@ -62,10 +62,24 @@ export function FloatingContextualToolbar({ canvas, selection, refreshSelection,
     refreshSelection();
   }
 
-  function handleReorder(direction: 'forward' | 'backward') {
+  function handleReorder(direction: 'forward' | 'backward' | 'front' | 'back') {
     if (!canvas) return;
     reorderActiveObject(canvas, direction);
     markDirty();
+  }
+
+  function handleOpacityChange(value: number) {
+    if (!canvas) return;
+    applyOpacity(canvas, value);
+    markDirty();
+    refreshSelection();
+  }
+
+  function handleToggleShadow(enabled: boolean) {
+    if (!canvas) return;
+    toggleShadow(canvas, enabled);
+    markDirty();
+    refreshSelection();
   }
 
   const visible = selection !== null;
@@ -147,11 +161,38 @@ export function FloatingContextualToolbar({ canvas, selection, refreshSelection,
 
             {(selection?.kind === 'textbox' || selection?.kind === 'image' || selection?.kind === 'shape') && (
               <>
+                <div className="flex items-center gap-1.5 px-1" title="Opacity">
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.05}
+                    value={selection.opacity}
+                    onChange={(e) => handleOpacityChange(Number(e.target.value))}
+                    className="w-16 accent-brand-600"
+                  />
+                  <span className="text-[10px] text-zinc-500 tabular-nums w-7">{Math.round(selection.opacity * 100)}%</span>
+                </div>
+                <Button
+                  variant={selection.hasShadow ? 'primary' : 'ghost'}
+                  size="sm"
+                  onClick={() => handleToggleShadow(!selection.hasShadow)}
+                  title="Toggle Shadow"
+                >
+                  <SquareStack className="w-3.5 h-3.5" />
+                </Button>
+                <div className="w-px h-6 bg-zinc-100 mx-0.5" />
+                <Button variant="ghost" size="sm" onClick={() => handleReorder('front')} title="Bring to Front">
+                  <ChevronsUp className="w-3.5 h-3.5" />
+                </Button>
                 <Button variant="ghost" size="sm" onClick={() => handleReorder('forward')} title="Bring Forward">
                   <BringToFront className="w-3.5 h-3.5" />
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => handleReorder('backward')} title="Send Backward">
                   <SendToBack className="w-3.5 h-3.5" />
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => handleReorder('back')} title="Send to Back">
+                  <ChevronsDown className="w-3.5 h-3.5" />
                 </Button>
                 <div className="w-px h-6 bg-zinc-100 mx-0.5" />
                 <Button variant="ghost" size="sm" onClick={handleDuplicate} title="Duplicate">
