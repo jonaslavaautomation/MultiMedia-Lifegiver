@@ -31,14 +31,14 @@ export interface LiveState {
   timer: TimerState;
 }
 
-export type LiveMessage = { type: 'state'; state: LiveState } | { type: 'request-state' };
-
 /**
- * Commands a Remote Control page (a phone/tablet on the Realtime channel)
- * sends to the operator, which is the only one that actually mutates
- * slide/blackout/timer state — the operator applies these via the exact
- * same functions its own UI buttons and keyboard shortcuts use, then
- * broadcasts the resulting LiveState back out (see PresentLivePage.tsx).
+ * Commands a Remote Control page (a phone/tablet on the Realtime channel),
+ * or a same-computer Projector/Stage Display window (on the local
+ * BroadcastChannel), sends to the operator, which is the only one that
+ * actually mutates slide/blackout/timer state — the operator applies these
+ * via the exact same functions its own UI buttons and keyboard shortcuts
+ * use, then broadcasts the resulting LiveState back out on both channels
+ * (see PresentLivePage.tsx).
  */
 export type RemoteCommand =
   | { type: 'command'; action: 'next' }
@@ -50,6 +50,14 @@ export type RemoteCommand =
   | { type: 'command'; action: 'timer-reset' }
   | { type: 'command'; action: 'timer-set-mode'; mode: TimerMode }
   | { type: 'command'; action: 'timer-set-duration'; minutes: number };
+
+/**
+ * Everything that can travel over the local (same-computer BroadcastChannel)
+ * channel — includes RemoteCommand so a Projector/Stage Display window can
+ * post Next/Previous back to the operator, the same way the phone Remote
+ * Control page already does over Realtime.
+ */
+export type LiveMessage = { type: 'state'; state: LiveState } | { type: 'request-state' } | RemoteCommand;
 
 /** Everything that can travel over the Realtime (cross-device) channel. */
 export type RealtimeLiveMessage = LiveMessage | RemoteCommand;
