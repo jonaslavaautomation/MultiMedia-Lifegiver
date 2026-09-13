@@ -17,15 +17,21 @@ export type SelectedObjectSnapshot =
       bold: boolean;
       italic: boolean;
       underline: boolean;
+      opacity: number;
+      hasShadow: boolean;
     }
   | {
       kind: 'image';
       id: string;
+      opacity: number;
+      hasShadow: boolean;
     }
   | {
       kind: 'shape';
       id: string;
       fill: string;
+      opacity: number;
+      hasShadow: boolean;
     }
   | {
       kind: 'multiple';

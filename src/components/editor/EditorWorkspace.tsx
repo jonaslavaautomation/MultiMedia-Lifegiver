@@ -145,6 +145,22 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
     flushSaveRef.current = flushSave;
   }, [flushSave]);
 
+  // The one place anything that mutates the current slide's content calls
+  // into: schedules a debounced autosave AND a debounced undo/redo step.
+  // Unifying both here (rather than pushing history only from a canvas
+  // object:added/removed/modified/text:changed listener) matters because a
+  // lot of edits never fire those Fabric events at all — the toolbar's
+  // color/opacity/shadow/bold/font/etc. controls call `.set()` directly,
+  // which markDirty already had to be called manually for anyway (see
+  // FloatingContextualToolbar.tsx/BrandPanel.tsx) but Fabric's own
+  // object:modified is only ever emitted by its interactive transform
+  // controls, not by a plain property setter — so those edits would
+  // otherwise be saved but silently NOT undoable.
+  //
+  // History is debounced (unlike the dirty flag/save-status, which flip
+  // immediately) so a burst of keystrokes, or several toolbar clicks in a
+  // row, collapses into one undo step instead of one per call — see
+  // HISTORY_DEBOUNCE_MS.
   const markDirty = useCallback(() => {
     if (isLoadingSlideRef.current) return;
     dirtyRef.current = true;
@@ -153,32 +169,31 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
     saveTimerRef.current = setTimeout(() => {
       void flushSaveRef.current();
     }, AUTOSAVE_DELAY_MS);
+
+    if (isRestoringHistoryRef.current || !canvas) return;
+    if (historyTimerRef.current) clearTimeout(historyTimerRef.current);
+    historyTimerRef.current = setTimeout(() => {
+      pushHistory(serializeSlide(canvas, backgroundMediaIdRef.current, backgroundVideoEmbedUrlRef.current, backgroundMotionIdRef.current));
+    }, HISTORY_DEBOUNCE_MS);
+  }, [canvas, pushHistory]);
+
+  // Only cleans up a pending history-commit timer on unmount — markDirty
+  // above (not this effect) is what actually schedules/clears it.
+  useEffect(() => {
+    return () => {
+      if (historyTimerRef.current) clearTimeout(historyTimerRef.current);
+    };
   }, []);
 
-  // Canvas mutation -> dirty + a debounced undo/redo step. loadFromJSON also
-  // fires object:added, but the isLoadingSlideRef guard (initial slide
-  // hydration) and isRestoringHistoryRef guard (an undo/redo applying its
-  // own snapshot) keep either of those from being recorded as a spurious
-  // autosave or a new history entry that would corrupt the undo/redo stack.
-  //
-  // History is debounced (unlike markDirty firing immediately) so a burst of
-  // keystrokes or a drag-then-release collapses into one undo step instead
-  // of one per event — see HISTORY_DEBOUNCE_MS.
+  // Canvas mutation -> dirty + a debounced undo/redo step (both via
+  // markDirty above). loadFromJSON also fires object:added, but the
+  // isLoadingSlideRef guard (initial slide hydration) and
+  // isRestoringHistoryRef guard (an undo/redo applying its own snapshot)
+  // keep either of those from being recorded as a spurious autosave or a
+  // new history entry that would corrupt the undo/redo stack.
   useEffect(() => {
     if (!canvas) return;
-
-    function commitHistory() {
-      if (isLoadingSlideRef.current || isRestoringHistoryRef.current) return;
-      pushHistory(serializeSlide(canvas!, backgroundMediaIdRef.current, backgroundVideoEmbedUrlRef.current, backgroundMotionIdRef.current));
-    }
-
-    function handler() {
-      markDirty();
-      if (isLoadingSlideRef.current || isRestoringHistoryRef.current) return;
-      if (historyTimerRef.current) clearTimeout(historyTimerRef.current);
-      historyTimerRef.current = setTimeout(commitHistory, HISTORY_DEBOUNCE_MS);
-    }
-
+    const handler = () => markDirty();
     canvas.on('object:added', handler);
     canvas.on('object:removed', handler);
     canvas.on('object:modified', handler);
@@ -188,9 +203,8 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
       canvas.off('object:removed', handler);
       canvas.off('object:modified', handler);
       canvas.off('text:changed', handler);
-      if (historyTimerRef.current) clearTimeout(historyTimerRef.current);
     };
-  }, [canvas, markDirty, pushHistory]);
+  }, [canvas, markDirty]);
 
   // Best-effort save on unmount and on tab close.
   useEffect(() => {
@@ -363,6 +377,23 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
   function handleRedo() {
     const target = redoHistory();
     if (target) void applyHistorySnapshot(target);
+  }
+
+  // --- Templates ---------------------------------------------------------
+
+  // Applying a template is just a big ordinary edit — unlike undo/redo it's
+  // deliberately NOT wrapped in isRestoringHistoryRef, so the normal
+  // debounced history-commit effect picks it up like any other mutation
+  // and it's undoable via Ctrl/Cmd+Z same as anything else.
+  async function handleApplyTemplate(content: SlideCanvasData) {
+    await applySnapshotToCanvas(content);
+    markDirty();
+    refreshSelection();
+  }
+
+  function getCurrentSlideContent(): SlideCanvasData | null {
+    if (!canvas) return null;
+    return serializeSlide(canvas, backgroundMediaIdRef.current, backgroundVideoEmbedUrlRef.current, backgroundMotionIdRef.current);
   }
 
   // Ctrl/Cmd+Z to undo, Ctrl/Cmd+Shift+Z (or Ctrl+Y) to redo — mirrors the
@@ -596,7 +627,7 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
   function renderActivePanel() {
     switch (activePanel) {
       case 'templates':
-        return <TemplatesPanel />;
+        return <TemplatesPanel onApply={(content) => void handleApplyTemplate(content)} getCurrentSlideContent={getCurrentSlideContent} />;
       case 'bible':
         return <BiblePanel canvas={canvas} markDirty={markDirty} refreshSelection={refreshSelection} />;
       case 'songs':

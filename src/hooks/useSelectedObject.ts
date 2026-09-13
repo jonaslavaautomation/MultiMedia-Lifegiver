@@ -5,6 +5,9 @@ import type { SelectedObjectSnapshot } from '@/types/editor';
 function snapshotFor(object: FabricObject | undefined): SelectedObjectSnapshot | null {
   if (!object) return null;
 
+  const opacity = typeof object.opacity === 'number' ? object.opacity : 1;
+  const hasShadow = !!object.shadow;
+
   if (object.type === 'textbox') {
     const textbox = object as Textbox;
     return {
@@ -17,11 +20,13 @@ function snapshotFor(object: FabricObject | undefined): SelectedObjectSnapshot |
       bold: textbox.fontWeight === 'bold' || textbox.fontWeight === 700,
       italic: textbox.fontStyle === 'italic',
       underline: textbox.underline === true,
+      opacity,
+      hasShadow,
     };
   }
 
   if (object.type === 'image') {
-    return { kind: 'image', id: String(object.get('id') ?? '') };
+    return { kind: 'image', id: String(object.get('id') ?? ''), opacity, hasShadow };
   }
 
   if (object.type === 'rect' || object.type === 'circle' || object.type === 'line') {
@@ -30,6 +35,8 @@ function snapshotFor(object: FabricObject | undefined): SelectedObjectSnapshot |
       kind: 'shape',
       id: String(object.get('id') ?? ''),
       fill: typeof fill === 'string' ? fill : '#2f8271',
+      opacity,
+      hasShadow,
     };
   }
 
