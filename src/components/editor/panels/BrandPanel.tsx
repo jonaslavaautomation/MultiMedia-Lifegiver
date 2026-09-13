@@ -1,7 +1,7 @@
 import { ImagePlus } from 'lucide-react';
 import type { Canvas } from 'fabric';
 import { Button } from '@/components/ui/Button';
-import { COLOR_SWATCHES } from '@/lib/editorConstants';
+import { useBrandSettings } from '@/hooks/useBrandSettings';
 import { applyShapeColor, createImageObjectFromUrl } from '@/lib/fabricObjects';
 import type { SelectedObjectSnapshot } from '@/types/editor';
 
@@ -12,8 +12,14 @@ interface BrandPanelProps {
   refreshSelection: () => void;
 }
 
-/** Nav rail "Brand" drawer — brand color swatches applied to the current selection, and a quick logo insert. */
+/**
+ * Nav rail "Brand" drawer — this church's own brand color swatches (set in
+ * Settings by an admin, via useBrandSettings) applied to the current
+ * selection, and a quick insert of its logo (custom if one's been set,
+ * otherwise the built-in default).
+ */
 export function BrandPanel({ canvas, selection, markDirty, refreshSelection }: BrandPanelProps) {
+  const { colors, logoUrl } = useBrandSettings();
   const colorable = selection?.kind === 'textbox' || selection?.kind === 'shape';
 
   function applyColor(hex: string) {
@@ -25,7 +31,7 @@ export function BrandPanel({ canvas, selection, markDirty, refreshSelection }: B
 
   async function insertLogo() {
     if (!canvas) return;
-    await createImageObjectFromUrl(canvas, '/lifegiver-logo.png');
+    await createImageObjectFromUrl(canvas, logoUrl ?? '/lifegiver-logo.png');
     markDirty();
     refreshSelection();
   }
@@ -41,7 +47,7 @@ export function BrandPanel({ canvas, selection, markDirty, refreshSelection }: B
           Brand colors {!colorable && '— select text or a shape first'}
         </p>
         <div className="grid grid-cols-5 gap-2">
-          {COLOR_SWATCHES.map((swatch) => (
+          {colors.map((swatch) => (
             <button
               key={swatch}
               type="button"
@@ -53,6 +59,7 @@ export function BrandPanel({ canvas, selection, markDirty, refreshSelection }: B
             />
           ))}
         </div>
+        <p className="text-[10px] text-zinc-400 mt-2">Set your church's own colors, font, and logo in Settings.</p>
       </div>
     </div>
   );

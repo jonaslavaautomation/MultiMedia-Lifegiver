@@ -156,3 +156,13 @@ export interface Template {
 export interface TemplateWithCreator extends Template {
   creator?: Pick<Profile, 'full_name' | 'role'> | null;
 }
+
+/** The one shared row in brand_settings — see its migration for why it's a singleton. */
+export interface BrandSettings {
+  id: number;
+  colors: string[];
+  logo_media_id: string | null;
+  font_family: string;
+  updated_by: string | null;
+  updated_at: string;
+}
