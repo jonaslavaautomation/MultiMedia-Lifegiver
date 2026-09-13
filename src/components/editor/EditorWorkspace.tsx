@@ -365,6 +365,23 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
     if (target) void applyHistorySnapshot(target);
   }
 
+  // --- Templates ---------------------------------------------------------
+
+  // Applying a template is just a big ordinary edit — unlike undo/redo it's
+  // deliberately NOT wrapped in isRestoringHistoryRef, so the normal
+  // debounced history-commit effect picks it up like any other mutation
+  // and it's undoable via Ctrl/Cmd+Z same as anything else.
+  async function handleApplyTemplate(content: SlideCanvasData) {
+    await applySnapshotToCanvas(content);
+    markDirty();
+    refreshSelection();
+  }
+
+  function getCurrentSlideContent(): SlideCanvasData | null {
+    if (!canvas) return null;
+    return serializeSlide(canvas, backgroundMediaIdRef.current, backgroundVideoEmbedUrlRef.current, backgroundMotionIdRef.current);
+  }
+
   // Ctrl/Cmd+Z to undo, Ctrl/Cmd+Shift+Z (or Ctrl+Y) to redo — mirrors the
   // Delete/Backspace handler's guards: skip while actively typing in a
   // Fabric textbox (its own in-progress edit should use the browser's native
@@ -596,7 +613,7 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
   function renderActivePanel() {
     switch (activePanel) {
       case 'templates':
-        return <TemplatesPanel />;
+        return <TemplatesPanel onApply={(content) => void handleApplyTemplate(content)} getCurrentSlideContent={getCurrentSlideContent} />;
       case 'bible':
         return <BiblePanel canvas={canvas} markDirty={markDirty} refreshSelection={refreshSelection} />;
       case 'songs':
