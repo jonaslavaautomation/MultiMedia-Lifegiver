@@ -10,6 +10,7 @@ import { createVerseSlideContent } from '@/lib/slideContent';
 import { BIBLE_BOOKS } from '@/data/bibleBooks';
 import { parseReference, type ParsedReference } from '@/lib/bibleReference';
 import { BIBLE_TRANSLATIONS, DEFAULT_TRANSLATION } from '@/data/bibleTranslations';
+import { NLT_ATTRIBUTION, NIV_ATTRIBUTION } from '@/lib/bibleApi';
 import { PageHeaderIcon } from '@/components/ui/PageHeaderIcon';
 
 function verseKey(book: string, chapter: number, verse: number): string {
@@ -155,12 +156,18 @@ export function BiblePage() {
                 {BIBLE_TRANSLATIONS.map((t) => (
                   <button
                     key={t.code}
+                    disabled={!t.available}
                     onClick={() => {
+                      if (!t.available) return;
                       setTranslation(t.code);
                       setTranslationMenuOpen(false);
                     }}
                     className={`w-full text-left px-3 py-2 text-sm transition-colors ${
-                      t.code === translation ? 'text-brand-600 bg-brand-100' : 'text-zinc-800 hover:bg-zinc-100'
+                      !t.available
+                        ? 'text-zinc-400 cursor-not-allowed'
+                        : t.code === translation
+                          ? 'text-brand-600 bg-brand-100'
+                          : 'text-zinc-800 hover:bg-zinc-100'
                     }`}
                   >
                     <span className="font-medium">{t.code}</span>
@@ -213,8 +220,16 @@ export function BiblePage() {
           onToggleVerse={toggleVerse}
           jumpTo={jumpTo}
           onJumped={() => setJumpTo(null)}
+          translation={translation}
         />
       </Card>
+
+      {translation === 'NLT' && (
+        <p className="text-[11px] text-zinc-500 mt-3 max-w-4xl">{NLT_ATTRIBUTION}</p>
+      )}
+      {translation === 'NIV' && (
+        <p className="text-[11px] text-zinc-500 mt-3 max-w-4xl">{NIV_ATTRIBUTION}</p>
+      )}
 
       {selected.length > 0 && (
         <div className="fixed bottom-0 left-0 right-0 lg:left-64 z-30 border-t border-zinc-200 bg-white/95 backdrop-blur-md px-4 lg:px-8 py-4">
