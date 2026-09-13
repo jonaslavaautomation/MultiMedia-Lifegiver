@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Search } from 'lucide-react';
+import { Search, ChevronDown } from 'lucide-react';
 import type { Canvas } from 'fabric';
 import { Button } from '@/components/ui/Button';
 import { createTextObject } from '@/lib/fabricObjects';
 import { BIBLE_BOOKS } from '@/data/bibleBooks';
 import { parseReference } from '@/lib/bibleReference';
-import { fetchAndCacheChapter } from '@/lib/bibleApi';
+import { fetchAndCacheChapter, NLT_ATTRIBUTION } from '@/lib/bibleApi';
+import { BIBLE_TRANSLATIONS, DEFAULT_TRANSLATION } from '@/data/bibleTranslations';
 
 interface BiblePanelProps {
   canvas: Canvas | null;
@@ -18,6 +19,8 @@ export function BiblePanel({ canvas, markDirty, refreshSelection }: BiblePanelPr
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [translation, setTranslation] = useState(DEFAULT_TRANSLATION);
+  const [translationMenuOpen, setTranslationMenuOpen] = useState(false);
 
   async function handleSearch() {
     const parsed = parseReference(query, BIBLE_BOOKS);
@@ -30,7 +33,7 @@ export function BiblePanel({ canvas, markDirty, refreshSelection }: BiblePanelPr
     setLoading(true);
     setError(null);
     try {
-      const verses = await fetchAndCacheChapter(parsed.book, parsed.chapter);
+      const verses = await fetchAndCacheChapter(parsed.book, parsed.chapter, translation);
       const verseStart = parsed.verseStart ?? verses[0]?.verse ?? 1;
       const verseEnd = parsed.verseEnd ?? verseStart;
       const matched = verses.filter((v) => v.verse >= verseStart && v.verse <= verseEnd);
@@ -70,6 +73,45 @@ export function BiblePanel({ canvas, markDirty, refreshSelection }: BiblePanelPr
   return (
     <div className="flex flex-col gap-3">
       <div className="relative">
+        <button
+          type="button"
+          onClick={() => setTranslationMenuOpen((o) => !o)}
+          className="flex items-center gap-1 text-xs text-zinc-600 hover:text-zinc-900"
+        >
+          {translation}
+          <ChevronDown className="w-3 h-3" />
+        </button>
+        {translationMenuOpen && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setTranslationMenuOpen(false)} />
+            <div className="absolute left-0 mt-1 w-52 bg-white border border-zinc-200 rounded-xl shadow-xl z-50 py-1 overflow-hidden">
+              {BIBLE_TRANSLATIONS.map((t) => (
+                <button
+                  key={t.code}
+                  type="button"
+                  disabled={!t.available}
+                  onClick={() => {
+                    if (!t.available) return;
+                    setTranslation(t.code);
+                    setTranslationMenuOpen(false);
+                  }}
+                  className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${
+                    !t.available
+                      ? 'text-zinc-400 cursor-not-allowed'
+                      : t.code === translation
+                        ? 'text-brand-600 bg-brand-100'
+                        : 'text-zinc-800 hover:bg-zinc-100'
+                  }`}
+                >
+                  <span className="font-medium">{t.code}</span>
+                  <span className="block text-[10px] text-zinc-500">{t.name} — {t.note}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+      <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500" />
         <input
           type="text"
@@ -92,6 +134,7 @@ export function BiblePanel({ canvas, markDirty, refreshSelection }: BiblePanelPr
       <p className="text-xs text-zinc-500">
         Drops the verse text onto the current slide, with a reference caption underneath — separate from the full Bible browser on the Bible page.
       </p>
+      {translation === 'NLT' && <p className="text-[10px] text-zinc-400">{NLT_ATTRIBUTION}</p>}
     </div>
   );
 }

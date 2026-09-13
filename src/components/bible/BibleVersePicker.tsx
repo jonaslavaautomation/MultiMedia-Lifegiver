@@ -18,10 +18,12 @@ interface BibleVersePickerProps {
   /** Set (to a fresh object) to navigate straight to a parsed reference — see BiblePage's quick search. */
   jumpTo?: ParsedReference | null;
   onJumped?: () => void;
+  /** Which translation to fetch verse text in — defaults to KJV if omitted. */
+  translation?: string;
 }
 
 /** Book grid -> chapter grid -> verse checklist. Reports selections upward; the caller owns what "Add to Slide" does. */
-export function BibleVersePicker({ isSelected, onToggleVerse, jumpTo, onJumped }: BibleVersePickerProps) {
+export function BibleVersePicker({ isSelected, onToggleVerse, jumpTo, onJumped, translation }: BibleVersePickerProps) {
   const [search, setSearch] = useState('');
   const [book, setBook] = useState<BibleBookMeta | null>(null);
   const [chapter, setChapter] = useState<number | null>(null);
@@ -44,19 +46,22 @@ export function BibleVersePicker({ isSelected, onToggleVerse, jumpTo, onJumped }
     }
   }
 
-  const loadChapter = useCallback(async (b: BibleBookMeta, c: number) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await fetchAndCacheChapter(b, c);
-      setVerses(result);
-    } catch (err) {
-      console.error('Error loading chapter:', err);
-      setError('Failed to load this chapter. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const loadChapter = useCallback(
+    async (b: BibleBookMeta, c: number) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const result = await fetchAndCacheChapter(b, c, translation);
+        setVerses(result);
+      } catch (err) {
+        console.error('Error loading chapter:', err);
+        setError('Failed to load this chapter. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [translation]
+  );
 
   useEffect(() => {
     if (book && chapter) loadChapter(book, chapter);

@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import type { BibleBookMeta } from '@/data/bibleBooks';
+import { BIBLE_TRANSLATIONS, DEFAULT_TRANSLATION } from '@/data/bibleTranslations';
 
 export interface ChapterVerse {
   verse: number;
@@ -17,11 +18,15 @@ interface ApiChapterResponse {
   verses?: ApiVerse[];
 }
 
+/** Required by Tyndale's NLT API terms wherever NLT verse text is displayed. */
+export const NLT_ATTRIBUTION =
+  'Scripture quotations are taken from the Holy Bible, New Living Translation, copyright ©1996, 2004, 2015 by Tyndale House Foundation. Used by permission of Tyndale House Publishers, Inc., Carol Stream, Illinois 60188. All rights reserved.';
+
 /** Checks the bible_verses cache table for a previously-fetched chapter. */
 export async function getCachedChapter(
   book: string,
   chapter: number,
-  translation = 'KJV'
+  translation = DEFAULT_TRANSLATION
 ): Promise<ChapterVerse[] | null> {
   const { data, error } = await supabase
     .from('bible_verses')
@@ -43,7 +48,7 @@ export async function getCachedChapter(
   }));
 }
 
-async function fetchChapterFromApi(book: BibleBookMeta, chapter: number): Promise<ChapterVerse[]> {
+async function fetchChapterFromKjvApi(book: BibleBookMeta, chapter: number): Promise<ChapterVerse[]> {
   const reference = `${book.apiName} ${chapter}`;
   const response = await fetch(`https://bible-api.com/${encodeURIComponent(reference)}?translation=kjv`);
 
@@ -59,15 +64,93 @@ async function fetchChapterFromApi(book: BibleBookMeta, chapter: number): Promis
   return data.verses.map((v) => ({ verse: v.verse, text: v.text.trim() }));
 }
 
+/** Matches a verse's opening `<verse_export ... vn="N" ...>` tag, capturing the verse number. */
+const VERSE_EXPORT_OPEN_TAG = /<verse_export\b[^>]*\bvn="(\d+)"[^>]*>/g;
+
+/**
+ * Tyndale's NLT API (https://api.nlt.to) returns an HTML fragment where each
+ * verse is wrapped in a `<verse_export vn="N">` element carrying the verse
+ * number as an attribute — confirmed against the live API. Its markup is
+ * occasionally malformed (a dangling, unclosed `<p>` at a verse's end); if
+ * parsed as one whole document, standard HTML error-recovery nests the
+ * *next* verse_export inside that dangling tag, merging verse text across
+ * boundaries. To avoid that, each verse's HTML is sliced out by the string
+ * position of its (always well-formed) opening tag *before* parsing, so each
+ * verse is parsed in isolation. Only then are the duplicated verse-number
+ * text, footnote markers/text, and headings stripped out.
+ */
+async function fetchChapterFromNltApi(book: BibleBookMeta, chapter: number): Promise<ChapterVerse[]> {
+  const key = import.meta.env.VITE_NLT_API_KEY as string | undefined;
+  const params = new URLSearchParams({ ref: `${book.apiName}.${chapter}`, version: 'NLT' });
+  if (key) params.set('key', key);
+
+  const response = await fetch(`https://api.nlt.to/api/passages?${params.toString()}`);
+  if (!response.ok) {
+    throw new Error(`NLT API request failed (${response.status})`);
+  }
+
+  const html = await response.text();
+  const openTags = Array.from(html.matchAll(VERSE_EXPORT_OPEN_TAG));
+  if (openTags.length === 0) {
+    throw new Error('No verses returned for that chapter.');
+  }
+
+  const verses = openTags
+    .map((match, i) => {
+      const verse = Number(match[1]);
+      const start = (match.index ?? 0) + match[0].length;
+      const end = i + 1 < openTags.length ? (openTags[i + 1].index ?? html.length) : html.length;
+      const chunk = html.slice(start, end);
+
+      const doc = new DOMParser().parseFromString(`<div id="root">${chunk}</div>`, 'text/html');
+      const root = doc.getElementById('root');
+      root?.querySelectorAll('.vn, .a-tn, .tn, h2, h3').forEach((el) => el.remove());
+      const text = (root?.textContent ?? '').replace(/\s+/g, ' ').trim();
+      return { verse, text };
+    })
+    .filter((v) => Number.isFinite(v.verse) && v.text.length > 0);
+
+  if (verses.length === 0) {
+    throw new Error('No verses returned for that chapter.');
+  }
+  return verses;
+}
+
+async function fetchChapterFromApi(
+  book: BibleBookMeta,
+  chapter: number,
+  translation: string
+): Promise<ChapterVerse[]> {
+  switch (translation) {
+    case 'KJV':
+      return fetchChapterFromKjvApi(book, chapter);
+    case 'NLT':
+      return fetchChapterFromNltApi(book, chapter);
+    default: {
+      const meta = BIBLE_TRANSLATIONS.find((t) => t.code === translation);
+      throw new Error(
+        meta && !meta.available
+          ? `${meta.name} (${meta.code}) isn't connected to a licensed text source yet.`
+          : `Unknown translation "${translation}".`
+      );
+    }
+  }
+}
+
 /** Fire-and-forget cache write — a failure here doesn't affect the read that already succeeded. */
-async function cacheChapter(book: BibleBookMeta, chapter: number, verses: ChapterVerse[]): Promise<void> {
+async function cacheChapter(
+  book: BibleBookMeta,
+  chapter: number,
+  verses: ChapterVerse[],
+  translation: string
+): Promise<void> {
   const rows = verses.map((v) => ({
     book: book.name,
     chapter,
     verse_start: v.verse,
     verse_end: null,
     text: v.text,
-    translation: 'KJV',
+    translation,
   }));
 
   const { error } = await supabase
@@ -81,14 +164,18 @@ async function cacheChapter(book: BibleBookMeta, chapter: number, verses: Chapte
 
 /**
  * Cache-through chapter fetch: checks bible_verses first, falls back to the
- * public Bible API on a miss, renders immediately, then caches in the
- * background so future lookups of the same chapter are instant/offline.
+ * translation's source API on a miss, renders immediately, then caches in
+ * the background so future lookups of the same chapter are instant/offline.
  */
-export async function fetchAndCacheChapter(book: BibleBookMeta, chapter: number): Promise<ChapterVerse[]> {
-  const cached = await getCachedChapter(book.name, chapter);
+export async function fetchAndCacheChapter(
+  book: BibleBookMeta,
+  chapter: number,
+  translation: string = DEFAULT_TRANSLATION
+): Promise<ChapterVerse[]> {
+  const cached = await getCachedChapter(book.name, chapter, translation);
   if (cached && cached.length > 0) return cached;
 
-  const verses = await fetchChapterFromApi(book, chapter);
-  void cacheChapter(book, chapter, verses);
+  const verses = await fetchChapterFromApi(book, chapter, translation);
+  void cacheChapter(book, chapter, verses, translation);
   return verses;
 }
