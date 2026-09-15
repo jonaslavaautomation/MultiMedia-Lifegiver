@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { COLOR_SWATCHES } from '@/lib/editorConstants';
 import { PortalDropdown } from '@/components/ui/PortalDropdown';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 interface ColorPickerPopoverProps {
   value: string;
@@ -15,18 +16,19 @@ export function ColorPickerPopover({ value, onChange, label = 'Color' }: ColorPi
 
   return (
     <div className="relative">
-      <button
-        ref={triggerRef}
-        type="button"
-        title={label}
-        onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-zinc-700 hover:bg-zinc-100 transition-all"
-      >
-        <span
-          className="w-5 h-5 rounded-full border border-zinc-400 shrink-0"
-          style={{ backgroundColor: value }}
-        />
-      </button>
+      <Tooltip label={label}>
+        <button
+          ref={triggerRef}
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-zinc-700 hover:bg-zinc-100 transition-all"
+        >
+          <span
+            className="w-5 h-5 rounded-full border border-zinc-400 shrink-0"
+            style={{ backgroundColor: value }}
+          />
+        </button>
+      </Tooltip>
 
       <PortalDropdown open={open} onClose={() => setOpen(false)} anchorRef={triggerRef}>
         <div className="w-52 bg-white border border-zinc-200 rounded-xl shadow-xl p-3">

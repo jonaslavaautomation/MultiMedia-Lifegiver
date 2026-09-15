@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { AlignVerticalSpaceAround } from 'lucide-react';
 import { PortalDropdown } from '@/components/ui/PortalDropdown';
+import { Tooltip } from '@/components/ui/Tooltip';
 
 interface TextSpacingPopoverProps {
   lineHeight: number;
@@ -16,15 +17,16 @@ export function TextSpacingPopover({ lineHeight, charSpacing, onLineHeightChange
 
   return (
     <div className="relative">
-      <button
-        ref={triggerRef}
-        type="button"
-        title="Line height & letter spacing"
-        onClick={() => setOpen((o) => !o)}
-        className={`flex items-center p-1.5 rounded-lg transition-all ${open ? 'bg-brand-100 text-brand-600' : 'text-zinc-700 hover:bg-zinc-100'}`}
-      >
-        <AlignVerticalSpaceAround className="w-3.5 h-3.5" />
-      </button>
+      <Tooltip label="Line height & letter spacing">
+        <button
+          ref={triggerRef}
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className={`flex items-center p-1.5 rounded-lg transition-all ${open ? 'bg-brand-100 text-brand-600' : 'text-zinc-700 hover:bg-zinc-100'}`}
+        >
+          <AlignVerticalSpaceAround className="w-3.5 h-3.5" />
+        </button>
+      </Tooltip>
 
       <PortalDropdown open={open} onClose={() => setOpen(false)} anchorRef={triggerRef}>
         <div className="w-56 bg-white border border-zinc-200 rounded-xl shadow-xl p-3 flex flex-col gap-3">

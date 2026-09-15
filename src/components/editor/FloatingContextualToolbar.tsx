@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import type { Canvas, Textbox } from 'fabric';
 import { Button } from '@/components/ui/Button';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { ColorPickerPopover } from '@/components/editor/ColorPickerPopover';
 import { FontFamilyPicker } from '@/components/editor/FontFamilyPicker';
 import { AlignmentButtonGroup } from '@/components/editor/AlignmentButtonGroup';
@@ -194,30 +195,33 @@ export function FloatingContextualToolbar({ canvas, selection, refreshSelection,
                   onChange={(align: TextAlign) => withActiveTextbox((tb) => tb.set({ textAlign: align }))}
                 />
                 <div className="flex items-center gap-0.5">
-                  <Button
-                    variant={selection.bold ? 'primary' : 'ghost'}
-                    size="sm"
-                    onClick={() => withActiveTextbox((tb) => tb.set({ fontWeight: selection.bold ? 'normal' : 'bold' }))}
-                    title="Bold"
-                  >
-                    <Bold className="w-3.5 h-3.5" />
-                  </Button>
-                  <Button
-                    variant={selection.italic ? 'primary' : 'ghost'}
-                    size="sm"
-                    onClick={() => withActiveTextbox((tb) => tb.set({ fontStyle: selection.italic ? 'normal' : 'italic' }))}
-                    title="Italic"
-                  >
-                    <Italic className="w-3.5 h-3.5" />
-                  </Button>
-                  <Button
-                    variant={selection.underline ? 'primary' : 'ghost'}
-                    size="sm"
-                    onClick={() => withActiveTextbox((tb) => tb.set({ underline: !selection.underline }))}
-                    title="Underline"
-                  >
-                    <Underline className="w-3.5 h-3.5" />
-                  </Button>
+                  <Tooltip label="Bold">
+                    <Button
+                      variant={selection.bold ? 'primary' : 'ghost'}
+                      size="sm"
+                      onClick={() => withActiveTextbox((tb) => tb.set({ fontWeight: selection.bold ? 'normal' : 'bold' }))}
+                    >
+                      <Bold className="w-3.5 h-3.5" />
+                    </Button>
+                  </Tooltip>
+                  <Tooltip label="Italic">
+                    <Button
+                      variant={selection.italic ? 'primary' : 'ghost'}
+                      size="sm"
+                      onClick={() => withActiveTextbox((tb) => tb.set({ fontStyle: selection.italic ? 'normal' : 'italic' }))}
+                    >
+                      <Italic className="w-3.5 h-3.5" />
+                    </Button>
+                  </Tooltip>
+                  <Tooltip label="Underline">
+                    <Button
+                      variant={selection.underline ? 'primary' : 'ghost'}
+                      size="sm"
+                      onClick={() => withActiveTextbox((tb) => tb.set({ underline: !selection.underline }))}
+                    >
+                      <Underline className="w-3.5 h-3.5" />
+                    </Button>
+                  </Tooltip>
                 </div>
                 <TextSpacingPopover
                   lineHeight={selection.lineHeight}
@@ -238,103 +242,131 @@ export function FloatingContextualToolbar({ canvas, selection, refreshSelection,
 
             {(selection?.kind === 'textbox' || selection?.kind === 'image' || selection?.kind === 'shape' || selection?.kind === 'group') && (
               <>
-                <div className="flex items-center gap-1.5 px-1" title="Opacity">
-                  <input
-                    type="range"
-                    min={0}
-                    max={1}
-                    step={0.05}
-                    value={selection.opacity}
-                    onChange={(e) => handleOpacityChange(Number(e.target.value))}
-                    className="w-16 accent-brand-600"
-                  />
-                  <span className="text-[10px] text-zinc-500 tabular-nums w-7">{Math.round(selection.opacity * 100)}%</span>
-                </div>
-                <Button
-                  variant={selection.hasShadow ? 'primary' : 'ghost'}
-                  size="sm"
-                  onClick={() => handleToggleShadow(!selection.hasShadow)}
-                  title="Toggle Shadow"
-                >
-                  <SquareStack className="w-3.5 h-3.5" />
-                </Button>
-                <Button
-                  variant={selection.locked ? 'primary' : 'ghost'}
-                  size="sm"
-                  onClick={() => handleToggleLock(!selection.locked)}
-                  title={selection.locked ? 'Unlock' : 'Lock in place'}
-                >
-                  {selection.locked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
-                </Button>
+                <Tooltip label="Opacity">
+                  <div className="flex items-center gap-1.5 px-1">
+                    <input
+                      type="range"
+                      min={0}
+                      max={1}
+                      step={0.05}
+                      value={selection.opacity}
+                      onChange={(e) => handleOpacityChange(Number(e.target.value))}
+                      className="w-16 accent-brand-600"
+                    />
+                    <span className="text-[10px] text-zinc-500 tabular-nums w-7">{Math.round(selection.opacity * 100)}%</span>
+                  </div>
+                </Tooltip>
+                <Tooltip label={selection.hasShadow ? 'Remove Shadow' : 'Add Shadow'}>
+                  <Button variant={selection.hasShadow ? 'primary' : 'ghost'} size="sm" onClick={() => handleToggleShadow(!selection.hasShadow)}>
+                    <SquareStack className="w-3.5 h-3.5" />
+                  </Button>
+                </Tooltip>
+                <Tooltip label={selection.locked ? 'Unlock' : 'Lock in place'}>
+                  <Button variant={selection.locked ? 'primary' : 'ghost'} size="sm" onClick={() => handleToggleLock(!selection.locked)}>
+                    {selection.locked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
+                  </Button>
+                </Tooltip>
                 <div className="w-px h-6 bg-zinc-100 mx-0.5" />
-                <Button variant="ghost" size="sm" onClick={() => handleReorder('front')} title="Bring to Front">
-                  <ChevronsUp className="w-3.5 h-3.5" />
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => handleReorder('forward')} title="Bring Forward">
-                  <BringToFront className="w-3.5 h-3.5" />
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => handleReorder('backward')} title="Send Backward">
-                  <SendToBack className="w-3.5 h-3.5" />
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => handleReorder('back')} title="Send to Back">
-                  <ChevronsDown className="w-3.5 h-3.5" />
-                </Button>
+                <Tooltip label="Bring to Front">
+                  <Button variant="ghost" size="sm" onClick={() => handleReorder('front')}>
+                    <ChevronsUp className="w-3.5 h-3.5" />
+                  </Button>
+                </Tooltip>
+                <Tooltip label="Bring Forward">
+                  <Button variant="ghost" size="sm" onClick={() => handleReorder('forward')}>
+                    <BringToFront className="w-3.5 h-3.5" />
+                  </Button>
+                </Tooltip>
+                <Tooltip label="Send Backward">
+                  <Button variant="ghost" size="sm" onClick={() => handleReorder('backward')}>
+                    <SendToBack className="w-3.5 h-3.5" />
+                  </Button>
+                </Tooltip>
+                <Tooltip label="Send to Back">
+                  <Button variant="ghost" size="sm" onClick={() => handleReorder('back')}>
+                    <ChevronsDown className="w-3.5 h-3.5" />
+                  </Button>
+                </Tooltip>
                 <div className="w-px h-6 bg-zinc-100 mx-0.5" />
                 {selection.kind === 'group' && (
-                  <Button variant="ghost" size="sm" onClick={handleUngroup} title="Ungroup">
-                    <UngroupIcon className="w-3.5 h-3.5" />
-                  </Button>
+                  <Tooltip label="Ungroup">
+                    <Button variant="ghost" size="sm" onClick={handleUngroup}>
+                      <UngroupIcon className="w-3.5 h-3.5" />
+                    </Button>
+                  </Tooltip>
                 )}
-                <Button variant="ghost" size="sm" onClick={handleDuplicate} title="Duplicate">
-                  <Copy className="w-3.5 h-3.5" />
-                </Button>
+                <Tooltip label="Duplicate">
+                  <Button variant="ghost" size="sm" onClick={handleDuplicate}>
+                    <Copy className="w-3.5 h-3.5" />
+                  </Button>
+                </Tooltip>
               </>
             )}
 
             {selection?.kind === 'multiple' && (
               <>
-                <div className="flex items-center gap-0.5" title="Align relative to each other">
-                  <Button variant="ghost" size="sm" onClick={() => handleAlign('left')} title="Align Left">
-                    <AlignLeft className="w-3.5 h-3.5" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => handleAlign('center-h')} title="Align Center">
-                    <AlignCenter className="w-3.5 h-3.5" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => handleAlign('right')} title="Align Right">
-                    <AlignRight className="w-3.5 h-3.5" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => handleAlign('top')} title="Align Top">
-                    <AlignStartVertical className="w-3.5 h-3.5" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => handleAlign('center-v')} title="Align Middle">
-                    <AlignCenterVertical className="w-3.5 h-3.5" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => handleAlign('bottom')} title="Align Bottom">
-                    <AlignEndVertical className="w-3.5 h-3.5" />
-                  </Button>
+                <div className="flex items-center gap-0.5">
+                  <Tooltip label="Align Left">
+                    <Button variant="ghost" size="sm" onClick={() => handleAlign('left')}>
+                      <AlignLeft className="w-3.5 h-3.5" />
+                    </Button>
+                  </Tooltip>
+                  <Tooltip label="Align Center">
+                    <Button variant="ghost" size="sm" onClick={() => handleAlign('center-h')}>
+                      <AlignCenter className="w-3.5 h-3.5" />
+                    </Button>
+                  </Tooltip>
+                  <Tooltip label="Align Right">
+                    <Button variant="ghost" size="sm" onClick={() => handleAlign('right')}>
+                      <AlignRight className="w-3.5 h-3.5" />
+                    </Button>
+                  </Tooltip>
+                  <Tooltip label="Align Top">
+                    <Button variant="ghost" size="sm" onClick={() => handleAlign('top')}>
+                      <AlignStartVertical className="w-3.5 h-3.5" />
+                    </Button>
+                  </Tooltip>
+                  <Tooltip label="Align Middle">
+                    <Button variant="ghost" size="sm" onClick={() => handleAlign('center-v')}>
+                      <AlignCenterVertical className="w-3.5 h-3.5" />
+                    </Button>
+                  </Tooltip>
+                  <Tooltip label="Align Bottom">
+                    <Button variant="ghost" size="sm" onClick={() => handleAlign('bottom')}>
+                      <AlignEndVertical className="w-3.5 h-3.5" />
+                    </Button>
+                  </Tooltip>
                 </div>
                 {selection.count >= 3 && (
                   <div className="flex items-center gap-0.5">
-                    <Button variant="ghost" size="sm" onClick={() => handleDistribute('horizontal')} title="Distribute Horizontally">
-                      <AlignHorizontalDistributeCenter className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleDistribute('vertical')} title="Distribute Vertically">
-                      <AlignVerticalDistributeCenter className="w-3.5 h-3.5" />
-                    </Button>
+                    <Tooltip label="Distribute Horizontally">
+                      <Button variant="ghost" size="sm" onClick={() => handleDistribute('horizontal')}>
+                        <AlignHorizontalDistributeCenter className="w-3.5 h-3.5" />
+                      </Button>
+                    </Tooltip>
+                    <Tooltip label="Distribute Vertically">
+                      <Button variant="ghost" size="sm" onClick={() => handleDistribute('vertical')}>
+                        <AlignVerticalDistributeCenter className="w-3.5 h-3.5" />
+                      </Button>
+                    </Tooltip>
                   </div>
                 )}
                 <div className="w-px h-6 bg-zinc-100 mx-0.5" />
-                <Button variant="ghost" size="sm" onClick={handleGroup} title="Group">
-                  <GroupIcon className="w-3.5 h-3.5" />
-                </Button>
+                <Tooltip label="Group">
+                  <Button variant="ghost" size="sm" onClick={handleGroup}>
+                    <GroupIcon className="w-3.5 h-3.5" />
+                  </Button>
+                </Tooltip>
                 <div className="w-px h-6 bg-zinc-100 mx-0.5" />
               </>
             )}
 
-            <Button variant="ghost" size="sm" onClick={handleDelete} title="Delete">
-              <Trash2 className="w-3.5 h-3.5" />
-              {selection?.kind === 'multiple' && ` (${selection.count})`}
-            </Button>
+            <Tooltip label="Delete">
+              <Button variant="ghost" size="sm" onClick={handleDelete}>
+                <Trash2 className="w-3.5 h-3.5" />
+                {selection?.kind === 'multiple' && ` (${selection.count})`}
+              </Button>
+            </Tooltip>
           </motion.div>
         )}
       </AnimatePresence>
