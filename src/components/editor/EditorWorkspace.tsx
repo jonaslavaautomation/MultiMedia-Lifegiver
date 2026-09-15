@@ -483,12 +483,23 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
     if (dirtyRef.current) await flushSave();
     const maxOrder = slides.reduce((max, s) => Math.max(max, s.sort_order), -1);
 
+    // Carries over the current slide's background (color/image/video/motion)
+    // onto the new slide instead of always starting from the plain default —
+    // Duplicate already exists for copying everything including
+    // text/shapes; Add Slide should still start empty, but not force
+    // re-picking the same background for every slide in a run (e.g. several
+    // verse or lyric slides meant to share one look).
+    const newSlideContent: SlideCanvasData = canvas
+      ? { ...serializeSlide(canvas, backgroundMediaIdRef.current, backgroundVideoEmbedUrlRef.current, backgroundMotionIdRef.current), objects: [] }
+      : createBlankSlideContent();
+
     const { data, error } = await supabase
       .from('slides')
       .insert({
         presentation_id: presentationId,
         title: `Slide ${slides.length + 1}`,
-        content: createBlankSlideContent(),
+        content: newSlideContent,
+        background_id: backgroundMediaIdRef.current,
         sort_order: maxOrder + 1,
       })
       .select('*')
