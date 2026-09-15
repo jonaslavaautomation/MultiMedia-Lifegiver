@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Maximize, Clock as ClockIcon, Radio, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Maximize, Clock as ClockIcon, Radio, ChevronLeft, ChevronRight, Snowflake, Church } from 'lucide-react';
 import { useLiveChannel } from '@/hooks/useLiveChannel';
 import { SlideCanvasRenderer } from '@/components/live/SlideCanvasRenderer';
 import { Button } from '@/components/ui/Button';
@@ -10,7 +10,12 @@ import type { LiveState } from '@/types/live';
 /**
  * Worship-team-facing confidence monitor: current slide (large), next
  * slide (small preview), a timer, and the time of day. Never goes black
- * during blackout — the audience-facing Projector does, this doesn't.
+ * during blackout, and never freezes or shows the Safe Slide either — the
+ * audience-facing Projector/Overlay/Remote do all of that, this always
+ * shows the operator's real, current position (state.liveContent /
+ * liveNextContent / liveSlideIndex) so the team can keep following along
+ * even while the audience-facing output is held on a frozen frame or the
+ * logo card. A small badge surfaces that fact instead of hiding it.
  * Cyber-Broadcast HUD look, matching the Operator console (Phase 1) —
  * this is a broadcast surface, not the main admin UI.
  *
@@ -24,6 +29,7 @@ export function StageDisplayPage() {
   const { id } = useParams<{ id: string }>();
   const [state, setState] = useState<LiveState | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  const [currentBgUnavailable, setCurrentBgUnavailable] = useState(false);
   const { post, lastMessage } = useLiveChannel(id ?? '');
 
   function goPrev() {
@@ -71,9 +77,21 @@ export function StageDisplayPage() {
             {connected ? state?.presentationTitle : 'Waiting for operator…'}
           </p>
         </div>
-        <div className="flex items-center gap-2 text-cyan-300/90 shrink-0">
-          <ClockIcon className="w-4 h-4" />
-          <span className="text-sm tabular-nums font-mono">{clockLabel}</span>
+        <div className="flex items-center gap-2 shrink-0">
+          {state?.freeze && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-sky-300 bg-sky-950/50 border border-sky-800/60 rounded-full px-2 py-1">
+              <Snowflake className="w-3 h-3" /> Output Frozen
+            </span>
+          )}
+          {state?.safeSlide && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-indigo-300 bg-indigo-950/50 border border-indigo-800/60 rounded-full px-2 py-1">
+              <Church className="w-3 h-3" /> Safe Slide On Air
+            </span>
+          )}
+          <div className="flex items-center gap-2 text-cyan-300/90">
+            <ClockIcon className="w-4 h-4" />
+            <span className="text-sm tabular-nums font-mono">{clockLabel}</span>
+          </div>
         </div>
       </div>
 
@@ -82,11 +100,17 @@ export function StageDisplayPage() {
           <div className="flex items-center gap-1.5 mb-1.5 px-1">
             <Radio className="w-3 h-3 text-brand-400" />
             <p className="text-[10px] font-bold uppercase tracking-wider text-brand-400">Current</p>
+            {currentBgUnavailable && (
+              <span className="text-[10px] text-amber-400/90" title="This slide's background couldn't be loaded — likely a brief connection blip.">
+                ⚠ Background unavailable
+              </span>
+            )}
           </div>
           <div className="flex-1 min-h-0">
             {connected ? (
               <SlideCanvasRenderer
-                content={state?.currentContent ?? null}
+                content={state?.liveContent ?? null}
+                onBackgroundStatus={setCurrentBgUnavailable}
                 className="w-full h-full rounded-2xl border-2 border-brand-600/60 overflow-hidden bg-hud-panel shadow-[0_0_24px_-6px_rgba(47,130,113,0.4)]"
               />
             ) : (
@@ -101,7 +125,7 @@ export function StageDisplayPage() {
           <div>
             <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-400 mb-1.5 px-1">Next</p>
             <SlideCanvasRenderer
-              content={state?.nextContent ?? null}
+              content={state?.liveNextContent ?? null}
               className="w-full rounded-xl border border-cyan-700/50 overflow-hidden bg-hud-panel"
             />
           </div>
@@ -121,19 +145,19 @@ export function StageDisplayPage() {
 
           {state && state.totalSlides > 0 && (
             <p className="text-center text-xs text-zinc-500 font-mono">
-              Slide {state.slideIndex + 1} of {state.totalSlides}
+              Slide {state.liveSlideIndex + 1} of {state.totalSlides}
             </p>
           )}
 
           <div className="flex items-center gap-2">
-            <Button variant="outline" className="flex-1 justify-center" onClick={goPrev} disabled={!connected || state?.slideIndex === 0}>
+            <Button variant="outline" className="flex-1 justify-center" onClick={goPrev} disabled={!connected || state?.liveSlideIndex === 0}>
               <ChevronLeft className="w-4 h-4" /> Previous
             </Button>
             <Button
               variant="outline"
               className="flex-1 justify-center"
               onClick={goNext}
-              disabled={!connected || (state ? state.slideIndex >= state.totalSlides - 1 : true)}
+              disabled={!connected || (state ? state.liveSlideIndex >= state.totalSlides - 1 : true)}
             >
               Next <ChevronRight className="w-4 h-4" />
             </Button>

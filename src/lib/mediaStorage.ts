@@ -99,16 +99,60 @@ export async function getMediaUrlById(mediaId: string): Promise<string | null> {
   return info?.url ?? null;
 }
 
-/** Like getMediaUrlById, but also returns the media row's type — used to decide image vs. video background rendering. */
+interface MediaInfoCacheEntry {
+  info: { url: string; type: MediaType };
+  expiresAt: number; // when the signed URL itself expires
+}
+
+const MEDIA_INFO_TTL_MS = 3600 * 1000; // matches getMediaSignedUrl's default expiresIn
+const MEDIA_INFO_SAFETY_MARGIN_MS = 60 * 1000; // re-resolve a minute before the signed URL actually expires
+
+// Keyed by media row id (not storage path — this is the id slide
+// backgrounds reference via meta.backgroundMediaId). Without this, every
+// slide-background resolution — resolveAndRenderSlide runs on EVERY
+// content-object reference change, and a BroadcastChannel state broadcast
+// (Projector/Stage) structured-clones its payload, producing a brand-new
+// reference on every single slide navigation — did a fresh, uncached
+// Supabase round trip (DB row lookup + a new signed URL) per navigation,
+// per window. That's the actual "internet drops mid-service, background
+// breaks" failure mode: not just an hourly expiry, but every slide change.
+const mediaInfoCache = new Map<string, MediaInfoCacheEntry>();
+
+function freshMediaInfo(mediaId: string): MediaInfoCacheEntry | null {
+  const entry = mediaInfoCache.get(mediaId);
+  if (!entry) return null;
+  if (Date.now() >= entry.expiresAt - MEDIA_INFO_SAFETY_MARGIN_MS) return null;
+  return entry;
+}
+
+/**
+ * Like getMediaUrlById, but also returns the media row's type — used to
+ * decide image vs. video background rendering. Cached by mediaId (see
+ * mediaInfoCache above) so repeated resolution of the same background is
+ * instant and needs no network at all once warm. If a re-resolution
+ * genuinely fails (offline), falls back to the last known-good entry even
+ * if past its normal renewal window — a still-valid-but-due-for-renewal
+ * signed URL is far better than a broken background, and it stays usable
+ * until its own real expiry regardless of what this cache thinks of it.
+ */
 export async function getMediaInfoById(mediaId: string): Promise<{ url: string; type: MediaType } | null> {
+  const fresh = freshMediaInfo(mediaId);
+  if (fresh) return fresh.info;
+
+  const stale = mediaInfoCache.get(mediaId) ?? null;
+
   const { data, error } = await supabase.from('media').select('url, type').eq('id', mediaId).maybeSingle();
   if (error || !data) {
-    if (error) console.error('Error fetching media row:', error.message);
-    return null;
+    if (error) console.error('Error fetching media row (offline?):', error.message);
+    return stale?.info ?? null;
   }
+
   const signedUrl = await getMediaSignedUrl(data.url);
-  if (!signedUrl) return null;
-  return { url: signedUrl, type: data.type as MediaType };
+  if (!signedUrl) return stale?.info ?? null;
+
+  const info = { url: signedUrl, type: data.type as MediaType };
+  mediaInfoCache.set(mediaId, { info, expiresAt: Date.now() + MEDIA_INFO_TTL_MS });
+  return info;
 }
 
 /** Best-effort delete — used both for rollback-on-DB-failure and the Delete action. */

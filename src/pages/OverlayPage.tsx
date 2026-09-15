@@ -41,7 +41,7 @@ export function OverlayPage() {
     };
   }, []);
 
-  const overlayText = !state?.blackout ? extractOverlayText(state?.currentContent) : null;
+  const overlayText = !state?.blackout && !state?.safeSlide ? extractOverlayText(state?.currentContent) : null;
   // Key the animation on the actual text, not just slide index, so the
   // enter/exit only fires when what's displayed actually changes.
   const animKey = overlayText ? `${overlayText.primary}|${overlayText.caption ?? ''}` : 'empty';

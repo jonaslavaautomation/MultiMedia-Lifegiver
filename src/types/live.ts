@@ -23,11 +23,37 @@ export const INITIAL_TIMER_STATE: TimerState = {
 
 export interface LiveState {
   presentationTitle: string;
+  /**
+   * The audience-facing OUTPUT position — what Projector/Overlay/Remote
+   * should actually render. Equal to the operator's live position normally,
+   * but pinned to the slide that was live when Freeze was engaged for as
+   * long as freeze stays true, so those surfaces keep showing that frozen
+   * frame regardless of where the operator has since navigated.
+   */
   slideIndex: number;
   totalSlides: number;
   currentContent: SlideCanvasData | null;
   nextContent: SlideCanvasData | null;
   blackout: boolean;
+  /** True while Freeze is engaged — see slideIndex/currentContent above. */
+  freeze: boolean;
+  /**
+   * True while the Safe Slide (church logo) is being shown on audience-
+   * facing outputs instead of the current slide — a calmer alternative to
+   * Blackout for a planned pause (e.g. between services). Mutually
+   * exclusive with blackout; turning one on turns the other off.
+   */
+  safeSlide: boolean;
+  /**
+   * The operator's real, ever-current position — never pinned by Freeze.
+   * Exists purely for the Stage Display confidence monitor, which by design
+   * must keep showing the team what's actually happening regardless of
+   * Blackout OR Freeze (see StageDisplayPage.tsx) — everything else should
+   * use slideIndex/currentContent/nextContent above instead.
+   */
+  liveSlideIndex: number;
+  liveContent: SlideCanvasData | null;
+  liveNextContent: SlideCanvasData | null;
   timer: TimerState;
 }
 
@@ -45,6 +71,8 @@ export type RemoteCommand =
   | { type: 'command'; action: 'previous' }
   | { type: 'command'; action: 'goto'; slideIndex: number }
   | { type: 'command'; action: 'toggle-blackout' }
+  | { type: 'command'; action: 'toggle-freeze' }
+  | { type: 'command'; action: 'toggle-safe-slide' }
   | { type: 'command'; action: 'timer-start' }
   | { type: 'command'; action: 'timer-pause' }
   | { type: 'command'; action: 'timer-reset' }

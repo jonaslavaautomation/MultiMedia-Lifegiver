@@ -11,7 +11,7 @@ import {
   type HotkeyBindings,
 } from '@/lib/hotkeyBindings';
 
-const ACTIONS: HotkeyAction[] = ['next', 'previous', 'clear'];
+const ACTIONS: HotkeyAction[] = ['next', 'previous', 'clear', 'freeze', 'safe-slide'];
 
 interface HotkeyBindingsModalProps {
   open: boolean;
@@ -72,8 +72,9 @@ export function HotkeyBindingsModal({ open, onClose, bindings, onChange }: Hotke
     <Modal open={open} onClose={onClose} title="MIDI & Hotkeys">
       <div className="flex flex-col gap-4">
         <p className="text-sm text-zinc-400 leading-relaxed">
-          Bind a keyboard key or a MIDI pad to control the show — the arrow keys and B for blackout always work too,
-          these are extra bindings on top (handy for a Stream Deck in MIDI mode, or a Launchpad).
+          Bind a keyboard key or a MIDI pad to control the show — the arrow keys, B for blackout, F for freeze, and L
+          for the safe slide always work too, these are extra bindings on top (handy for a Stream Deck in MIDI mode,
+          or a Launchpad).
         </p>
 
         <div

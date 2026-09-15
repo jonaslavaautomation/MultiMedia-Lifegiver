@@ -1,4 +1,4 @@
-export type HotkeyAction = 'next' | 'previous' | 'clear';
+export type HotkeyAction = 'next' | 'previous' | 'clear' | 'freeze' | 'safe-slide';
 
 export type BindingSource = { type: 'keyboard'; key: string } | { type: 'midi'; note: number };
 
@@ -10,6 +10,8 @@ export const HOTKEY_ACTION_LABELS: Record<HotkeyAction, string> = {
   next: 'Next Slide',
   previous: 'Previous Slide',
   clear: 'Toggle Blackout',
+  freeze: 'Toggle Freeze',
+  'safe-slide': 'Toggle Safe Slide (Logo)',
 };
 
 /** Human-readable label for a binding, e.g. "Key: B" or "MIDI note 60". */

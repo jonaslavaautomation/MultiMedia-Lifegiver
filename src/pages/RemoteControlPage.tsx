@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Eye, EyeOff, Play, Pause, RotateCcw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Eye, EyeOff, Play, Pause, RotateCcw, Snowflake, Church } from 'lucide-react';
 import { useRealtimeLiveChannel } from '@/hooks/useRealtimeLiveChannel';
 import { Button } from '@/components/ui/Button';
 import { SlideCanvasRenderer } from '@/components/live/SlideCanvasRenderer';
+import { SafeSlideDisplay } from '@/components/live/SafeSlideDisplay';
+import { ConnectionStatusBadge } from '@/components/live/ConnectionStatusBadge';
 import { getDisplayMs, formatDuration } from '@/lib/liveTimer';
 import type { LiveState, RemoteCommand } from '@/types/live';
 
@@ -47,10 +49,19 @@ export function RemoteControlPage() {
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col gap-4 p-4 max-w-md mx-auto">
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-semibold truncate">{state?.presentationTitle ?? 'Connecting…'}</p>
-        <span className={`shrink-0 text-xs flex items-center gap-1 ${connected ? 'text-emerald-400' : 'text-zinc-500'}`}>
-          <span className="w-1.5 h-1.5 rounded-full bg-current" /> {connected ? 'Connected' : 'Connecting…'}
-        </span>
+        <div className="shrink-0 flex items-center gap-2">
+          <ConnectionStatusBadge />
+          <span className={`text-xs flex items-center gap-1 ${connected ? 'text-emerald-400' : 'text-zinc-500'}`}>
+            <span className="w-1.5 h-1.5 rounded-full bg-current" /> {connected ? 'Connected' : 'Connecting…'}
+          </span>
+        </div>
       </div>
+
+      {!connected && (
+        <p className="text-[11px] text-amber-400/90 text-center -mt-2">
+          Remote disconnected — the booth computer's own controls (keyboard, mouse, MIDI) keep working regardless.
+        </p>
+      )}
 
       {state && state.totalSlides > 0 && (
         <p className="text-xs text-zinc-500 text-center">
@@ -67,10 +78,18 @@ export function RemoteControlPage() {
           <div className="w-full h-full flex items-center justify-center">
             <p className="text-xs text-zinc-600 uppercase tracking-wider">Blacked Out</p>
           </div>
+        ) : state?.safeSlide ? (
+          <SafeSlideDisplay className="w-full h-full" />
         ) : (
           <SlideCanvasRenderer content={state?.currentContent ?? null} className="w-full h-full" />
         )}
       </div>
+
+      {state?.freeze && (
+        <p className="text-[11px] text-sky-400/90 text-center -mt-2 flex items-center justify-center gap-1.5">
+          <Snowflake className="w-3 h-3" /> Output frozen — the operator is navigating ahead unseen
+        </p>
+      )}
 
       <div className="grid grid-cols-2 gap-3">
         <Button
@@ -99,6 +118,23 @@ export function RemoteControlPage() {
         {state?.blackout ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
         {state?.blackout ? 'Blacked Out' : 'Blackout'}
       </Button>
+
+      <div className="grid grid-cols-2 gap-3">
+        <Button
+          variant="outline"
+          onClick={() => send({ type: 'command', action: 'toggle-freeze' })}
+          className={`h-12 justify-center ${state?.freeze ? 'bg-sky-600 border-sky-600 text-white hover:bg-sky-700' : ''}`}
+        >
+          <Snowflake className="w-4 h-4" /> {state?.freeze ? 'Frozen' : 'Freeze'}
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => send({ type: 'command', action: 'toggle-safe-slide' })}
+          className={`h-12 justify-center ${state?.safeSlide ? 'bg-indigo-600 border-indigo-600 text-white hover:bg-indigo-700' : ''}`}
+        >
+          <Church className="w-4 h-4" /> {state?.safeSlide ? 'Safe Slide On' : 'Safe Slide'}
+        </Button>
+      </div>
 
       <div className="rounded-2xl bg-zinc-900/60 border border-zinc-800/80 p-4 text-center mt-2">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mb-2">
