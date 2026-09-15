@@ -10,6 +10,16 @@ export interface RenderSlideResult {
   videoBackgroundUrl: string | null;
   /** Set when the slide's background is a built-in Motion Background Library preset — the caller renders it via <MotionBackgroundPlayer> behind the canvas. */
   motionBackground: MotionPreset | null;
+  /**
+   * True when this slide references an uploaded media background
+   * (meta.backgroundMediaId) that could not be resolved this time — e.g. a
+   * transient offline blip. The slide still renders (with whatever solid
+   * background color it has), this never throws or blocks; it's purely a
+   * signal a caller can use to show a calm "Background unavailable" note on
+   * the operator's own screens. Never true for a Motion Background preset
+   * or a pasted embed URL, since neither needs a network lookup.
+   */
+  backgroundUnavailable: boolean;
 }
 
 /**
@@ -36,7 +46,7 @@ export async function resolveAndRenderSlide(canvas: StaticCanvas, content: Slide
     const preset = getMotionPresetById(motionId);
     if (preset) {
       clearBackgroundForVideo(canvas); // same "transparent canvas, something else paints behind it" treatment as video
-      return { videoBackgroundUrl: null, motionBackground: preset };
+      return { videoBackgroundUrl: null, motionBackground: preset, backgroundUnavailable: false };
     }
   }
 
@@ -45,7 +55,7 @@ export async function resolveAndRenderSlide(canvas: StaticCanvas, content: Slide
   const embedUrl = content.meta?.backgroundVideoEmbedUrl ?? null;
   if (embedUrl && !canvas.backgroundImage) {
     clearBackgroundForVideo(canvas);
-    return { videoBackgroundUrl: embedUrl, motionBackground: null };
+    return { videoBackgroundUrl: embedUrl, motionBackground: null, backgroundUnavailable: false };
   }
 
   const bgMediaId = content.meta?.backgroundMediaId ?? null;
@@ -53,12 +63,17 @@ export async function resolveAndRenderSlide(canvas: StaticCanvas, content: Slide
     const info = await getMediaInfoById(bgMediaId);
     if (info?.type === 'video') {
       clearBackgroundForVideo(canvas);
-      return { videoBackgroundUrl: info.url, motionBackground: null };
+      return { videoBackgroundUrl: info.url, motionBackground: null, backgroundUnavailable: false };
     }
     if (info?.url) {
       await applyImageBackground(canvas, info.url);
+      return { videoBackgroundUrl: null, motionBackground: null, backgroundUnavailable: false };
     }
+    // A background was supposed to be here but couldn't be resolved (e.g.
+    // offline) — render proceeds with a plain background rather than
+    // failing, but the caller can flag it for the operator.
+    return { videoBackgroundUrl: null, motionBackground: null, backgroundUnavailable: true };
   }
 
-  return { videoBackgroundUrl: null, motionBackground: null };
+  return { videoBackgroundUrl: null, motionBackground: null, backgroundUnavailable: false };
 }

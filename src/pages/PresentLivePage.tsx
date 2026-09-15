@@ -72,6 +72,8 @@ export function PresentLivePage() {
   const slideIndexRef = useRef(slideIndex);
   slideIndexRef.current = slideIndex;
 
+  const [programBgUnavailable, setProgramBgUnavailable] = useState(false);
+  const [previewBgUnavailable, setPreviewBgUnavailable] = useState(false);
   const [remoteModalOpen, setRemoteModalOpen] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [hotkeyModalOpen, setHotkeyModalOpen] = useState(false);
@@ -494,9 +496,15 @@ export function PresentLivePage() {
               <div className="flex items-center gap-1.5 mb-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse-glow-red" />
                 <p className="text-[10px] font-bold uppercase tracking-wider text-red-400">Program — On Air</p>
+                {programBgUnavailable && (
+                  <span className="text-[10px] text-amber-400/90" title="This slide's background couldn't be loaded — likely a brief connection blip. The slide is still showing; it'll pick up the background automatically once it's reachable again.">
+                    ⚠ Background unavailable
+                  </span>
+                )}
               </div>
               <SlideCanvasRenderer
                 content={slides[slideIndex]?.content ?? null}
+                onBackgroundStatus={setProgramBgUnavailable}
                 className="rounded-2xl border-2 border-red-600/60 overflow-hidden bg-hud-panel shadow-[0_0_24px_-6px_rgba(239,68,68,0.35)]"
               />
             </div>
@@ -504,9 +512,15 @@ export function PresentLivePage() {
               <div className="flex items-center gap-1.5 mb-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
                 <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-400">Preview — Next</p>
+                {previewBgUnavailable && (
+                  <span className="text-[10px] text-amber-400/90" title="This slide's background couldn't be loaded — likely a brief connection blip.">
+                    ⚠ Background unavailable
+                  </span>
+                )}
               </div>
               <SlideCanvasRenderer
                 content={slides[slideIndex + 1]?.content ?? null}
+                onBackgroundStatus={setPreviewBgUnavailable}
                 className="rounded-2xl border border-cyan-700/50 overflow-hidden bg-hud-panel shadow-[0_0_16px_-6px_rgba(6,182,212,0.3)]"
               />
             </div>

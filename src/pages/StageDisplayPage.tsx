@@ -29,6 +29,7 @@ export function StageDisplayPage() {
   const { id } = useParams<{ id: string }>();
   const [state, setState] = useState<LiveState | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  const [currentBgUnavailable, setCurrentBgUnavailable] = useState(false);
   const { post, lastMessage } = useLiveChannel(id ?? '');
 
   function goPrev() {
@@ -99,11 +100,17 @@ export function StageDisplayPage() {
           <div className="flex items-center gap-1.5 mb-1.5 px-1">
             <Radio className="w-3 h-3 text-brand-400" />
             <p className="text-[10px] font-bold uppercase tracking-wider text-brand-400">Current</p>
+            {currentBgUnavailable && (
+              <span className="text-[10px] text-amber-400/90" title="This slide's background couldn't be loaded — likely a brief connection blip.">
+                ⚠ Background unavailable
+              </span>
+            )}
           </div>
           <div className="flex-1 min-h-0">
             {connected ? (
               <SlideCanvasRenderer
                 content={state?.liveContent ?? null}
+                onBackgroundStatus={setCurrentBgUnavailable}
                 className="w-full h-full rounded-2xl border-2 border-brand-600/60 overflow-hidden bg-hud-panel shadow-[0_0_24px_-6px_rgba(47,130,113,0.4)]"
               />
             ) : (
