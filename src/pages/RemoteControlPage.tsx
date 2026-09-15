@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Eye, EyeOff, Play, Pause, RotateCcw } from 'lucide-react';
 import { useRealtimeLiveChannel } from '@/hooks/useRealtimeLiveChannel';
 import { Button } from '@/components/ui/Button';
+import { SlideCanvasRenderer } from '@/components/live/SlideCanvasRenderer';
 import { getDisplayMs, formatDuration } from '@/lib/liveTimer';
 import type { LiveState, RemoteCommand } from '@/types/live';
 
@@ -56,6 +57,20 @@ export function RemoteControlPage() {
           Slide {state.slideIndex + 1} of {state.totalSlides}
         </p>
       )}
+
+      {/* Mirrors the audience-facing Projector exactly, blackout included —
+          this is meant to show what's actually live, not a confidence
+          monitor (that's Stage Display, which deliberately never blacks
+          out). */}
+      <div className="rounded-xl overflow-hidden border border-zinc-800 bg-black aspect-video">
+        {state?.blackout ? (
+          <div className="w-full h-full flex items-center justify-center">
+            <p className="text-xs text-zinc-600 uppercase tracking-wider">Blacked Out</p>
+          </div>
+        ) : (
+          <SlideCanvasRenderer content={state?.currentContent ?? null} className="w-full h-full" />
+        )}
+      </div>
 
       <div className="grid grid-cols-2 gap-3">
         <Button
