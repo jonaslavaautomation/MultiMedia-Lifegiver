@@ -29,9 +29,11 @@ import { SlideCanvasRenderer } from '@/components/live/SlideCanvasRenderer';
 import { TimerControl } from '@/components/live/TimerControl';
 import { BroadcastTelemetryBar } from '@/components/live/BroadcastTelemetryBar';
 import { ConnectionStatusBadge } from '@/components/live/ConnectionStatusBadge';
+import { useConnectionStatus } from '@/hooks/useConnectionStatus';
 import { HotkeyBindingsModal } from '@/components/live/HotkeyBindingsModal';
 import { startTimer, pauseTimer, resetTimer, setTimerMode, setCountdownDuration } from '@/lib/liveTimer';
 import { findActionForKey, findActionForMidiNote, loadHotkeyBindings, saveHotkeyBindings, type HotkeyBindings } from '@/lib/hotkeyBindings';
+import { cachePresentationSnapshot, loadPresentationSnapshot } from '@/lib/offlineStore';
 import { INITIAL_TIMER_STATE, type LiveState, type TimerState, type RemoteCommand } from '@/types/live';
 import type { Slide } from '@/types';
 
@@ -51,6 +53,13 @@ export function PresentLivePage() {
   const [slides, setSlides] = useState<Slide[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Set when this load came from the local IndexedDB copy (see
+  // offlineStore.ts) because Supabase itself was unreachable — a cold
+  // start (fresh page load, not just a mid-service reconnect) with no
+  // internet at all. Shown as a calm banner, not an error: the presentation
+  // still works, it just might be missing edits made since it was last
+  // cached.
+  const [offlineSnapshotCachedAt, setOfflineSnapshotCachedAt] = useState<number | null>(null);
 
   const [slideIndex, setSlideIndex] = useState(0);
   const [blackout, setBlackout] = useState(false);
@@ -94,20 +103,52 @@ export function PresentLivePage() {
     ]);
 
     if (presRes.error || slidesRes.error) {
-      console.error('Error loading live presentation:', presRes.error?.message ?? slidesRes.error?.message);
+      console.error('Error loading live presentation (offline?):', presRes.error?.message ?? slidesRes.error?.message);
+
+      // Cold-start offline fallback — the live presentation must never
+      // depend on the internet, including a fresh page load. If this
+      // presentation was ever successfully opened before, fall back to
+      // that last-known copy rather than blocking with a hard error.
+      const cached = await loadPresentationSnapshot(id);
+      if (cached) {
+        setTitle(cached.title);
+        setSlides(cached.slides);
+        setOfflineSnapshotCachedAt(cached.cachedAt);
+        setLoading(false);
+        return;
+      }
+
       setError('Failed to load this presentation. Please try again.');
       setLoading(false);
       return;
     }
 
-    setTitle(presRes.data?.title ?? 'Untitled Presentation');
-    setSlides((slidesRes.data as Slide[]) ?? []);
+    const loadedTitle = presRes.data?.title ?? 'Untitled Presentation';
+    const loadedSlides = (slidesRes.data as Slide[]) ?? [];
+    setTitle(loadedTitle);
+    setSlides(loadedSlides);
+    setOfflineSnapshotCachedAt(null);
     setLoading(false);
+    void cachePresentationSnapshot(id, loadedTitle, loadedSlides);
   }, [id]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Once we're back online after having fallen back to the offline
+  // snapshot, quietly retry the real fetch so the presentation picks up
+  // whatever was edited since — no user action needed.
+  const { status: connectionStatus } = useConnectionStatus();
+  const showingOfflineSnapshotRef = useRef(false);
+  useEffect(() => {
+    showingOfflineSnapshotRef.current = offlineSnapshotCachedAt !== null;
+  }, [offlineSnapshotCachedAt]);
+  useEffect(() => {
+    if (connectionStatus === 'online' && showingOfflineSnapshotRef.current) {
+      void fetchData();
+    }
+  }, [connectionStatus, fetchData]);
 
   // Restore operator state from a previous session (survives an accidental refresh mid-service).
   useEffect(() => {
@@ -411,6 +452,15 @@ export function PresentLivePage() {
     <div className="min-h-screen bg-hud-bg flex flex-col">
       {/* Broadcast Telemetry Bar */}
       <BroadcastTelemetryBar onAir={!blackout} timer={timer} />
+
+      {offlineSnapshotCachedAt !== null && (
+        <div className="px-4 lg:px-6 py-2 bg-amber-950/30 border-b border-amber-900/40 text-center text-xs text-amber-300">
+          Showing the last downloaded copy of this presentation (saved{' '}
+          {new Date(offlineSnapshotCachedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}) —
+          Supabase isn't reachable right now. Everything still works locally; it'll pick up any newer edits
+          automatically once it's back online.
+        </div>
+      )}
 
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 px-4 lg:px-6 py-3 border-b border-hud-border bg-hud-panel/40">
