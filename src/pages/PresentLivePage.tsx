@@ -15,6 +15,8 @@ import {
   Check,
   Piano,
   Layers,
+  Snowflake,
+  Church,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
@@ -36,6 +38,8 @@ import type { Slide } from '@/types';
 interface StoredLiveState {
   slideIndex: number;
   blackout: boolean;
+  freeze: { active: boolean; index: number };
+  safeSlide: boolean;
   timer: TimerState;
 }
 
@@ -50,7 +54,23 @@ export function PresentLivePage() {
 
   const [slideIndex, setSlideIndex] = useState(0);
   const [blackout, setBlackout] = useState(false);
+  // { active, index } rather than a plain boolean — index is the slide that
+  // was live the moment Freeze was engaged, so the audience-facing outputs
+  // keep showing exactly that frame while the operator is free to keep
+  // navigating slideIndex locally to prep ahead, unseen, until Unfreeze.
+  const [freeze, setFreezeState] = useState<{ active: boolean; index: number }>({ active: false, index: 0 });
+  const [safeSlide, setSafeSlide] = useState(false);
   const [timer, setTimer] = useState<TimerState>(INITIAL_TIMER_STATE);
+  // Kept in sync every render (not via an effect) purely so toggleFreeze
+  // below can read "what slide is live right now" without needing
+  // slideIndex in its own dependency array — same reasoning as the
+  // buildStateRef/applyCommandRef pattern a bit further down: a callback
+  // used inside the command-handling effects must never change identity as
+  // a side effect of the state it just changed, or that effect re-fires and
+  // reapplies the same stale command forever (see the Blackout loop this
+  // exact bug caused previously).
+  const slideIndexRef = useRef(slideIndex);
+  slideIndexRef.current = slideIndex;
 
   const [remoteModalOpen, setRemoteModalOpen] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
@@ -99,6 +119,13 @@ export function PresentLivePage() {
           setSlideIndex(Math.min(Math.max(0, parsed.slideIndex), slides.length - 1));
         }
         if (typeof parsed.blackout === 'boolean') setBlackout(parsed.blackout);
+        if (parsed.freeze && typeof parsed.freeze.active === 'boolean' && typeof parsed.freeze.index === 'number') {
+          setFreezeState({
+            active: parsed.freeze.active,
+            index: Math.min(Math.max(0, parsed.freeze.index), slides.length - 1),
+          });
+        }
+        if (typeof parsed.safeSlide === 'boolean') setSafeSlide(parsed.safeSlide);
         if (parsed.timer) setTimer(parsed.timer);
       }
     } catch {
@@ -110,25 +137,34 @@ export function PresentLivePage() {
   useEffect(() => {
     if (!id) return;
     try {
-      const toStore: StoredLiveState = { slideIndex, blackout, timer };
+      const toStore: StoredLiveState = { slideIndex, blackout, freeze, safeSlide, timer };
       sessionStorage.setItem(`live-state-${id}`, JSON.stringify(toStore));
     } catch {
       // ignore (private browsing / quota)
     }
-  }, [id, slideIndex, blackout, timer]);
+  }, [id, slideIndex, blackout, freeze, safeSlide, timer]);
 
-  const buildState = useCallback(
-    (): LiveState => ({
+  const buildState = useCallback((): LiveState => {
+    // While frozen, report the slide that was live when Freeze was engaged
+    // — not wherever the operator has since navigated locally — so every
+    // audience-facing output (Projector/Stage/Overlay/Remote) keeps showing
+    // that frozen frame until Unfreeze.
+    const outputIndex = freeze.active ? freeze.index : slideIndex;
+    return {
       presentationTitle: title,
-      slideIndex,
+      slideIndex: outputIndex,
       totalSlides: slides.length,
-      currentContent: slides[slideIndex]?.content ?? null,
-      nextContent: slides[slideIndex + 1]?.content ?? null,
+      currentContent: slides[outputIndex]?.content ?? null,
+      nextContent: slides[outputIndex + 1]?.content ?? null,
       blackout,
+      freeze: freeze.active,
+      safeSlide,
+      liveSlideIndex: slideIndex,
+      liveContent: slides[slideIndex]?.content ?? null,
+      liveNextContent: slides[slideIndex + 1]?.content ?? null,
       timer,
-    }),
-    [title, slideIndex, slides, blackout, timer]
-  );
+    };
+  }, [title, slideIndex, slides, blackout, freeze, safeSlide, timer]);
 
   // Shared slide-navigation / blackout callbacks — the UI buttons, keyboard
   // shortcuts, and remote commands (from a phone) all funnel through these
@@ -145,7 +181,21 @@ export function PresentLivePage() {
     },
     [slides.length]
   );
-  const toggleBlackout = useCallback(() => setBlackout((b) => !b), []);
+  // Blackout and Safe Slide are mutually exclusive audience-facing states —
+  // turning one on turns the other off, since showing pure black and the
+  // logo card at the same time makes no sense. Freeze is independent of
+  // both (it just holds whichever frame was live when it engaged).
+  const toggleBlackout = useCallback(() => {
+    setBlackout((b) => !b);
+    setSafeSlide(false);
+  }, []);
+  const toggleSafeSlide = useCallback(() => {
+    setSafeSlide((s) => !s);
+    setBlackout(false);
+  }, []);
+  const toggleFreeze = useCallback(() => {
+    setFreezeState((f) => (f.active ? { active: false, index: f.index } : { active: true, index: slideIndexRef.current }));
+  }, []);
 
   // Applies a RemoteCommand via the exact same functions the local UI
   // buttons/keyboard shortcuts use, so a phone tapping "Next" — or a
@@ -167,6 +217,12 @@ export function PresentLivePage() {
         case 'toggle-blackout':
           toggleBlackout();
           break;
+        case 'toggle-freeze':
+          toggleFreeze();
+          break;
+        case 'toggle-safe-slide':
+          toggleSafeSlide();
+          break;
         case 'timer-start':
           setTimer((t) => startTimer(t));
           break;
@@ -184,7 +240,7 @@ export function PresentLivePage() {
           break;
       }
     },
-    [goNext, goPrev, goToSlide, toggleBlackout]
+    [goNext, goPrev, goToSlide, toggleBlackout, toggleFreeze, toggleSafeSlide]
   );
 
   // buildState/applyCommand change identity on every slideIndex/blackout/
@@ -261,6 +317,8 @@ export function PresentLivePage() {
         e.preventDefault();
         if (customAction === 'next') goNext();
         else if (customAction === 'previous') goPrev();
+        else if (customAction === 'freeze') toggleFreeze();
+        else if (customAction === 'safe-slide') toggleSafeSlide();
         else toggleBlackout();
         return;
       }
@@ -273,11 +331,15 @@ export function PresentLivePage() {
         goPrev();
       } else if (e.key.toLowerCase() === 'b') {
         toggleBlackout();
+      } else if (e.key.toLowerCase() === 'f') {
+        toggleFreeze();
+      } else if (e.key.toLowerCase() === 'l') {
+        toggleSafeSlide();
       }
     }
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [goNext, goPrev, toggleBlackout, hotkeyBindings]);
+  }, [goNext, goPrev, toggleBlackout, toggleFreeze, toggleSafeSlide, hotkeyBindings]);
 
   // MIDI: a bound pad/note triggers the same shared callbacks as the UI
   // buttons, keyboard shortcuts, and remote commands. Suppressed while the
@@ -293,6 +355,8 @@ export function PresentLivePage() {
       if (action === 'next') goNext();
       else if (action === 'previous') goPrev();
       else if (action === 'clear') toggleBlackout();
+      else if (action === 'freeze') toggleFreeze();
+      else if (action === 'safe-slide') toggleSafeSlide();
     },
   });
 
@@ -362,6 +426,24 @@ export function PresentLivePage() {
           <Button variant={blackout ? 'danger' : 'outline'} size="sm" onClick={toggleBlackout} title="Toggle blackout (B)">
             {blackout ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
             {blackout ? 'Blacked Out' : 'Blackout'}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={toggleFreeze}
+            title="Freeze the output on this frame — you can keep navigating locally without the audience seeing it (F)"
+            className={freeze.active ? 'bg-sky-600 border-sky-600 text-white hover:bg-sky-700' : ''}
+          >
+            <Snowflake className="w-3.5 h-3.5" /> {freeze.active ? 'Frozen' : 'Freeze'}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={toggleSafeSlide}
+            title="Show the Safe Slide (church logo) on audience-facing outputs (L)"
+            className={safeSlide ? 'bg-indigo-600 border-indigo-600 text-white hover:bg-indigo-700' : ''}
+          >
+            <Church className="w-3.5 h-3.5" /> {safeSlide ? 'Safe Slide On' : 'Safe Slide'}
           </Button>
           <Button variant="outline" size="sm" onClick={() => openWindow('projector')}>
             <Monitor className="w-3.5 h-3.5" /> Open Projector

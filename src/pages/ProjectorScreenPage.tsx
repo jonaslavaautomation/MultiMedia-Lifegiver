@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { Maximize, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLiveChannel } from '@/hooks/useLiveChannel';
 import { SlideCanvasRenderer } from '@/components/live/SlideCanvasRenderer';
+import { SafeSlideDisplay } from '@/components/live/SafeSlideDisplay';
 import type { LiveState } from '@/types/live';
 
 /**
@@ -39,7 +40,12 @@ export function ProjectorScreenPage() {
 
   return (
     <div className="fixed inset-0 bg-black flex items-center justify-center overflow-hidden">
-      {!state?.blackout && (
+      {!state?.blackout && state?.safeSlide && (
+        <div style={{ width: 'min(100vw, 177.78vh)', aspectRatio: '16 / 9' }}>
+          <SafeSlideDisplay className="w-full h-full" />
+        </div>
+      )}
+      {!state?.blackout && !state?.safeSlide && (
         <div style={{ width: 'min(100vw, 177.78vh)', aspectRatio: '16 / 9' }}>
           <SlideCanvasRenderer content={state?.currentContent ?? null} className="w-full h-full" />
         </div>
