@@ -3,6 +3,7 @@ import { getMediaSignedUrl } from '@/lib/mediaStorage';
 
 const SIGNED_URL_TTL_MS = 3600 * 1000; // matches getMediaSignedUrl's default expiresIn
 const SAFETY_MARGIN_MS = 60 * 1000; // refresh a minute before the URL actually expires
+const RETRY_DELAY_MS = 30 * 1000; // if a refresh fails (offline?), try again shortly instead of giving up for the rest of the session
 
 interface CacheEntry {
   url: string;
@@ -57,6 +58,14 @@ export function useSignedUrl(path: string | null | undefined): string | null {
         signedUrlCache.set(path!, { url: signedUrl, expiresAt });
         setUrl(signedUrl);
         scheduleRefresh(expiresAt);
+      } else {
+        // Offline or a transient failure — this used to just give up
+        // silently (no retry ever scheduled again), so the asset would work
+        // only until its already-issued URL's own hard expiry, then break
+        // permanently for the rest of the session. Whatever URL is already
+        // displayed is left alone (still valid until its real expiry) and
+        // we just try again shortly instead.
+        refreshTimer = setTimeout(() => void fetchFresh(), RETRY_DELAY_MS);
       }
     }
 
