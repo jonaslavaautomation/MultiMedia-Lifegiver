@@ -17,6 +17,7 @@ import { resolveAndRenderSlide } from '@/lib/renderSlide';
 import { createBlankSlideContent, isEmptySlideContent } from '@/lib/slideContent';
 import { getMediaSignedUrl } from '@/lib/mediaStorage';
 import { getMotionPresetById } from '@/lib/motionLibrary';
+import { saveSlideDraft, loadSlideDraft, clearSlideDraft } from '@/lib/offlineStore';
 import type { MotionPreset } from '@/types/motion';
 import { AUTOSAVE_DELAY_MS, HISTORY_DEBOUNCE_MS, DEFAULT_SLIDE_BACKGROUND_COLOR } from '@/lib/editorConstants';
 import { EditorToolbar } from '@/components/editor/EditorToolbar';
@@ -140,6 +141,9 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
     setSlides((prev) =>
       prev.map((s) => (s.id === slideId ? { ...s, content, background_id: backgroundMediaIdRef.current } : s))
     );
+    // The local crash-safe draft (see markDirty below) is now redundant —
+    // Supabase has this exact content confirmed saved.
+    void clearSlideDraft(slideId);
   }, [canvas]);
 
   const flushSaveRef = useRef(flushSave);
@@ -172,10 +176,28 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
       void flushSaveRef.current();
     }, AUTOSAVE_DELAY_MS);
 
-    if (isRestoringHistoryRef.current || !canvas) return;
+    if (!canvas) return;
+    // Serialized once and reused below for both the local draft (written
+    // immediately) and the debounced history step — safe to share since
+    // nothing else can mutate the canvas between now and either firing
+    // (any further edit would itself call markDirty again first, replacing
+    // this capture with a fresher one).
+    const content = serializeSlide(canvas, backgroundMediaIdRef.current, backgroundVideoEmbedUrlRef.current, backgroundMotionIdRef.current);
+
+    // Crash-safe local draft — written to IndexedDB right now, well before
+    // the debounced Supabase autosave above actually fires AUTOSAVE_DELAY_MS
+    // from now. If the browser closes/crashes/loses power in that window
+    // (or Supabase is simply unreachable), the edit isn't lost: opening this
+    // slide again finds this draft and restores + re-attempts saving it
+    // (see the hydration effect below and offlineStore.ts).
+    if (currentSlideIdRef.current) {
+      void saveSlideDraft(currentSlideIdRef.current, content, backgroundMediaIdRef.current);
+    }
+
+    if (isRestoringHistoryRef.current) return;
     if (historyTimerRef.current) clearTimeout(historyTimerRef.current);
     historyTimerRef.current = setTimeout(() => {
-      pushHistory(serializeSlide(canvas, backgroundMediaIdRef.current, backgroundVideoEmbedUrlRef.current, backgroundMotionIdRef.current));
+      pushHistory(content);
     }, HISTORY_DEBOUNCE_MS);
   }, [canvas, pushHistory]);
 
@@ -374,16 +396,36 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
       isLoadingSlideRef.current = true;
       setLoadingSlide(true);
 
-      await applySnapshotToCanvas(slide!.content, () => cancelled);
+      // A local draft only ever exists here because the last edit to this
+      // slide was never confirmed saved to Supabase (flushSave clears it on
+      // every success) — a crash, a closed tab, or an offline gap. Prefer
+      // it over Supabase's copy rather than silently discarding it.
+      const draft = await loadSlideDraft(slide!.id);
+      if (cancelled) return;
+      const contentToLoad = draft?.content ?? slide!.content;
+
+      await applySnapshotToCanvas(contentToLoad, () => cancelled);
       if (cancelled) return;
 
-      dirtyRef.current = false;
-      setSaveStatus('idle');
-      setSaveError(null);
+      if (draft) {
+        // Still genuinely unsaved — let the existing autosave path pick it
+        // back up and retry sending it to Supabase, same as any other edit.
+        dirtyRef.current = true;
+        setSaveStatus('pending');
+        setSaveError(null);
+        if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = setTimeout(() => {
+          void flushSaveRef.current();
+        }, AUTOSAVE_DELAY_MS);
+      } else {
+        dirtyRef.current = false;
+        setSaveStatus('idle');
+        setSaveError(null);
+      }
       isLoadingSlideRef.current = false;
       setLoadingSlide(false);
       refreshSelection();
-      resetHistory(slide!.content); // fresh, independent undo/redo stack per slide
+      resetHistory(contentToLoad); // fresh, independent undo/redo stack per slide
     }
 
     hydrate();
