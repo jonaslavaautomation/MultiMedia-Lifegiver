@@ -113,11 +113,12 @@ export function BiblePage() {
     const slideRows = selected.map((v, index) => ({
       presentation_id: presentation.id,
       title: `${v.book} ${v.chapter}:${v.verse}`,
-      // fontSize 96 (bigger than DEFAULT_TEXT_PROPS' 72) — a verse read aloud
-      // to a room needs to be larger/more legible than general-purpose text.
-      // Matches the same size the editor's own quick Bible panel uses (see
-      // BiblePanel.tsx) so a verse looks identical wherever it's added from.
-      content: createVerseSlideContent(`${v.book} ${v.chapter}:${v.verse}`, v.text, { fontSize: 96 }),
+      // Verse text uses the shared default size — the reference caption
+      // (e.g. "Genesis 1:29") is what actually needed to be bigger, not the
+      // verse itself; captionFontSize overrides just that independently of
+      // the verse's own fontSize. Matches BiblePanel.tsx's quick-add so a
+      // verse looks identical wherever it's added from.
+      content: createVerseSlideContent(`${v.book} ${v.chapter}:${v.verse}`, v.text, { captionFontSize: 56 }),
       sort_order: index,
     }));
 
