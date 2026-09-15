@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Eye, EyeOff, Play, Pause, RotateCcw } from '
 import { useRealtimeLiveChannel } from '@/hooks/useRealtimeLiveChannel';
 import { Button } from '@/components/ui/Button';
 import { SlideCanvasRenderer } from '@/components/live/SlideCanvasRenderer';
+import { ConnectionStatusBadge } from '@/components/live/ConnectionStatusBadge';
 import { getDisplayMs, formatDuration } from '@/lib/liveTimer';
 import type { LiveState, RemoteCommand } from '@/types/live';
 
@@ -47,10 +48,19 @@ export function RemoteControlPage() {
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col gap-4 p-4 max-w-md mx-auto">
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-semibold truncate">{state?.presentationTitle ?? 'Connecting…'}</p>
-        <span className={`shrink-0 text-xs flex items-center gap-1 ${connected ? 'text-emerald-400' : 'text-zinc-500'}`}>
-          <span className="w-1.5 h-1.5 rounded-full bg-current" /> {connected ? 'Connected' : 'Connecting…'}
-        </span>
+        <div className="shrink-0 flex items-center gap-2">
+          <ConnectionStatusBadge />
+          <span className={`text-xs flex items-center gap-1 ${connected ? 'text-emerald-400' : 'text-zinc-500'}`}>
+            <span className="w-1.5 h-1.5 rounded-full bg-current" /> {connected ? 'Connected' : 'Connecting…'}
+          </span>
+        </div>
       </div>
+
+      {!connected && (
+        <p className="text-[11px] text-amber-400/90 text-center -mt-2">
+          Remote disconnected — the booth computer's own controls (keyboard, mouse, MIDI) keep working regardless.
+        </p>
+      )}
 
       {state && state.totalSlides > 0 && (
         <p className="text-xs text-zinc-500 text-center">

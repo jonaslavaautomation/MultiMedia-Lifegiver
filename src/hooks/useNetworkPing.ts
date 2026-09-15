@@ -1,40 +1,15 @@
-import { useEffect, useRef, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useConnectionStatus } from '@/hooks/useConnectionStatus';
 
 /**
- * Real round-trip latency to Supabase, sampled periodically with a minimal
- * head-only query. Not a literal WebSocket ping, but an honest measurement
- * of "how fast is this operator's connection to the backend right now" —
- * used by the Broadcast Telemetry Bar. Returns null until the first sample
- * lands.
+ * Real round-trip latency to Supabase, for the Broadcast Telemetry Bar.
+ * Thin wrapper over useConnectionStatus (which owns the actual ping loop —
+ * kept as one shared poller rather than two independent 5s interval pings
+ * on the same page). Returns null until the first sample lands, AND
+ * whenever the connection isn't currently 'online' — this used to keep
+ * displaying the last successful latency forever even while offline, which
+ * was misleading (a stale "42ms" reading while actually disconnected).
  */
-export function useNetworkPing(intervalMs = 5000): number | null {
-  const [latencyMs, setLatencyMs] = useState<number | null>(null);
-  const inFlightRef = useRef(false);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function ping() {
-      if (inFlightRef.current) return;
-      inFlightRef.current = true;
-      const start = performance.now();
-      const { error } = await supabase
-        .from('presentations')
-        .select('id', { head: true, count: 'exact' })
-        .limit(1);
-      inFlightRef.current = false;
-      if (cancelled || error) return;
-      setLatencyMs(Math.round(performance.now() - start));
-    }
-
-    ping();
-    const id = setInterval(ping, intervalMs);
-    return () => {
-      cancelled = true;
-      clearInterval(id);
-    };
-  }, [intervalMs]);
-
+export function useNetworkPing(): number | null {
+  const { latencyMs } = useConnectionStatus();
   return latencyMs;
 }

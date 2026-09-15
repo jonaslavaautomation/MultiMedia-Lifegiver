@@ -26,6 +26,7 @@ import { useMidiController } from '@/hooks/useMidiController';
 import { SlideCanvasRenderer } from '@/components/live/SlideCanvasRenderer';
 import { TimerControl } from '@/components/live/TimerControl';
 import { BroadcastTelemetryBar } from '@/components/live/BroadcastTelemetryBar';
+import { ConnectionStatusBadge } from '@/components/live/ConnectionStatusBadge';
 import { HotkeyBindingsModal } from '@/components/live/HotkeyBindingsModal';
 import { startTimer, pauseTimer, resetTimer, setTimerMode, setCountdownDuration } from '@/lib/liveTimer';
 import { findActionForKey, findActionForMidiNote, loadHotkeyBindings, saveHotkeyBindings, type HotkeyBindings } from '@/lib/hotkeyBindings';
@@ -355,6 +356,7 @@ export function PresentLivePage() {
             <p className="text-xs text-cyan-400 font-semibold uppercase tracking-wider">Operator Console</p>
             <h1 className="text-sm font-semibold text-zinc-100 truncate">{title}</h1>
           </div>
+          <ConnectionStatusBadge />
         </div>
         <div className="flex items-center gap-2">
           <Button variant={blackout ? 'danger' : 'outline'} size="sm" onClick={toggleBlackout} title="Toggle blackout (B)">
