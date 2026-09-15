@@ -2,6 +2,7 @@ import type { StaticCanvas } from 'fabric';
 import type { SlideCanvasData } from '@/types';
 import { applyImageBackground, clearBackgroundForVideo } from '@/lib/fabricObjects';
 import { getMediaInfoById } from '@/lib/mediaStorage';
+import { getCachedAssetInfo } from '@/lib/servicePack';
 import { getMotionPresetById } from '@/lib/motionLibrary';
 import type { MotionPreset } from '@/types/motion';
 
@@ -60,7 +61,11 @@ export async function resolveAndRenderSlide(canvas: StaticCanvas, content: Slide
 
   const bgMediaId = content.meta?.backgroundMediaId ?? null;
   if (bgMediaId && !canvas.backgroundImage) {
-    const info = await getMediaInfoById(bgMediaId);
+    // A locally downloaded Service Pack copy always wins over a Supabase
+    // round trip — this is what makes a presentation genuinely playable
+    // with zero connectivity (not just resilient to a blip), once it's
+    // been prepared ahead of time via "Download for Offline Use".
+    const info = (await getCachedAssetInfo(bgMediaId)) ?? (await getMediaInfoById(bgMediaId));
     if (info?.type === 'video') {
       clearBackgroundForVideo(canvas);
       return { videoBackgroundUrl: info.url, motionBackground: null, backgroundUnavailable: false };
