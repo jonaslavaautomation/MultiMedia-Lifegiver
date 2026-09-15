@@ -256,7 +256,11 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
       if ('isEditing' in active && (active as { isEditing?: boolean }).isEditing) return;
 
       const tag = document.activeElement?.tagName.toLowerCase();
-      if (tag === 'input' || tag === 'textarea') return;
+      // Also covers any contentEditable region generically (not just
+      // <input>/<textarea> by tag name) — future-proofing against anything
+      // that uses contenteditable instead, on top of the isEditing check
+      // above already covering Fabric's own hidden-textarea text editing.
+      if (tag === 'input' || tag === 'textarea' || (document.activeElement as HTMLElement | null)?.isContentEditable) return;
 
       e.preventDefault();
       deleteActiveObjects(canvas);
@@ -287,7 +291,11 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
       if ('isEditing' in active && (active as { isEditing?: boolean }).isEditing) return;
 
       const tag = document.activeElement?.tagName.toLowerCase();
-      if (tag === 'input' || tag === 'textarea') return;
+      // Also covers any contentEditable region generically (not just
+      // <input>/<textarea> by tag name) — future-proofing against anything
+      // that uses contenteditable instead, on top of the isEditing check
+      // above already covering Fabric's own hidden-textarea text editing.
+      if (tag === 'input' || tag === 'textarea' || (document.activeElement as HTMLElement | null)?.isContentEditable) return;
 
       e.preventDefault();
       const step = (e.shiftKey ? 10 : 1) / canvas.getZoom();
@@ -491,7 +499,11 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
       if (active && 'isEditing' in active && (active as { isEditing?: boolean }).isEditing) return;
 
       const tag = document.activeElement?.tagName.toLowerCase();
-      if (tag === 'input' || tag === 'textarea') return;
+      // Also covers any contentEditable region generically (not just
+      // <input>/<textarea> by tag name) — future-proofing against anything
+      // that uses contenteditable instead, on top of the isEditing check
+      // above already covering Fabric's own hidden-textarea text editing.
+      if (tag === 'input' || tag === 'textarea' || (document.activeElement as HTMLElement | null)?.isContentEditable) return;
 
       e.preventDefault();
       if (isUndoKey) handleUndo();

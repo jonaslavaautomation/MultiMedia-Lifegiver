@@ -80,12 +80,29 @@ export type RemoteCommand =
   | { type: 'command'; action: 'timer-set-duration'; minutes: number };
 
 /**
+ * A PresentLivePage instance announcing/acknowledging itself to any OTHER
+ * operator console open for the same presentation — same-computer only
+ * (BroadcastChannel, never sent over Realtime), purely to warn about the
+ * "two operator tabs open at once, each an independent authoritative
+ * broadcaster racing the other's commands" hazard. Not meaningful to
+ * Projector/Stage/Overlay/Remote, which safely ignore any message type
+ * they don't recognize.
+ */
+export type OperatorPresenceMessage =
+  | { type: 'operator-announce'; instanceId: string }
+  | { type: 'operator-ack'; instanceId: string };
+
+/**
  * Everything that can travel over the local (same-computer BroadcastChannel)
  * channel — includes RemoteCommand so a Projector/Stage Display window can
  * post Next/Previous back to the operator, the same way the phone Remote
  * Control page already does over Realtime.
  */
-export type LiveMessage = { type: 'state'; state: LiveState } | { type: 'request-state' } | RemoteCommand;
+export type LiveMessage =
+  | { type: 'state'; state: LiveState }
+  | { type: 'request-state' }
+  | RemoteCommand
+  | OperatorPresenceMessage;
 
 /** Everything that can travel over the Realtime (cross-device) channel. */
 export type RealtimeLiveMessage = LiveMessage | RemoteCommand;

@@ -149,3 +149,14 @@ export async function clearSlideDraft(slideId: string): Promise<void> {
     console.error('Failed to clear local slide draft:', err);
   }
 }
+
+/** For the admin System Health panel — every presentation currently mirrored locally, for a "N cached for offline use" readout. */
+export async function listCachedPresentations(): Promise<{ id: string; title: string; cachedAt: number }[]> {
+  try {
+    const db = await getDb();
+    return await db.getAll('presentations');
+  } catch (err) {
+    console.error('Failed to list cached presentations:', err);
+    return [];
+  }
+}
