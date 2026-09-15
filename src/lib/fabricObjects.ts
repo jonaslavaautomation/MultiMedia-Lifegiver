@@ -1,4 +1,4 @@
-import { Canvas, Circle, FabricImage, Line, Polygon, Rect, Shadow, StaticCanvas, Textbox, Triangle, type FabricObject } from 'fabric';
+import { ActiveSelection, Canvas, Circle, FabricImage, Group, Line, Polygon, Rect, Shadow, StaticCanvas, Textbox, Triangle, type FabricObject } from 'fabric';
 import type { SlideCanvasData } from '@/types';
 import { DEFAULT_SLIDE_BACKGROUND_COLOR, DEFAULT_TEXT_PROPS, SLIDE_HEIGHT, SLIDE_WIDTH } from '@/lib/editorConstants';
 
@@ -197,6 +197,73 @@ export function createShapeObject(canvas: Canvas, kind: ShapeKind): FabricObject
   canvas.setActiveObject(shape);
   canvas.requestRenderAll();
   return shape;
+}
+
+/**
+ * Converts the current multi-selection into a single persistent Group —
+ * unlike an ActiveSelection (which exists only while multiple objects
+ * happen to be selected at once), a Group stays together as one object
+ * after deselecting, survives save/reload, and can be moved/resized as a
+ * unit going forward. Verified this round-trips correctly (absolute
+ * positions preserved, ids preserved) through both grouping and the
+ * serialize/loadFromJSON save path before wiring it in.
+ */
+export function groupActiveSelection(canvas: Canvas): FabricObject | null {
+  const objects = canvas.getActiveObjects();
+  if (objects.length < 2) return null;
+
+  canvas.discardActiveObject();
+  objects.forEach((obj) => canvas.remove(obj));
+  const group = new Group(objects);
+  assignId(group);
+  canvas.add(group);
+  canvas.setActiveObject(group);
+  canvas.requestRenderAll();
+  return group;
+}
+
+/**
+ * Reverses groupActiveSelection: dissolves the selected Group back into its
+ * individual objects, each restored to its correct absolute canvas
+ * position (Group.removeAll() is the Fabric-verified way to do this — a
+ * child's own .left/.top while still inside the group is relative to the
+ * group, not absolute, the same gotcha ActiveSelection has).
+ */
+export function ungroupActiveObject(canvas: Canvas): FabricObject[] | null {
+  const active = canvas.getActiveObject();
+  if (!active || active.type !== 'group') return null;
+  const group = active as InstanceType<typeof Group>;
+
+  canvas.discardActiveObject();
+  const restored = group.removeAll();
+  canvas.remove(group);
+  restored.forEach((obj) => {
+    canvas.add(obj);
+    obj.setCoords();
+  });
+
+  // Re-select the now-individual objects as a multi-selection, matching how
+  // ungroup behaves in most design tools — you can immediately move on to
+  // aligning/distributing them, or click away to deselect.
+  const selection = new ActiveSelection(restored, { canvas });
+  canvas.setActiveObject(selection);
+  canvas.requestRenderAll();
+  return restored;
+}
+
+/** Toggles whether the current selection can be moved, resized, or rotated — still selectable, just pinned in place. */
+export function toggleLock(canvas: Canvas, locked: boolean): void {
+  const active = canvas.getActiveObject();
+  if (!active) return;
+  active.set({
+    lockMovementX: locked,
+    lockMovementY: locked,
+    lockScalingX: locked,
+    lockScalingY: locked,
+    lockRotation: locked,
+    hasControls: !locked,
+  });
+  canvas.requestRenderAll();
 }
 
 /** Layer ordering for the currently-selected object(s) — Bring Forward / Send Backward / Front / Back. */

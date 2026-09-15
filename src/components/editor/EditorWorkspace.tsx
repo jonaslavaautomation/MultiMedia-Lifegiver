@@ -246,6 +246,42 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [canvas, markDirty, refreshSelection]);
 
+  // Arrow-key nudge — moves the current selection by roughly 1 on-screen
+  // pixel per press (10 with Shift), computed from the current zoom so it
+  // feels the same regardless of how zoomed in/out the editor view is,
+  // rather than a fixed number of logical canvas units (which at this
+  // canvas's fixed 1920-wide logical space would be imperceptibly small
+  // on screen at typical zoom levels). Same guards as the Delete/Backspace
+  // handler above: works on both a single object and a multi-selection
+  // (Fabric's ActiveSelection supports the same left/top set() as one
+  // object), but not while actually typing in a textbox or a page input.
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (!canvas) return;
+      if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+
+      const active = canvas.getActiveObject();
+      if (!active) return;
+      if ('isEditing' in active && (active as { isEditing?: boolean }).isEditing) return;
+
+      const tag = document.activeElement?.tagName.toLowerCase();
+      if (tag === 'input' || tag === 'textarea') return;
+
+      e.preventDefault();
+      const step = (e.shiftKey ? 10 : 1) / canvas.getZoom();
+      const dx = e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0;
+      const dy = e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0;
+      active.set({ left: (active.left ?? 0) + dx, top: (active.top ?? 0) + dy });
+      active.setCoords();
+      canvas.requestRenderAll();
+      markDirty();
+      refreshSelection();
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [canvas, markDirty, refreshSelection]);
+
   // Canva-style click-to-add: clicking empty canvas (not an existing object,
   // and not a rubber-band drag-select) drops a new text box right there,
   // already in edit mode ready to type — instead of only being addable via
