@@ -1,4 +1,4 @@
-import { Square, Circle as CircleIcon, Minus } from 'lucide-react';
+import { Square, Circle as CircleIcon, Minus, Triangle as TriangleIcon, Star as StarIcon, ArrowRight } from 'lucide-react';
 import type { Canvas } from 'fabric';
 import { createShapeObject, type ShapeKind } from '@/lib/fabricObjects';
 
@@ -11,7 +11,10 @@ interface ElementsPanelProps {
 const SHAPES: { kind: ShapeKind; label: string; icon: typeof Square }[] = [
   { kind: 'rectangle', label: 'Rectangle', icon: Square },
   { kind: 'circle', label: 'Circle', icon: CircleIcon },
+  { kind: 'triangle', label: 'Triangle', icon: TriangleIcon },
   { kind: 'line', label: 'Line', icon: Minus },
+  { kind: 'star', label: 'Star', icon: StarIcon },
+  { kind: 'arrow', label: 'Arrow', icon: ArrowRight },
 ];
 
 /** Nav rail "Elements" drawer — basic shapes to drop onto the slide. */
