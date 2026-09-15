@@ -7,6 +7,7 @@ function snapshotFor(object: FabricObject | undefined): SelectedObjectSnapshot |
 
   const opacity = typeof object.opacity === 'number' ? object.opacity : 1;
   const hasShadow = !!object.shadow;
+  const locked = object.lockMovementX === true;
 
   if (object.type === 'textbox') {
     const textbox = object as Textbox;
@@ -22,13 +23,14 @@ function snapshotFor(object: FabricObject | undefined): SelectedObjectSnapshot |
       underline: textbox.underline === true,
       opacity,
       hasShadow,
+      locked,
       lineHeight: textbox.lineHeight ?? 1.16,
       charSpacing: textbox.charSpacing ?? 0,
     };
   }
 
   if (object.type === 'image') {
-    return { kind: 'image', id: String(object.get('id') ?? ''), opacity, hasShadow };
+    return { kind: 'image', id: String(object.get('id') ?? ''), opacity, hasShadow, locked };
   }
 
   if (object.type === 'rect' || object.type === 'circle' || object.type === 'line' || object.type === 'triangle' || object.type === 'polygon') {
@@ -39,7 +41,12 @@ function snapshotFor(object: FabricObject | undefined): SelectedObjectSnapshot |
       fill: typeof fill === 'string' ? fill : '#2f8271',
       opacity,
       hasShadow,
+      locked,
     };
+  }
+
+  if (object.type === 'group') {
+    return { kind: 'group', id: String(object.get('id') ?? ''), opacity, hasShadow, locked };
   }
 
   return null;

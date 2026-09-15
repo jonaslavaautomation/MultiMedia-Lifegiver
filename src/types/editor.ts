@@ -19,6 +19,7 @@ export type SelectedObjectSnapshot =
       underline: boolean;
       opacity: number;
       hasShadow: boolean;
+      locked: boolean;
       /** Fabric's line-height multiplier (default 1.16). */
       lineHeight: number;
       /** Fabric's charSpacing, in 1/1000 em (default 0). */
@@ -29,6 +30,7 @@ export type SelectedObjectSnapshot =
       id: string;
       opacity: number;
       hasShadow: boolean;
+      locked: boolean;
     }
   | {
       kind: 'shape';
@@ -36,6 +38,14 @@ export type SelectedObjectSnapshot =
       fill: string;
       opacity: number;
       hasShadow: boolean;
+      locked: boolean;
+    }
+  | {
+      kind: 'group';
+      id: string;
+      opacity: number;
+      hasShadow: boolean;
+      locked: boolean;
     }
   | {
       kind: 'multiple';
