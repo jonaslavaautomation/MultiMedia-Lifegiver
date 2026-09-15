@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { useFabricCanvas } from '@/hooks/useFabricCanvas';
 import { useSelectedObject } from '@/hooks/useSelectedObject';
 import { useEditorHistory } from '@/hooks/useEditorHistory';
+import { useAlignmentGuides } from '@/hooks/useAlignmentGuides';
 import {
   applyImageBackground,
   applySolidBackground,
@@ -56,6 +57,7 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
   const { containerRef, canvasElRef, canvas } = useFabricCanvas({ backgroundColor: DEFAULT_SLIDE_BACKGROUND_COLOR });
   const { selection, refreshSelection } = useSelectedObject(canvas);
   const { canUndo, canRedo, push: pushHistory, reset: resetHistory, undo: undoHistory, redo: redoHistory } = useEditorHistory();
+  const alignmentGuides = useAlignmentGuides(canvas);
 
   const slidesRef = useRef<Slide[]>([]);
   useEffect(() => {
@@ -674,6 +676,7 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
             loadingSlide={loadingSlide}
             backgroundVideoUrl={backgroundVideoUrl}
             backgroundMotion={backgroundMotion}
+            guides={alignmentGuides}
           />
         </div>
       </div>
