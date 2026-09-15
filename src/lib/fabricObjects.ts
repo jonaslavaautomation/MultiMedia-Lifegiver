@@ -1,4 +1,4 @@
-import { Canvas, Circle, FabricImage, Line, Rect, Shadow, StaticCanvas, Textbox, type FabricObject } from 'fabric';
+import { Canvas, Circle, FabricImage, Line, Polygon, Rect, Shadow, StaticCanvas, Textbox, Triangle, type FabricObject } from 'fabric';
 import type { SlideCanvasData } from '@/types';
 import { DEFAULT_SLIDE_BACKGROUND_COLOR, DEFAULT_TEXT_PROPS, SLIDE_HEIGHT, SLIDE_WIDTH } from '@/lib/editorConstants';
 
@@ -114,7 +114,35 @@ export async function createImageObjectFromUrl(
   return img;
 }
 
-export type ShapeKind = 'rectangle' | 'circle' | 'line';
+export type ShapeKind = 'rectangle' | 'circle' | 'line' | 'triangle' | 'star' | 'arrow';
+
+/** Points for a 5-pointed star, centered on its own bounding box (top-left origin at 0,0). */
+function starPoints(outerRadius: number, innerRadius: number): { x: number; y: number }[] {
+  const spikes = 5;
+  const step = Math.PI / spikes;
+  const points: { x: number; y: number }[] = [];
+  for (let i = 0; i < 2 * spikes; i++) {
+    const r = i % 2 === 0 ? outerRadius : innerRadius;
+    const angle = i * step - Math.PI / 2;
+    points.push({ x: outerRadius + r * Math.cos(angle), y: outerRadius + r * Math.sin(angle) });
+  }
+  return points;
+}
+
+/** Points for a simple right-pointing block arrow, `w` x `h` bounding box. */
+function arrowPoints(w: number, h: number): { x: number; y: number }[] {
+  const shaftHeight = h * 0.4;
+  const headWidth = w * 0.4;
+  return [
+    { x: 0, y: h / 2 - shaftHeight / 2 },
+    { x: w - headWidth, y: h / 2 - shaftHeight / 2 },
+    { x: w - headWidth, y: 0 },
+    { x: w, y: h / 2 },
+    { x: w - headWidth, y: h },
+    { x: w - headWidth, y: h / 2 + shaftHeight / 2 },
+    { x: 0, y: h / 2 + shaftHeight / 2 },
+  ];
+}
 
 /** Inserts a basic shape (Elements panel) centered on the slide, in the current brand accent color. */
 export function createShapeObject(canvas: Canvas, kind: ShapeKind): FabricObject {
@@ -136,6 +164,26 @@ export function createShapeObject(canvas: Canvas, kind: ShapeKind): FabricObject
       top: SLIDE_HEIGHT / 2 - 150,
       radius: 150,
       fill: '#2f8271',
+    });
+  } else if (kind === 'triangle') {
+    shape = new Triangle({
+      left: SLIDE_WIDTH / 2 - 150,
+      top: SLIDE_HEIGHT / 2 - 130,
+      width: 300,
+      height: 260,
+      fill: '#2f8271',
+    });
+  } else if (kind === 'star') {
+    shape = new Polygon(starPoints(150, 60), {
+      left: SLIDE_WIDTH / 2 - 150,
+      top: SLIDE_HEIGHT / 2 - 150,
+      fill: '#f59e0b',
+    });
+  } else if (kind === 'arrow') {
+    shape = new Polygon(arrowPoints(300, 150), {
+      left: SLIDE_WIDTH / 2 - 150,
+      top: SLIDE_HEIGHT / 2 - 75,
+      fill: '#0ea5e9',
     });
   } else {
     shape = new Line([SLIDE_WIDTH / 2 - 250, SLIDE_HEIGHT / 2, SLIDE_WIDTH / 2 + 250, SLIDE_HEIGHT / 2], {

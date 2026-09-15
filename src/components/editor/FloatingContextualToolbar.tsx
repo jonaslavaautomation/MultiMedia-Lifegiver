@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { ColorPickerPopover } from '@/components/editor/ColorPickerPopover';
 import { FontFamilyPicker } from '@/components/editor/FontFamilyPicker';
 import { AlignmentButtonGroup } from '@/components/editor/AlignmentButtonGroup';
+import { TextSpacingPopover } from '@/components/editor/TextSpacingPopover';
 import { applyShapeColor, applyOpacity, toggleShadow, assignId, deleteActiveObjects, reorderActiveObject } from '@/lib/fabricObjects';
 import type { SelectedObjectSnapshot, TextAlign } from '@/types/editor';
 
@@ -148,6 +149,12 @@ export function FloatingContextualToolbar({ canvas, selection, refreshSelection,
                     <Underline className="w-3.5 h-3.5" />
                   </Button>
                 </div>
+                <TextSpacingPopover
+                  lineHeight={selection.lineHeight}
+                  charSpacing={selection.charSpacing}
+                  onLineHeightChange={(value) => withActiveTextbox((tb) => tb.set({ lineHeight: value }))}
+                  onCharSpacingChange={(value) => withActiveTextbox((tb) => tb.set({ charSpacing: value }))}
+                />
                 <div className="w-px h-6 bg-zinc-100 mx-0.5" />
               </>
             )}

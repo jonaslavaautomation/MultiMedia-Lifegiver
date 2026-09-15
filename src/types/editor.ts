@@ -19,6 +19,10 @@ export type SelectedObjectSnapshot =
       underline: boolean;
       opacity: number;
       hasShadow: boolean;
+      /** Fabric's line-height multiplier (default 1.16). */
+      lineHeight: number;
+      /** Fabric's charSpacing, in 1/1000 em (default 0). */
+      charSpacing: number;
     }
   | {
       kind: 'image';

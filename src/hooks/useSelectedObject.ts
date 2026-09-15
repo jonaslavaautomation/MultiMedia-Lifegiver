@@ -22,6 +22,8 @@ function snapshotFor(object: FabricObject | undefined): SelectedObjectSnapshot |
       underline: textbox.underline === true,
       opacity,
       hasShadow,
+      lineHeight: textbox.lineHeight ?? 1.16,
+      charSpacing: textbox.charSpacing ?? 0,
     };
   }
 
@@ -29,7 +31,7 @@ function snapshotFor(object: FabricObject | undefined): SelectedObjectSnapshot |
     return { kind: 'image', id: String(object.get('id') ?? ''), opacity, hasShadow };
   }
 
-  if (object.type === 'rect' || object.type === 'circle' || object.type === 'line') {
+  if (object.type === 'rect' || object.type === 'circle' || object.type === 'line' || object.type === 'triangle' || object.type === 'polygon') {
     const fill = 'stroke' in object && object.type === 'line' ? object.stroke : object.fill;
     return {
       kind: 'shape',
