@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
 interface TooltipProps {
@@ -30,6 +30,16 @@ export function Tooltip({ label, children, delay = 300 }: TooltipProps) {
   const [rect, setRect] = useState<{ top: number; left: number } | null>(null);
   const wrapperRef = useRef<HTMLSpanElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // The pending show() timer is harmless if it outlives unmount (its
+  // callback bails out once wrapperRef.current goes null), but there's no
+  // reason to let it linger in memory for up to `delay` ms doing nothing —
+  // clear it outright, same as any other timer in this codebase.
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
 
   function show() {
     timerRef.current = setTimeout(() => {

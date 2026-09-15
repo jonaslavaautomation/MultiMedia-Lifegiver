@@ -91,9 +91,28 @@ export function PresentLivePage() {
   const [servicePackModalOpen, setServicePackModalOpen] = useState(false);
   const [hotkeyBindings, setHotkeyBindings] = useState<HotkeyBindings>(() => loadHotkeyBindings());
 
+  // Identifies this specific PresentLivePage instance to any OTHER operator
+  // console open for the same presentation (same computer, another tab or
+  // window) — see the operator-announce/operator-ack handling below.
+  const [instanceId] = useState(() => crypto.randomUUID());
+  const [otherOperatorDetected, setOtherOperatorDetected] = useState(false);
+  const [multiOperatorWarningDismissed, setMultiOperatorWarningDismissed] = useState(false);
+
   const restoredRef = useRef(false);
   const { post, lastMessage } = useLiveChannel(id ?? '');
   const { post: postRemote, lastMessage: lastRemoteMessage, connected: remoteConnected } = useRealtimeLiveChannel(id ?? '');
+
+  // Two operator consoles open for the same presentation at once would each
+  // be an independent authoritative broadcaster racing the other's
+  // commands — a real hazard, not just a leak. Announce this instance once
+  // on mount; any other operator tab replies with its own ack, and either
+  // side seeing the other's message means there IS another one open. Local
+  // (BroadcastChannel) only — this is a same-computer, multiple-tabs
+  // concern, never sent over Realtime.
+  useEffect(() => {
+    if (!id) return;
+    post({ type: 'operator-announce', instanceId });
+  }, [id, post, instanceId]);
 
   const fetchData = useCallback(async () => {
     if (!id) return;
@@ -313,7 +332,8 @@ export function PresentLivePage() {
 
   // Answer late-joining Projector/Stage windows (same-computer,
   // BroadcastChannel) — request-state, or a command one of their own
-  // Next/Previous buttons sent.
+  // Next/Previous buttons sent. Also where another operator console
+  // announcing/acking itself is detected (see the mount effect above).
   useEffect(() => {
     if (!lastMessage) return;
 
@@ -324,8 +344,23 @@ export function PresentLivePage() {
 
     if (lastMessage.type === 'command') {
       applyCommandRef.current(lastMessage);
+      return;
     }
-  }, [lastMessage, post]);
+
+    if (lastMessage.type === 'operator-announce') {
+      if (lastMessage.instanceId !== instanceId) {
+        setOtherOperatorDetected(true);
+        post({ type: 'operator-ack', instanceId }); // let it know this one is here too
+      }
+      return;
+    }
+
+    if (lastMessage.type === 'operator-ack') {
+      if (lastMessage.instanceId !== instanceId) {
+        setOtherOperatorDetected(true);
+      }
+    }
+  }, [lastMessage, post, instanceId]);
 
   // Handle Realtime traffic: request-state from a newly-opened remote, or a
   // command it sent.
@@ -356,7 +391,11 @@ export function PresentLivePage() {
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       const tag = document.activeElement?.tagName.toLowerCase();
-      if (tag === 'input' || tag === 'textarea') return;
+      // Also covers any contentEditable region generically, not just
+      // <input>/<textarea> by tag name — the timer duration field is a
+      // real <input>, but this stays correct even if a future control uses
+      // contenteditable instead.
+      if (tag === 'input' || tag === 'textarea' || (document.activeElement as HTMLElement | null)?.isContentEditable) return;
 
       const customAction = findActionForKey(hotkeyBindings, e.key);
       if (customAction) {
@@ -462,6 +501,21 @@ export function PresentLivePage() {
           {new Date(offlineSnapshotCachedAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}) —
           Supabase isn't reachable right now. Everything still works locally; it'll pick up any newer edits
           automatically once it's back online.
+        </div>
+      )}
+
+      {otherOperatorDetected && !multiOperatorWarningDismissed && (
+        <div className="flex items-center justify-center gap-3 px-4 lg:px-6 py-2 bg-red-950/40 border-b border-red-900/50 text-center text-xs text-red-300">
+          <span>
+            Another Operator Console for this presentation appears to be open in a different tab or window on this
+            computer — having two open at once can send conflicting commands. Close one of them.
+          </span>
+          <button
+            onClick={() => setMultiOperatorWarningDismissed(true)}
+            className="shrink-0 text-red-400/80 hover:text-red-200 underline underline-offset-2"
+          >
+            Dismiss
+          </button>
         </div>
       )}
 

@@ -12,6 +12,7 @@ import { Alert } from '@/components/ui/Alert';
 import { MediaPicker } from '@/components/media/MediaPicker';
 import { useSignedUrl } from '@/components/media/useSignedUrl';
 import { PageHeaderIcon } from '@/components/ui/PageHeaderIcon';
+import { SystemHealthCard } from '@/components/settings/SystemHealthCard';
 import type { MediaItem } from '@/types';
 
 const MAX_BRAND_COLORS = 12;
@@ -96,6 +97,8 @@ export function SettingsPage() {
       </div>
 
       <div className="flex flex-col gap-5">
+        <SystemHealthCard />
+
         {/* Brand Kit */}
         <Card className="p-6">
           <div className="flex items-center gap-3 mb-5">
