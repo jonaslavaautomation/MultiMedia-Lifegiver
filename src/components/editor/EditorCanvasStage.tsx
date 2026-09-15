@@ -1,5 +1,7 @@
 import { Loader2 } from 'lucide-react';
 import { MotionBackgroundPlayer } from '@/components/motion/MotionBackgroundPlayer';
+import { SLIDE_WIDTH, SLIDE_HEIGHT } from '@/lib/editorConstants';
+import type { GuideLine } from '@/lib/alignmentGuides';
 import type { SaveStatus } from '@/types/editor';
 import type { MotionPreset } from '@/types/motion';
 
@@ -10,6 +12,8 @@ interface EditorCanvasStageProps {
   loadingSlide: boolean;
   backgroundVideoUrl?: string | null;
   backgroundMotion?: MotionPreset | null;
+  /** Smart alignment guides to draw while dragging an object — see useAlignmentGuides.ts. */
+  guides?: GuideLine[];
 }
 
 const STATUS_LABEL: Record<SaveStatus, string> = {
@@ -20,7 +24,7 @@ const STATUS_LABEL: Record<SaveStatus, string> = {
   error: 'Failed to save',
 };
 
-export function EditorCanvasStage({ containerRef, canvasElRef, saveStatus, loadingSlide, backgroundVideoUrl, backgroundMotion }: EditorCanvasStageProps) {
+export function EditorCanvasStage({ containerRef, canvasElRef, saveStatus, loadingSlide, backgroundVideoUrl, backgroundMotion, guides = [] }: EditorCanvasStageProps) {
   return (
     <div className="flex-1 flex flex-col min-w-0">
       <div className="flex items-center justify-end px-1 pb-2">
@@ -82,6 +86,27 @@ export function EditorCanvasStage({ containerRef, canvasElRef, saveStatus, loadi
           <div className="absolute inset-0">
             <canvas ref={canvasElRef} className="relative" />
           </div>
+          {/* Smart alignment guides — plain positioned overlays, not drawn on
+              the Fabric canvas itself (see useAlignmentGuides.ts for why).
+              Percentage-based against the always-16:9 SLIDE_WIDTH x
+              SLIDE_HEIGHT logical space, so they're correct at any zoom
+              without any transform math. pointer-events-none so they never
+              intercept the drag they're providing feedback for. */}
+          {guides.map((guide, i) =>
+            guide.orientation === 'vertical' ? (
+              <div
+                key={i}
+                className="absolute top-0 bottom-0 w-px bg-pink-500 pointer-events-none"
+                style={{ left: `${(guide.position / SLIDE_WIDTH) * 100}%` }}
+              />
+            ) : (
+              <div
+                key={i}
+                className="absolute left-0 right-0 h-px bg-pink-500 pointer-events-none"
+                style={{ top: `${(guide.position / SLIDE_HEIGHT) * 100}%` }}
+              />
+            )
+          )}
           {loadingSlide && (
             <div className="absolute inset-0 flex items-center justify-center bg-white/70">
               <Loader2 className="w-6 h-6 text-zinc-500 animate-spin" />
