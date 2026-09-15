@@ -49,15 +49,18 @@ export function BiblePanel({ canvas, markDirty, refreshSelection }: BiblePanelPr
           ? `${parsed.book.name} ${parsed.chapter}:${verseStart}`
           : `${parsed.book.name} ${parsed.chapter}:${verseStart}-${verseEnd}`;
 
+      // Bigger than DEFAULT_TEXT_PROPS.fontSize (72, used for plain new text
+      // boxes) — a single verse read aloud to a room needs to be larger and
+      // more legible than general-purpose text, not the shared default.
       const textbox = createTextObject(canvas, text);
-      textbox.set({ fontSize: 64 });
+      textbox.set({ fontSize: 96 });
       canvas.requestRenderAll();
       markDirty();
       refreshSelection();
 
       // Small reference caption underneath, matching the Bible page's own generated slides.
       const caption = createTextObject(canvas, reference, { centerAt: { x: 960, y: 920 } });
-      caption.set({ fontSize: 28, fontStyle: 'italic' });
+      caption.set({ fontSize: 38, fontStyle: 'italic' });
       canvas.requestRenderAll();
       markDirty();
 

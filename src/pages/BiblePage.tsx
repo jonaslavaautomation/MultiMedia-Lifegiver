@@ -113,7 +113,11 @@ export function BiblePage() {
     const slideRows = selected.map((v, index) => ({
       presentation_id: presentation.id,
       title: `${v.book} ${v.chapter}:${v.verse}`,
-      content: createVerseSlideContent(`${v.book} ${v.chapter}:${v.verse}`, v.text),
+      // fontSize 96 (bigger than DEFAULT_TEXT_PROPS' 72) — a verse read aloud
+      // to a room needs to be larger/more legible than general-purpose text.
+      // Matches the same size the editor's own quick Bible panel uses (see
+      // BiblePanel.tsx) so a verse looks identical wherever it's added from.
+      content: createVerseSlideContent(`${v.book} ${v.chapter}:${v.verse}`, v.text, { fontSize: 96 }),
       sort_order: index,
     }));
 
