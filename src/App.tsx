@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { LoadingScreen } from '@/components/LoadingScreen';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { LoginPage } from '@/pages/LoginPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { PresentationsPage } from '@/pages/PresentationsPage';
@@ -29,24 +30,39 @@ function ProtectedRoutes() {
 
   return (
     <Routes>
-      <Route path="/login" element={<LoginPage />} />
+      <Route path="/login" element={<ErrorBoundary label="Login"><LoginPage /></ErrorBoundary>} />
 
-      <Route path="/dashboard" element={<AppLayout><DashboardPage /></AppLayout>} />
-      <Route path="/presentations" element={<AppLayout><PresentationsPage /></AppLayout>} />
-      <Route path="/presentations/:id/edit" element={<AppLayout><PresentationEditorPage /></AppLayout>} />
-      <Route path="/presentations/:id/present" element={<LiveGuard><PresentLivePage /></LiveGuard>} />
-      <Route path="/presentations/:id/present/projector" element={<LiveGuard><ProjectorScreenPage /></LiveGuard>} />
-      <Route path="/presentations/:id/present/stage" element={<LiveGuard><StageDisplayPage /></LiveGuard>} />
-      <Route path="/presentations/:id/present/remote" element={<LiveGuard><RemoteControlPage /></LiveGuard>} />
-      <Route path="/presentations/:id/present/overlay" element={<LiveGuard><OverlayPage /></LiveGuard>} />
-      <Route path="/songs" element={<AppLayout><SongsPage /></AppLayout>} />
-      <Route path="/songs/:id" element={<AppLayout><SongDetailPage /></AppLayout>} />
-      <Route path="/bible" element={<AppLayout><BiblePage /></AppLayout>} />
-      <Route path="/media" element={<AppLayout><MediaPage /></AppLayout>} />
-      <Route path="/templates" element={<AppLayout><TemplatesPage /></AppLayout>} />
+      <Route path="/dashboard" element={<ErrorBoundary label="Dashboard"><AppLayout><DashboardPage /></AppLayout></ErrorBoundary>} />
+      <Route path="/presentations" element={<ErrorBoundary label="Presentations"><AppLayout><PresentationsPage /></AppLayout></ErrorBoundary>} />
+      <Route path="/presentations/:id/edit" element={<ErrorBoundary label="Slide Editor"><AppLayout><PresentationEditorPage /></AppLayout></ErrorBoundary>} />
+      <Route
+        path="/presentations/:id/present"
+        element={<ErrorBoundary label="Live Presentation" isLiveSurface><LiveGuard><PresentLivePage /></LiveGuard></ErrorBoundary>}
+      />
+      <Route
+        path="/presentations/:id/present/projector"
+        element={<ErrorBoundary label="Projector Display" isLiveSurface><LiveGuard><ProjectorScreenPage /></LiveGuard></ErrorBoundary>}
+      />
+      <Route
+        path="/presentations/:id/present/stage"
+        element={<ErrorBoundary label="Stage Display" isLiveSurface><LiveGuard><StageDisplayPage /></LiveGuard></ErrorBoundary>}
+      />
+      <Route
+        path="/presentations/:id/present/remote"
+        element={<ErrorBoundary label="Remote Control" isLiveSurface><LiveGuard><RemoteControlPage /></LiveGuard></ErrorBoundary>}
+      />
+      <Route
+        path="/presentations/:id/present/overlay"
+        element={<ErrorBoundary label="Overlay Display" isLiveSurface><LiveGuard><OverlayPage /></LiveGuard></ErrorBoundary>}
+      />
+      <Route path="/songs" element={<ErrorBoundary label="Songs"><AppLayout><SongsPage /></AppLayout></ErrorBoundary>} />
+      <Route path="/songs/:id" element={<ErrorBoundary label="Song"><AppLayout><SongDetailPage /></AppLayout></ErrorBoundary>} />
+      <Route path="/bible" element={<ErrorBoundary label="Bible"><AppLayout><BiblePage /></AppLayout></ErrorBoundary>} />
+      <Route path="/media" element={<ErrorBoundary label="Media Library"><AppLayout><MediaPage /></AppLayout></ErrorBoundary>} />
+      <Route path="/templates" element={<ErrorBoundary label="Templates"><AppLayout><TemplatesPage /></AppLayout></ErrorBoundary>} />
 
-      <Route path="/users" element={<AppLayout requireAdmin><UsersPage /></AppLayout>} />
-      <Route path="/settings" element={<AppLayout requireAdmin><SettingsPage /></AppLayout>} />
+      <Route path="/users" element={<ErrorBoundary label="Users"><AppLayout requireAdmin><UsersPage /></AppLayout></ErrorBoundary>} />
+      <Route path="/settings" element={<ErrorBoundary label="Settings"><AppLayout requireAdmin><SettingsPage /></AppLayout></ErrorBoundary>} />
 
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
