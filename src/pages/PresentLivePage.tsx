@@ -17,6 +17,7 @@ import {
   Layers,
   Snowflake,
   Church,
+  PackageCheck,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
@@ -31,6 +32,7 @@ import { BroadcastTelemetryBar } from '@/components/live/BroadcastTelemetryBar';
 import { ConnectionStatusBadge } from '@/components/live/ConnectionStatusBadge';
 import { useConnectionStatus } from '@/hooks/useConnectionStatus';
 import { HotkeyBindingsModal } from '@/components/live/HotkeyBindingsModal';
+import { ServicePackModal } from '@/components/live/ServicePackModal';
 import { startTimer, pauseTimer, resetTimer, setTimerMode, setCountdownDuration } from '@/lib/liveTimer';
 import { findActionForKey, findActionForMidiNote, loadHotkeyBindings, saveHotkeyBindings, type HotkeyBindings } from '@/lib/hotkeyBindings';
 import { cachePresentationSnapshot, loadPresentationSnapshot } from '@/lib/offlineStore';
@@ -86,6 +88,7 @@ export function PresentLivePage() {
   const [remoteModalOpen, setRemoteModalOpen] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [hotkeyModalOpen, setHotkeyModalOpen] = useState(false);
+  const [servicePackModalOpen, setServicePackModalOpen] = useState(false);
   const [hotkeyBindings, setHotkeyBindings] = useState<HotkeyBindings>(() => loadHotkeyBindings());
 
   const restoredRef = useRef(false);
@@ -512,6 +515,9 @@ export function PresentLivePage() {
           <Button variant="outline" size="sm" onClick={() => setHotkeyModalOpen(true)}>
             <Piano className="w-3.5 h-3.5" /> MIDI & Hotkeys
           </Button>
+          <Button variant="outline" size="sm" onClick={() => setServicePackModalOpen(true)} title="Check readiness for offline use, or download media backgrounds for it">
+            <PackageCheck className="w-3.5 h-3.5" /> Service Pack
+          </Button>
         </div>
       </div>
 
@@ -634,6 +640,8 @@ export function PresentLivePage() {
         bindings={hotkeyBindings}
         onChange={handleHotkeyBindingsChange}
       />
+
+      <ServicePackModal open={servicePackModalOpen} onClose={() => setServicePackModalOpen(false)} slides={slides} />
     </div>
   );
 }
