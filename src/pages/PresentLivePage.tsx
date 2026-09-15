@@ -186,6 +186,28 @@ export function PresentLivePage() {
     [goNext, goPrev, goToSlide, toggleBlackout]
   );
 
+  // buildState/applyCommand change identity on every slideIndex/blackout/
+  // timer update — including the very update a command just caused. Kept
+  // behind refs (instead of listed directly in the two effects below) so
+  // handling an incoming message reacts only to a genuinely NEW message
+  // arriving, not to those callbacks' identity changing as a side effect of
+  // the previous message being handled. Without this, the two effects
+  // re-fire the instant state changes — since lastMessage/lastRemoteMessage
+  // themselves haven't changed, they'd re-apply the *same stale command*
+  // again, and again, forever. next/previous partially mask this by
+  // clamping at the first/last slide (a fixed point where slideIndex stops
+  // changing), but toggle-blackout has no fixed point — it was flipping
+  // on/off in a tight infinite loop, visible as the remote's Blackout
+  // button (and the live output) flickering nonstop after a single tap.
+  const buildStateRef = useRef(buildState);
+  useEffect(() => {
+    buildStateRef.current = buildState;
+  }, [buildState]);
+  const applyCommandRef = useRef(applyCommand);
+  useEffect(() => {
+    applyCommandRef.current = applyCommand;
+  }, [applyCommand]);
+
   // Answer late-joining Projector/Stage windows (same-computer,
   // BroadcastChannel) — request-state, or a command one of their own
   // Next/Previous buttons sent.
@@ -193,14 +215,14 @@ export function PresentLivePage() {
     if (!lastMessage) return;
 
     if (lastMessage.type === 'request-state') {
-      post({ type: 'state', state: buildState() });
+      post({ type: 'state', state: buildStateRef.current() });
       return;
     }
 
     if (lastMessage.type === 'command') {
-      applyCommand(lastMessage);
+      applyCommandRef.current(lastMessage);
     }
-  }, [lastMessage, post, buildState, applyCommand]);
+  }, [lastMessage, post]);
 
   // Handle Realtime traffic: request-state from a newly-opened remote, or a
   // command it sent.
@@ -208,14 +230,14 @@ export function PresentLivePage() {
     if (!lastRemoteMessage) return;
 
     if (lastRemoteMessage.type === 'request-state') {
-      postRemote({ type: 'state', state: buildState() });
+      postRemote({ type: 'state', state: buildStateRef.current() });
       return;
     }
 
     if (lastRemoteMessage.type === 'command') {
-      applyCommand(lastRemoteMessage);
+      applyCommandRef.current(lastRemoteMessage);
     }
-  }, [lastRemoteMessage, postRemote, buildState, applyCommand]);
+  }, [lastRemoteMessage, postRemote]);
 
   // Broadcast on every state change — over both the local BroadcastChannel
   // (Projector/Stage on this computer) and Realtime (a connected remote).
