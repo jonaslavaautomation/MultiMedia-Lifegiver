@@ -39,6 +39,8 @@ interface TextSlideOptions {
   backgroundColor?: string;
   /** A built-in Motion Background Library preset id (src/lib/motionLibrary.ts) to use as this slide's background instead of a solid color. */
   backgroundMotionId?: string | null;
+  /** createVerseSlideContent only — overrides the reference caption's size instead of the default 0.4x the verse text's fontSize. */
+  captionFontSize?: number;
 }
 
 /**
@@ -102,7 +104,7 @@ export function createVerseSlideContent(reference: string, text: string, options
         top: SLIDE_HEIGHT - 170,
         width: DEFAULT_TEXT_PROPS.width,
         fontFamily: options.fontFamily ?? DEFAULT_TEXT_PROPS.fontFamily,
-        fontSize: Math.round(fontSize * 0.4),
+        fontSize: options.captionFontSize ?? Math.round(fontSize * 0.4),
         fontStyle: 'italic',
         fill: options.fill ?? DEFAULT_TEXT_PROPS.fill,
         textAlign: 'center',
