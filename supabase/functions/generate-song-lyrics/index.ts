@@ -1,18 +1,20 @@
 // "Write with AI" — generates completely original worship-song lyrics from
-// a topic/style/mood/structure, using Claude. This is the one part of the
-// Song Search & Import system that needs a real secret (an Anthropic API
-// key) — which is exactly why it's a Supabase Edge Function and not a
-// client-side call: Deno.env.get('ANTHROPIC_API_KEY') never reaches the
-// browser, unlike the free/keyless iTunes Search integration this sits
-// alongside (src/lib/songSearch/).
+// a topic/style/mood/structure, using Groq (a free, fast inference API,
+// OpenAI-compatible). This is the one part of the Song Search & Import
+// system that needs a real secret (a Groq API key) — which is exactly why
+// it's a Supabase Edge Function and not a client-side call:
+// Deno.env.get('GROQ_API_KEY') never reaches the browser, unlike the
+// free/keyless iTunes Search integration this sits alongside
+// (src/lib/songSearch/).
 //
 // Deploy: supabase functions deploy generate-song-lyrics
-// Configure the secret once: supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
-// (An Anthropic API key, from console.anthropic.com — a different thing
-// entirely from the Apple Developer / iTunes confusion earlier in this
-// project's history. This function is never called by anything unless you
-// deploy it — until then, the "Write with AI" button shows a clear
-// "not configured yet" message instead of failing mysteriously.)
+// Configure the secret once: supabase secrets set GROQ_API_KEY=gsk_...
+// (A Groq API key, free, from console.groq.com/keys — unrelated to the
+// Apple Developer / iTunes confusion earlier in this project's history,
+// and to Anthropic, which this function used before switching to Groq's
+// free tier. This function is never called by anything unless you deploy
+// it — until then, the "Write with AI" button shows a clear "not
+// configured yet" message instead of failing mysteriously.)
 
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 
@@ -32,7 +34,11 @@ interface GenerateLyricsRequest {
   includeBridge: boolean;
 }
 
-const ANTHROPIC_MODEL = 'claude-sonnet-5';
+// Groq's free-tier model lineup changes over time — check
+// console.groq.com/docs/models for the current list if this one is ever
+// retired (the function will otherwise start returning a clean "model
+// decommissioned"-style error from Groq, not a silent failure).
+const GROQ_MODEL = 'llama-3.3-70b-versatile';
 
 function buildPrompt(req: GenerateLyricsRequest): { system: string; user: string } {
   const sections: string[] = [];
@@ -85,10 +91,10 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
+  const apiKey = Deno.env.get('GROQ_API_KEY');
   if (!apiKey) {
     return new Response(
-      JSON.stringify({ error: 'AI lyric writing is not configured yet — set the ANTHROPIC_API_KEY secret for this Supabase project.' }),
+      JSON.stringify({ error: 'AI lyric writing is not configured yet — set the GROQ_API_KEY secret for this Supabase project.' }),
       { status: 503, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } }
     );
   }
@@ -115,22 +121,23 @@ Deno.serve(async (req: Request) => {
 
   let response: Response;
   try {
-    response = await fetch('https://api.anthropic.com/v1/messages', {
+    response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
+        Authorization: `Bearer ${apiKey}`,
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        model: ANTHROPIC_MODEL,
+        model: GROQ_MODEL,
         max_tokens: 1200,
-        system,
-        messages: [{ role: 'user', content: user }],
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: user },
+        ],
       }),
     });
   } catch (err) {
-    console.error('Error calling Anthropic API:', err);
+    console.error('Error calling Groq API:', err);
     return new Response(JSON.stringify({ error: 'Could not reach the AI service. Please try again.' }), {
       status: 502,
       headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
@@ -138,7 +145,7 @@ Deno.serve(async (req: Request) => {
   }
 
   if (response.status === 401) {
-    return new Response(JSON.stringify({ error: 'The configured Anthropic API key was rejected — check the ANTHROPIC_API_KEY secret.' }), {
+    return new Response(JSON.stringify({ error: 'The configured Groq API key was rejected — check the GROQ_API_KEY secret.' }), {
       status: 502,
       headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
     });
@@ -150,7 +157,7 @@ Deno.serve(async (req: Request) => {
     });
   }
   if (!response.ok) {
-    console.error('Anthropic API error:', response.status, await response.text().catch(() => ''));
+    console.error('Groq API error:', response.status, await response.text().catch(() => ''));
     return new Response(JSON.stringify({ error: 'The AI service returned an error. Please try again.' }), {
       status: 502,
       headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
@@ -158,7 +165,7 @@ Deno.serve(async (req: Request) => {
   }
 
   const data = await response.json();
-  const text = Array.isArray(data.content) ? data.content.map((b: { text?: string }) => b.text ?? '').join('') : '';
+  const text: string = data?.choices?.[0]?.message?.content ?? '';
 
   if (!text.trim()) {
     return new Response(JSON.stringify({ error: 'The AI did not return any lyrics. Please try again.' }), {
