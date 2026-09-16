@@ -55,7 +55,10 @@ export function BibleVersePicker({ isSelected, onToggleVerse, jumpTo, onJumped, 
         setVerses(result);
       } catch (err) {
         console.error('Error loading chapter:', err);
-        setError('Failed to load this chapter. Please try again.');
+        // Surface a configuration error (e.g. a missing NIV/NLT API key) verbatim —
+        // it already says exactly what's wrong and which env var fixes it; replacing
+        // it with a generic "try again" would send an admin down a dead end forever.
+        setError(err instanceof Error && err.message ? err.message : 'Failed to load this chapter. Please try again.');
       } finally {
         setLoading(false);
       }

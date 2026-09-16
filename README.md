@@ -1,6 +1,6 @@
 # LifeGiver Media Studio
 
-A private church presentation and media management web application for LifeGiver Davao's media team — build worship presentations, manage a song library with smart lyrics import, browse Bible verses, manage media, and run live services with a full broadcast-style operator console, projector output, stage/confidence-monitor display, phone remote control, and an OBS/vMix transparent overlay.
+A private church presentation and media management web application for LifeGiver Davao's media team — build worship presentations, manage a song library with smart lyrics import, browse Bible verses in KJV/NLT/NIV, manage media, and run live services with a full broadcast-style operator console, projector output, stage/confidence-monitor display, phone remote control, and an OBS/vMix transparent overlay — resilient to a dropped internet connection mid-service.
 
 ## Tech Stack
 
@@ -9,23 +9,27 @@ A private church presentation and media management web application for LifeGiver
 - **Tailwind CSS** — utility-first styling (light theme, lime/vanilla accent palette)
 - **Supabase** — PostgreSQL database, authentication, storage, and Realtime
 - **Fabric.js** — the slide editor's canvas engine
+- **idb** (IndexedDB) — offline persistence: cached presentations, crash-safe slide drafts, and the downloadable Service Pack
 - **Framer Motion** — UI transitions (asset drawer, overlay animations)
+- **qrcode.react** — the Remote Control page's pairing QR code
 - **Lucide React** — icon library
 - **React Router** — client-side routing
 
 ## Feature Overview
 
-- **Authentication** — email/password only, no public registration; roles are `admin` / `media` / `pastor`.
+- **Authentication** — email/password only, no public registration; roles are `admin` / `media` / `pastor`; login returns you to the page you were headed to, not always the Dashboard.
 - **Dashboard** — at-a-glance counts and recent activity.
-- **Presentations** — create, list, duplicate, delete; a Canva-style slide editor (nav rail, asset drawers, floating contextual toolbar, dotted-grid canvas) built on Fabric.js.
+- **Presentations** — create, list, duplicate, delete; a Canva-style slide editor (nav rail, asset drawers, floating contextual toolbar, dotted-grid canvas) built on Fabric.js, with Undo/Redo, smart alignment (Canva/Figma-style) guides, multi-select align/distribute/group/lock, arrow-key nudge, more shapes (triangle/star/arrow), and text line-height/letter-spacing controls.
 - **Slide backgrounds** — solid color, an uploaded image/video from the Media library, a pasted direct video URL, or a built-in **Motion Background Library** (54 original animated presets across Worship/Prayer/Bible/Sermon/Countdown/Announcement collections, with search, category filters, and per-user favorites).
+- **Templates** — 10 real starter templates plus "Save Current Slide as Template" from inside the editor; applying one replaces the current slide's design (Undo still works right after).
+- **Brand Kit** (Settings, admin) — a church-wide color palette, primary font, and logo, available from the editor's Brand panel.
 - **Songs** — a song library with a manual lyrics/section editor, plus **Smart Import**: paste lyrics text and it auto-detects Verse/Pre-Chorus/Chorus/Refrain/Bridge/Intro/Outro/Tag structure, strips chord charts, lets you pick a slide theme and an optional motion background, and generates a presentation marked `ready` — immediately usable for Go Live. In-progress imports autosave locally and can be restored.
-- **Bible** — browse by book/chapter/verse or jump straight to a reference (e.g. "John 3:16"); add verses to a presentation.
+- **Bible** — browse by book/chapter/verse or jump straight to a reference (e.g. "John 3:16"); KJV (public domain), NLT (Tyndale, free key), and NIV (Biblica, via api.bible — requires its own API key, see Environment Variables); add verses to a presentation.
 - **Media** — upload and manage images, videos, and audio (with a live waveform preview).
-- **Templates** — reusable slide template records.
-- **Live Presentation Mode** — an operator console (current/next preview, blackout, a stopwatch/countdown timer, MIDI controller + keyboard hotkey bindings) that drives, over `BroadcastChannel` (same computer) and Supabase Realtime (a remote device), a full-bleed **Projector** output, a **Stage Display** / confidence monitor, a phone-friendly **Remote Control** page, and a chroma-key-ready **Overlay** for OBS/vMix.
+- **Live Presentation Mode** — an operator console (current/next preview, Blackout, Freeze, Safe Slide, a stopwatch/countdown timer, MIDI controller + keyboard hotkey bindings, a live connection-status badge) that drives, over `BroadcastChannel` (same computer) and Supabase Realtime (a remote device, with auto-reconnect), a full-bleed **Projector** output, a **Stage Display** / confidence monitor, a phone-friendly **Remote Control** page (QR-code pairing), and a chroma-key-ready **Overlay** for OBS/vMix.
+- **Offline resilience** — presentations and their slides are mirrored locally (IndexedDB) the moment they load, so a dropped connection mid-service falls back to the last-known copy instead of a blank screen; in-progress editor edits are saved locally the instant they happen, ahead of the debounced cloud autosave, so a crash/reload never loses more than a moment's work; a **Service Pack** lets an operator pre-download every media background a presentation references so its playback needs no connection at all once downloaded; a **System Health** panel (Settings, admin) reports all of this plainly — what's actually cached, what's downloaded, and the live connection state — never a claim taken on faith. Every top-level route is wrapped in its own error boundary, so a crash in one screen can't take down another.
 - **Command Palette** (⌘K) for fast navigation and search.
-- **Users & Settings** — admin-only team and app configuration pages.
+- **Users & Settings** — admin-only team, Brand Kit, and System Health pages.
 
 ## Installation
 
@@ -41,12 +45,14 @@ Copy `.env.example` to `.env` and fill in your Supabase credentials:
 cp .env.example .env
 ```
 
-| Variable | Description |
-|---|---|
-| `VITE_SUPABASE_URL` | Your Supabase project URL |
-| `VITE_SUPABASE_ANON_KEY` | Your Supabase anon public key |
+| Variable | Required? | Description |
+|---|---|---|
+| `VITE_SUPABASE_URL` | Yes | Your Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | Yes | Your Supabase anon public key |
+| `VITE_NLT_API_KEY` | No | Free key from [api.nlt.to](https://api.nlt.to/Account/Register) (non-commercial use only). Omit it and NLT still works, just against Tyndale's more tightly rate-limited anonymous access. |
+| `VITE_API_BIBLE_KEY` | Only if you want NIV | An [api.bible](https://api.bible) API key, from an account/plan with NIV specifically approved. **Without this, selecting NIV shows a clear "needs an API key" message rather than failing silently or crashing** — KJV and NLT are unaffected. |
 
-> **Do NOT use the service role key in frontend code.** Only `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are used in the client.
+> **Do NOT use the service role key in frontend code.** Only the variables above are used in the client.
 
 ## Supabase Setup
 
@@ -65,10 +71,11 @@ cp .env.example .env
 | `songs` | Worship song library — lyrics stored as structured sections (type/label/text/order). |
 | `bible_verses` | Saved Bible verses for presentations. |
 | `media` | Uploaded images, videos, and audio files. |
-| `templates` | Reusable slide template records. |
+| `templates` | Reusable slide template records (10 real starters seeded by migration). |
 | `motion_favorites` | Per-user favorited Motion Background Library preset ids. |
+| `brand_settings` | The one shared brand-kit row (colors, font, logo). |
 
-All tables use UUID primary keys, `created_at`/`updated_at` timestamps, foreign keys with appropriate cascade rules, JSONB columns for flexible content, and Row Level Security with role-based policies. The Motion Background Library's 54 presets themselves are **not** a database table — they're static catalog data shipped with the app (`src/lib/motionLibrary.ts`).
+All tables use UUID primary keys, `created_at`/`updated_at` timestamps, foreign keys with appropriate cascade rules, JSONB columns for flexible content, and Row Level Security with role-based policies. The Motion Background Library's 54 presets are **not** a database table — they're static catalog data shipped with the app (`src/lib/motionLibrary.ts`). Offline caching (IndexedDB) and the downloadable Service Pack are entirely client-side/browser storage — also not database tables.
 
 ## Local Development
 
@@ -86,17 +93,17 @@ npm run lint        # eslint
 
 ## Vercel Deployment
 
-This repo includes a `vercel.json` SPA rewrite. Import the repository at [vercel.com](https://vercel.com), add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` as project environment variables, and deploy — Vercel runs `npm run build` automatically. Once the GitHub repo is connected, a push to `main` triggers a new deployment.
+This repo includes a `vercel.json` SPA rewrite. Import the repository at [vercel.com](https://vercel.com), add the environment variables above as project settings, and deploy — Vercel runs `npm run build` automatically. Once the GitHub repo is connected, a push to `main` triggers a new deployment.
 
 ## Roles & Permissions
 
 | Role | Access |
 |---|---|
-| **Admin** | Everything, including Users and Settings |
+| **Admin** | Everything, including Users, Settings (Brand Kit + System Health) |
 | **Media** | Presentations, Songs, Bible, Media, Templates, Live Presentation |
 | **Pastor** | Presentations, Songs, Bible, Media, Templates, Live Presentation |
 
-Admin-only pages: `/users` (team & roles) and `/settings` (app configuration).
+Admin-only pages: `/users` (team & roles) and `/settings` (Brand Kit, System Health).
 
 ## Project Structure
 
@@ -105,17 +112,18 @@ src/
 ├── components/
 │   ├── editor/          # Slide editor: canvas stage, nav rail, asset drawers, panels
 │   ├── motion/           # Motion Background Library player, card, and browser panel
-│   ├── live/             # Live-mode shared renderer, timer, telemetry bar, hotkeys modal
+│   ├── live/             # Live-mode shared renderer, timer, telemetry bar, hotkeys/service-pack modals
 │   ├── songs/            # Song section editor, Smart Import modal
+│   ├── settings/         # System Health card
 │   ├── bible/, media/, command/, layout/, ui/
-│   └── LoadingScreen.tsx
+│   └── ErrorBoundary.tsx, LoadingScreen.tsx
 ├── context/
 │   └── AuthContext.tsx   # Supabase auth provider
-├── hooks/                # useFabricCanvas, useLiveChannel, useMidiController, …
-├── lib/                  # supabase client, slide/lyrics/motion logic, pure helpers
+├── hooks/                # useFabricCanvas, useLiveChannel, useMidiController, useConnectionStatus, useEditorHistory, …
+├── lib/                  # supabase client, slide/lyrics/motion logic, offlineStore, servicePack, pure helpers
 ├── pages/                # Route pages
 ├── types/                # TypeScript types for database models and editor state
-├── App.tsx               # Router setup
+├── App.tsx               # Router setup (every route wrapped in an ErrorBoundary)
 ├── main.tsx               # Entry point
 └── index.css              # Tailwind + global styles
 
