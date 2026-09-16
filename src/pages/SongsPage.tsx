@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Music4, Plus, Copy, Trash2, Search, MoreVertical, Calendar, Clock, User, Pencil, Wand2, AlertTriangle } from 'lucide-react';
+import { Music4, Plus, Copy, Trash2, Search, MoreVertical, Calendar, Clock, User, Pencil, Wand2, AlertTriangle, Globe } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -10,7 +10,9 @@ import { Input } from '@/components/ui/Input';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Alert } from '@/components/ui/Alert';
 import { PageHeaderIcon } from '@/components/ui/PageHeaderIcon';
-import { SmartImportModal } from '@/components/songs/SmartImportModal';
+import { SmartImportModal, type SmartImportPrefill } from '@/components/songs/SmartImportModal';
+import { OnlineSongSearchModal } from '@/components/songs/OnlineSongSearchModal';
+import { findSimilarSong } from '@/lib/duplicateSongDetection';
 import type { SongWithCreator } from '@/types';
 
 export function SongsPage() {
@@ -41,6 +43,8 @@ export function SongsPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [smartImportOpen, setSmartImportOpen] = useState(false);
+  const [searchOnlineOpen, setSearchOnlineOpen] = useState(false);
+  const [importPrefill, setImportPrefill] = useState<SmartImportPrefill | null>(null);
 
   const fetchSongs = useCallback(async () => {
     setLoading(true);
@@ -178,8 +182,12 @@ export function SongsPage() {
             <p className="text-sm text-zinc-500 mt-1">Manage your worship song library with lyrics and metadata.</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => setSmartImportOpen(true)}>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button variant="outline" onClick={() => setSearchOnlineOpen(true)}>
+            <Globe className="w-4 h-4" />
+            Search Online
+          </Button>
+          <Button variant="outline" onClick={() => { setImportPrefill(null); setSmartImportOpen(true); }}>
             <Wand2 className="w-4 h-4" />
             Smart Import
           </Button>
@@ -351,7 +359,7 @@ export function SongsPage() {
             onKeyDown={(e) => { if (e.key === 'Enter') handleCreate(); }}
             autoFocus
           />
-          {newTitle.trim() && songs.some((s) => s.title.toLowerCase() === newTitle.trim().toLowerCase()) && (
+          {newTitle.trim() && findSimilarSong(newTitle, null, songs) && (
             <div className="flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-700">
               <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
               A song titled "{newTitle.trim()}" already exists — you can still continue if this is a different arrangement.
@@ -436,12 +444,30 @@ export function SongsPage() {
 
       <SmartImportModal
         open={smartImportOpen}
-        onClose={() => setSmartImportOpen(false)}
-        existingTitles={songs.map((s) => s.title)}
+        onClose={() => { setSmartImportOpen(false); setImportPrefill(null); }}
+        existingSongs={songs}
+        prefill={importPrefill}
+        onOpenExisting={(songId) => { setSmartImportOpen(false); setImportPrefill(null); navigate(`/songs/${songId}`); }}
         onImported={(songId, presentationId) => {
           setSmartImportOpen(false);
+          setImportPrefill(null);
           if (presentationId) navigate(`/presentations/${presentationId}/edit`);
           else navigate(`/songs/${songId}`);
+        }}
+      />
+
+      <OnlineSongSearchModal
+        open={searchOnlineOpen}
+        onClose={() => setSearchOnlineOpen(false)}
+        onImport={(item) => {
+          setImportPrefill({
+            title: item.title,
+            author: item.artist,
+            sourceUrl: item.sourceUrl,
+            sourceProvider: item.provider,
+          });
+          setSearchOnlineOpen(false);
+          setSmartImportOpen(true);
         }}
       />
     </div>
