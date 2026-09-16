@@ -100,6 +100,10 @@ export interface Song {
   key: string | null;
   tempo: string | null;
   lyrics: SongLyrics;
+  /** Set when this song was created from an online search result (src/lib/songSearch/) — a link back to the source, never the lyrics text itself. */
+  source_url: string | null;
+  /** Which SongSearchProvider found it, e.g. 'itunes' — null for a hand-entered or paste-only import. */
+  source_provider: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
