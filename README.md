@@ -57,11 +57,11 @@ cp .env.example .env
 
 > **Do NOT use the service role key in frontend code.** Only the variables above are used in the client.
 
-**"Write with AI" needs one more thing, set differently** — an Anthropic API key (from [console.anthropic.com](https://console.anthropic.com)) is a real secret, so it is never a `VITE_*` variable (those ship in the client bundle). Instead it's a **Supabase Edge Function secret**:
+**"Write with AI" needs one more thing, set differently** — a free [Groq](https://console.groq.com/keys) API key is a real secret, so it is never a `VITE_*` variable (those ship in the client bundle). Instead it's a **Supabase Edge Function secret**:
 
 ```bash
 npx supabase functions deploy generate-song-lyrics --project-ref <your-project-ref>
-npx supabase secrets set ANTHROPIC_API_KEY=sk-ant-... --project-ref <your-project-ref>
+npx supabase secrets set GROQ_API_KEY=gsk_... --project-ref <your-project-ref>
 ```
 
 Until this is deployed, the "Write with AI" button shows a clear "not configured yet" message instead of failing mysteriously — every other feature (Search Online, Smart Import, everything else) is completely unaffected either way. Note: this key is unrelated to the iTunes Search integration (which needs no key/account at all) and to the Apple Developer Program (which doesn't provide lyrics either, at any tier).

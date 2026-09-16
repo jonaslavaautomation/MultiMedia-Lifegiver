@@ -3,8 +3,8 @@ import { supabase } from '@/lib/supabase';
 /**
  * Client wrapper for the `generate-song-lyrics` Supabase Edge Function —
  * see its own header for why this can't be a direct client-side API call
- * (it needs a real Anthropic API key, which is a secret, unlike the
- * keyless iTunes Search integration in src/lib/songSearch/).
+ * (it needs a real Groq API key, which is a secret, unlike the keyless
+ * iTunes Search integration in src/lib/songSearch/).
  */
 
 export interface GenerateLyricsRequest {
@@ -33,7 +33,7 @@ export async function generateSongLyrics(request: GenerateLyricsRequest): Promis
     // failure, not a clean 503 — so this is the one place worth a specific hint.
     console.error('Error calling generate-song-lyrics:', error);
     throw new Error(
-      'AI lyric writing isn’t set up yet on this project — the generate-song-lyrics Edge Function needs to be deployed with an ANTHROPIC_API_KEY secret configured. See README.md.'
+      'AI lyric writing isn’t set up yet on this project — the generate-song-lyrics Edge Function needs to be deployed with a GROQ_API_KEY secret configured. See README.md.'
     );
   }
 
