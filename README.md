@@ -23,7 +23,10 @@ A private church presentation and media management web application for LifeGiver
 - **Slide backgrounds** — solid color, an uploaded image/video from the Media library, a pasted direct video URL, or a built-in **Motion Background Library** (54 original animated presets across Worship/Prayer/Bible/Sermon/Countdown/Announcement collections, with search, category filters, and per-user favorites).
 - **Templates** — 10 real starter templates plus "Save Current Slide as Template" from inside the editor; applying one replaces the current slide's design (Undo still works right after).
 - **Brand Kit** (Settings, admin) — a church-wide color palette, primary font, and logo, available from the editor's Brand panel.
-- **Songs** — a song library with a manual lyrics/section editor, plus **Smart Import**: paste lyrics text and it auto-detects Verse/Pre-Chorus/Chorus/Refrain/Bridge/Intro/Outro/Tag structure, strips chord charts, lets you pick a slide theme and an optional motion background, and generates a presentation marked `ready` — immediately usable for Go Live. In-progress imports autosave locally and can be restored.
+- **Songs** — a song library with a manual lyrics/section editor, plus:
+  - **Smart Import**: paste lyrics text and it auto-detects Verse/Pre-Chorus/Chorus/Refrain/Bridge/Intro/Outro/Tag structure, strips chord charts, lets you pick a slide theme and an optional motion background, and generates a presentation marked `ready` — immediately usable for Go Live. In-progress imports autosave locally and can be restored. Section review supports Add/Duplicate/Delete/reorder, and saving checks for a likely-duplicate existing song first (Open Existing / Create Anyway / Cancel — never a silent overwrite).
+  - **Search Online**: finds a song by title/artist (via the free, keyless iTunes Search API — title/artist/album/artwork/a short preview/a link to the source) and feeds the result straight into Smart Import, prefilled. This **never** fetches or auto-populates lyrics text — no free/legal source of full copyrighted lyrics exists — you still paste in lyrics you're authorized to use.
+  - **Write with AI**: generates completely original lyrics from a topic/style/mood/structure (via the `generate-song-lyrics` Supabase Edge Function — see Environment Variables / Supabase Setup) and feeds the draft into the same Smart Import review flow for editing before saving. Never reproduces an existing song.
 - **Bible** — browse by book/chapter/verse or jump straight to a reference (e.g. "John 3:16"); KJV (public domain), NLT (Tyndale, free key), and NIV (Biblica, via api.bible — requires its own API key, see Environment Variables); add verses to a presentation.
 - **Media** — upload and manage images, videos, and audio (with a live waveform preview).
 - **Live Presentation Mode** — an operator console (current/next preview, Blackout, Freeze, Safe Slide, a stopwatch/countdown timer, MIDI controller + keyboard hotkey bindings, a live connection-status badge) that drives, over `BroadcastChannel` (same computer) and Supabase Realtime (a remote device, with auto-reconnect), a full-bleed **Projector** output, a **Stage Display** / confidence monitor, a phone-friendly **Remote Control** page (QR-code pairing), and a chroma-key-ready **Overlay** for OBS/vMix.
@@ -54,12 +57,22 @@ cp .env.example .env
 
 > **Do NOT use the service role key in frontend code.** Only the variables above are used in the client.
 
+**"Write with AI" needs one more thing, set differently** — an Anthropic API key (from [console.anthropic.com](https://console.anthropic.com)) is a real secret, so it is never a `VITE_*` variable (those ship in the client bundle). Instead it's a **Supabase Edge Function secret**:
+
+```bash
+npx supabase functions deploy generate-song-lyrics --project-ref <your-project-ref>
+npx supabase secrets set ANTHROPIC_API_KEY=sk-ant-... --project-ref <your-project-ref>
+```
+
+Until this is deployed, the "Write with AI" button shows a clear "not configured yet" message instead of failing mysteriously — every other feature (Search Online, Smart Import, everything else) is completely unaffected either way. Note: this key is unrelated to the iTunes Search integration (which needs no key/account at all) and to the Apple Developer Program (which doesn't provide lyrics either, at any tier).
+
 ## Supabase Setup
 
 1. Create a project at [supabase.com](https://supabase.com) and copy its URL/anon key into `.env`.
 2. Apply every file in `supabase/migrations/` **in filename (chronological) order** via the Supabase SQL Editor — there is no automatic migration runner in this environment, so a new migration added to the repo needs to be run manually before the feature it supports will work against your database.
 3. In Supabase Auth settings: enable Email/Password auth, disable email confirmation, and leave public sign-up off — admins create accounts via the Supabase dashboard.
 4. First admin user: Authentication → Users → Add user, then flip that user's `role` to `admin` in the `profiles` table (Table Editor).
+5. Deploy the Edge Function only if you want "Write with AI" (Songs) — see the "Write with AI" note above for the exact commands. Everything else in this app works without it.
 
 ### Database Schema (high level)
 
@@ -127,7 +140,10 @@ src/
 ├── main.tsx               # Entry point
 └── index.css              # Tailwind + global styles
 
-supabase/migrations/       # Apply in filename order — see Supabase Setup above
+supabase/
+├── migrations/            # Apply in filename order — see Supabase Setup above
+└── functions/
+    └── generate-song-lyrics/  # "Write with AI" — the only thing needing a real secret; see Environment Variables
 ```
 
 ## License

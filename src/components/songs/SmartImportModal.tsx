@@ -28,12 +28,19 @@ import { findSimilarSong } from '@/lib/duplicateSongDetection';
 import { saveImportDraft, loadImportDraft, clearImportDraft, saveImportPrefs, loadImportPrefs } from '@/lib/importDraftCache';
 import type { SongSectionType, SongWithCreator } from '@/types';
 
-/** Prefilled from an online search result (see OnlineSongSearchModal) — never carries lyrics text, since no configured provider supplies any. */
+/**
+ * Prefilled from either an online search result (see OnlineSongSearchModal
+ * — never carries lyrics text, since no configured provider supplies any)
+ * or an AI-generated draft (see AiLyricsWizardModal — carries `rawText`,
+ * since that lyrics text is exactly what was just written and is meant to
+ * be reviewed/edited here like any other import).
+ */
 export interface SmartImportPrefill {
   title: string;
   author: string | null;
   sourceUrl: string | null;
   sourceProvider: string | null;
+  rawText?: string;
 }
 
 interface SmartImportModalProps {
@@ -94,7 +101,7 @@ export function SmartImportModal({ open, onClose, existingSongs, onImported, onO
       setAuthor(prefill.author ?? '');
       setSourceUrl(prefill.sourceUrl);
       setSourceProvider(prefill.sourceProvider);
-      setRawText('');
+      setRawText(prefill.rawText ?? '');
       setRestoredDraft(false);
     } else {
       const draft = loadImportDraft();
@@ -439,10 +446,15 @@ export function SmartImportModal({ open, onClose, existingSongs, onImported, onO
                 </a>
               </div>
             )}
+            {sourceProvider === 'ai-generated' && (
+              <div className="flex items-center gap-2 rounded-xl bg-lime-500/10 border border-lime-500/40 px-3 py-2 text-xs text-zinc-700">
+                <Sparkles className="w-3.5 h-3.5 text-lime-700 shrink-0" /> AI-generated draft — original lyrics, not from an existing song. Review and edit below before saving.
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1.5">Lyrics</label>
-              {prefill && !rawText && (
+              {prefill && !rawText && sourceProvider !== 'ai-generated' && (
                 <div className="flex items-start gap-2 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2 mb-2 text-xs text-amber-700">
                   <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
                   Lyrics are not available for automatic import from this source. You can paste lyrics you are authorized to use below.

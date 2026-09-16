@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Music4, Plus, Copy, Trash2, Search, MoreVertical, Calendar, Clock, User, Pencil, Wand2, AlertTriangle, Globe } from 'lucide-react';
+import { Music4, Plus, Copy, Trash2, Search, MoreVertical, Calendar, Clock, User, Pencil, Wand2, AlertTriangle, Globe, Sparkles } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -12,6 +12,7 @@ import { Alert } from '@/components/ui/Alert';
 import { PageHeaderIcon } from '@/components/ui/PageHeaderIcon';
 import { SmartImportModal, type SmartImportPrefill } from '@/components/songs/SmartImportModal';
 import { OnlineSongSearchModal } from '@/components/songs/OnlineSongSearchModal';
+import { AiLyricsWizardModal } from '@/components/songs/AiLyricsWizardModal';
 import { findSimilarSong } from '@/lib/duplicateSongDetection';
 import type { SongWithCreator } from '@/types';
 
@@ -44,6 +45,7 @@ export function SongsPage() {
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [smartImportOpen, setSmartImportOpen] = useState(false);
   const [searchOnlineOpen, setSearchOnlineOpen] = useState(false);
+  const [aiWizardOpen, setAiWizardOpen] = useState(false);
   const [importPrefill, setImportPrefill] = useState<SmartImportPrefill | null>(null);
 
   const fetchSongs = useCallback(async () => {
@@ -183,6 +185,10 @@ export function SongsPage() {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <Button variant="outline" onClick={() => setAiWizardOpen(true)}>
+            <Sparkles className="w-4 h-4" />
+            Write with AI
+          </Button>
           <Button variant="outline" onClick={() => setSearchOnlineOpen(true)}>
             <Globe className="w-4 h-4" />
             Search Online
@@ -467,6 +473,22 @@ export function SongsPage() {
             sourceProvider: item.provider,
           });
           setSearchOnlineOpen(false);
+          setSmartImportOpen(true);
+        }}
+      />
+
+      <AiLyricsWizardModal
+        open={aiWizardOpen}
+        onClose={() => setAiWizardOpen(false)}
+        onGenerated={(result) => {
+          setImportPrefill({
+            title: result.title || 'Untitled Song',
+            author: null,
+            sourceUrl: null,
+            sourceProvider: 'ai-generated',
+            rawText: result.lyrics,
+          });
+          setAiWizardOpen(false);
           setSmartImportOpen(true);
         }}
       />
