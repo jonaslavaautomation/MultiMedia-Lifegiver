@@ -7,13 +7,14 @@ import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Input } from '@/components/ui/Input';
 import { Alert } from '@/components/ui/Alert';
+import { Modal } from '@/components/ui/Modal';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SongSectionEditor } from '@/components/songs/SongSectionEditor';
 import { AddSectionModal } from '@/components/songs/AddSectionModal';
-import { createTextSlideContent, splitTextIntoChunks } from '@/lib/slideContent';
-import { SONG_THEMES, getSongThemeById, DEFAULT_SONG_THEME_ID } from '@/lib/songThemes';
+import { SONG_THEMES, DEFAULT_SONG_THEME_ID } from '@/lib/songThemes';
 import { getMotionPresetById } from '@/lib/motionLibrary';
 import { MotionLibraryPanel } from '@/components/motion/MotionLibraryPanel';
+import { buildSlideRowsFromSections, generatePresentationWithSlides } from '@/lib/songSlideGeneration';
 import type { Presentation, Song, SongSection, SongSectionType } from '@/types';
 
 function labelForNewSection(type: SongSectionType, existing: SongSection[]): string {
@@ -51,6 +52,7 @@ export function SongDetailPage() {
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [linkedPresentations, setLinkedPresentations] = useState<Presentation[]>([]);
+  const [confirmRegenerateOpen, setConfirmRegenerateOpen] = useState(false);
 
   const fetchSong = useCallback(async () => {
     if (!id) return;
@@ -178,78 +180,38 @@ export function SongDetailPage() {
     });
   }
 
-  async function handleGenerateSlides() {
+  async function handleGenerateSlides(confirmedDespiteExisting = false) {
     const chosen = sections.filter((s) => selectedIds.has(s.id)).sort((a, b) => a.order - b.order);
     if (chosen.length === 0) {
       setGenerateError('Select at least one section to generate slides.');
       return;
     }
 
+    // Duplicate-generation protection: this song already has one or more presentations
+    // generated from it — confirm before silently adding another, rather than letting an
+    // accidental double-click on "Generate" quietly pile up near-identical presentations.
+    if (!confirmedDespiteExisting && linkedPresentations.length > 0) {
+      setConfirmRegenerateOpen(true);
+      return;
+    }
+
     setGenerating(true);
     setGenerateError(null);
 
-    const { data: presentation, error: presError } = await supabase
-      .from('presentations')
-      .insert({
+    const slideRows = buildSlideRowsFromSections(chosen, { linesPerSlide, themeId, motionId });
+
+    try {
+      const presentationId = await generatePresentationWithSlides({
         title: presentationTitle.trim() || song!.title,
         status: 'ready', // generated slides are immediately Go-Live-ready, no manual status flip needed
-        source_song_id: song!.id,
-      })
-      .select('id')
-      .maybeSingle();
-
-    if (presError || !presentation) {
-      console.error('Error creating presentation:', presError?.message);
-      setGenerateError('Failed to create the presentation. Please try again.');
-      setGenerating(false);
-      return;
-    }
-
-    const theme = getSongThemeById(themeId);
-    const motion = motionId ? getMotionPresetById(motionId) : undefined;
-    const textOptions = {
-      fontFamily: theme?.fontFamily,
-      fontSize: theme?.fontSize,
-      fill: theme?.fill,
-      textAlign: theme?.textAlign,
-      backgroundColor: theme?.backgroundColor,
-      backgroundMotionId: motion?.id ?? null,
-    };
-
-    const slideRows: { presentation_id: string; title: string; content: ReturnType<typeof createTextSlideContent>; sort_order: number }[] = [];
-    chosen.forEach((section) => {
-      const chunks = splitTextIntoChunks(section.text, linesPerSlide);
-      if (chunks.length === 0) {
-        // Section has no lyrics yet — still add a placeholder slide so it's not silently dropped.
-        slideRows.push({
-          presentation_id: presentation.id,
-          title: section.label,
-          content: createTextSlideContent(section.label, textOptions),
-          sort_order: slideRows.length,
-        });
-        return;
-      }
-      chunks.forEach((chunkText, chunkIndex) => {
-        slideRows.push({
-          presentation_id: presentation.id,
-          title: chunks.length > 1 ? `${section.label} (${chunkIndex + 1}/${chunks.length})` : section.label,
-          content: createTextSlideContent(chunkText, textOptions),
-          sort_order: slideRows.length,
-        });
+        sourceSongId: song!.id,
+        slideRows,
       });
-    });
-
-    const { error: slidesError } = await supabase.from('slides').insert(slideRows);
-
-    if (slidesError) {
-      console.error('Error generating slides:', slidesError.message);
-      await supabase.from('presentations').delete().eq('id', presentation.id);
-      setGenerateError('Failed to generate slides. Please try again.');
+      navigate(`/presentations/${presentationId}/edit`);
+    } catch (err) {
+      setGenerateError(err instanceof Error ? err.message : 'Failed to generate slides. Please try again.');
       setGenerating(false);
-      return;
     }
-
-    navigate(`/presentations/${presentation.id}/edit`);
   }
 
   if (loading) {
@@ -496,7 +458,7 @@ export function SongDetailPage() {
           </div>
           <Button
             variant="primary"
-            onClick={handleGenerateSlides}
+            onClick={() => handleGenerateSlides()}
             disabled={generating || sections.length === 0}
           >
             {generating ? (
@@ -539,6 +501,33 @@ export function SongDetailPage() {
       )}
 
       <AddSectionModal open={addSectionOpen} onClose={() => setAddSectionOpen(false)} onAdd={handleAddSection} />
+
+      <Modal
+        open={confirmRegenerateOpen}
+        onClose={() => setConfirmRegenerateOpen(false)}
+        title="Generate another presentation?"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setConfirmRegenerateOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => {
+                setConfirmRegenerateOpen(false);
+                void handleGenerateSlides(true);
+              }}
+            >
+              Generate Anyway
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-zinc-600">
+          This song already has {linkedPresentations.length} presentation{linkedPresentations.length === 1 ? '' : 's'} generated
+          from it. Generating again will create a separate, additional presentation rather than updating the existing one{linkedPresentations.length === 1 ? '' : 's'}.
+        </p>
+      </Modal>
     </div>
   );
 }

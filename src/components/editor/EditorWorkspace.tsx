@@ -624,6 +624,31 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
     }
   }
 
+  /**
+   * Drag-and-drop reorder from SlideFilmstrip: `orderedIds` is the full slide
+   * list in its new order. Updates local state immediately (so the filmstrip
+   * never snaps back while the request is in flight), then persists every
+   * slide's new `sort_order` — reusing 0..n-1 by array position, matching how
+   * handleAddSlide/handleDuplicateSlide already assign sort_order.
+   */
+  async function handleReorderSlides(orderedIds: string[]) {
+    const byId = new Map(slides.map((s) => [s.id, s]));
+    const reordered = orderedIds.map((id) => byId.get(id)).filter((s): s is Slide => !!s);
+    if (reordered.length !== slides.length) return;
+
+    setSlides(reordered.map((s, index) => ({ ...s, sort_order: index })));
+
+    const updates = reordered.map((slide, index) =>
+      supabase.from('slides').update({ sort_order: index }).eq('id', slide.id)
+    );
+    const results = await Promise.all(updates);
+    const failed = results.find((r) => r.error);
+    if (failed?.error) {
+      console.error('Error persisting slide order:', failed.error.message);
+      throw new Error('Failed to save the new slide order. Please try again.');
+    }
+  }
+
   // --- Toolbar actions that need Supabase/media resolution -----------------
 
   async function handleInsertImage(url: string, mediaId?: string) {
@@ -789,6 +814,7 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
         onAdd={handleAddSlide}
         onDuplicate={handleDuplicateSlide}
         onDelete={handleDeleteSlide}
+        onReorder={handleReorderSlides}
       />
 
       <BackgroundPickerModal
