@@ -20,11 +20,11 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Alert } from '@/components/ui/Alert';
 import { parseLyrics, type ParsedSection } from '@/lib/lyricsParser';
-import { splitTextIntoChunks, createTextSlideContent } from '@/lib/slideContent';
 import { SONG_THEMES, getSongThemeById, DEFAULT_SONG_THEME_ID } from '@/lib/songThemes';
 import { getMotionPresetById } from '@/lib/motionLibrary';
 import { MotionLibraryPanel } from '@/components/motion/MotionLibraryPanel';
 import { findSimilarSong } from '@/lib/duplicateSongDetection';
+import { buildSlideRowsFromSections, generatePresentationWithSlides } from '@/lib/songSlideGeneration';
 import { saveImportDraft, loadImportDraft, clearImportDraft, saveImportPrefs, loadImportPrefs } from '@/lib/importDraftCache';
 import type { SongSectionType, SongWithCreator } from '@/types';
 
@@ -306,74 +306,26 @@ export function SmartImportModal({ open, onClose, existingSongs, onImported, onO
       return;
     }
 
-    const theme = getSongThemeById(themeId);
-    const motion = motionId ? getMotionPresetById(motionId) : undefined;
+    const slideRows = buildSlideRowsFromSections(chosen, { linesPerSlide, themeId, motionId });
 
-    const { data: presentation, error: presError } = await supabase
-      .from('presentations')
-      .insert({
+    try {
+      const presentationId = await generatePresentationWithSlides({
         title: title.trim(),
         status: 'ready', // Smart Import's whole point: the song is immediately ready for Go Live, no manual status flip needed.
-        source_song_id: song.id,
-      })
-      .select('id')
-      .maybeSingle();
-
-    if (presError || !presentation) {
-      console.error('Error creating presentation:', presError?.message);
-      setSaveError('Song was saved, but creating the presentation failed. You can still generate slides from the song page.');
-      setSaving(false);
-      clearImportDraft();
-      onImported(song.id, null);
-      return;
-    }
-
-    const slideRows: { presentation_id: string; title: string; content: ReturnType<typeof createTextSlideContent>; sort_order: number }[] = [];
-    chosen.forEach((section) => {
-      const chunks = splitTextIntoChunks(section.text, linesPerSlide);
-      const textOptions = {
-        fontFamily: theme?.fontFamily,
-        fontSize: theme?.fontSize,
-        fill: theme?.fill,
-        textAlign: theme?.textAlign,
-        backgroundColor: theme?.backgroundColor,
-        backgroundMotionId: motion?.id ?? null,
-      };
-      if (chunks.length === 0) {
-        slideRows.push({
-          presentation_id: presentation.id,
-          title: section.label,
-          content: createTextSlideContent(section.label, textOptions),
-          sort_order: slideRows.length,
-        });
-        return;
-      }
-      chunks.forEach((chunkText, chunkIndex) => {
-        slideRows.push({
-          presentation_id: presentation.id,
-          title: chunks.length > 1 ? `${section.label} (${chunkIndex + 1}/${chunks.length})` : section.label,
-          content: createTextSlideContent(chunkText, textOptions),
-          sort_order: slideRows.length,
-        });
+        sourceSongId: song.id,
+        slideRows,
       });
-    });
-
-    const { error: slidesError } = await supabase.from('slides').insert(slideRows);
-
-    if (slidesError) {
-      console.error('Error generating slides:', slidesError.message);
-      await supabase.from('presentations').delete().eq('id', presentation.id);
+      clearImportDraft();
+      setSaving(false);
+      resetAll();
+      onImported(song.id, presentationId);
+    } catch (err) {
+      console.error('Error generating presentation with slides:', err);
       setSaveError('Song was saved, but slide generation failed. You can try generating slides again from the song page.');
       setSaving(false);
       clearImportDraft();
       onImported(song.id, null);
-      return;
     }
-
-    clearImportDraft();
-    setSaving(false);
-    resetAll();
-    onImported(song.id, presentation.id);
   }
 
   const selectedTheme = getSongThemeById(themeId);

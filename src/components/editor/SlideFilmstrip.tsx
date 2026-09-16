@@ -13,13 +13,17 @@ interface SlideFilmstripProps {
   onAdd: () => void | Promise<void>;
   onDuplicate: (id: string) => void | Promise<void>;
   onDelete: (id: string) => void | Promise<void>;
+  /** Called with the full slide id list in its new order once a drag-and-drop reorder is dropped. */
+  onReorder?: (orderedIds: string[]) => void | Promise<void>;
 }
 
-export function SlideFilmstrip({ slides, currentSlideId, onSelect, onAdd, onDuplicate, onDelete }: SlideFilmstripProps) {
+export function SlideFilmstrip({ slides, currentSlideId, onSelect, onAdd, onDuplicate, onDelete, onReorder }: SlideFilmstripProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Slide | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
 
   async function run(action: () => void | Promise<void>) {
     setBusy(true);
@@ -32,6 +36,23 @@ export function SlideFilmstrip({ slides, currentSlideId, onSelect, onAdd, onDupl
     } finally {
       setBusy(false);
     }
+  }
+
+  function handleDrop(targetId: string) {
+    setDragOverId(null);
+    const draggedId = dragId;
+    setDragId(null);
+    if (!draggedId || !onReorder || draggedId === targetId) return;
+
+    const fromIndex = slides.findIndex((s) => s.id === draggedId);
+    const toIndex = slides.findIndex((s) => s.id === targetId);
+    if (fromIndex === -1 || toIndex === -1) return;
+
+    const reordered = slides.map((s) => s.id);
+    reordered.splice(fromIndex, 1);
+    reordered.splice(toIndex, 0, draggedId);
+
+    run(() => onReorder(reordered));
   }
 
   async function confirmDelete() {
@@ -57,11 +78,34 @@ export function SlideFilmstrip({ slides, currentSlideId, onSelect, onAdd, onDupl
         {slides.map((slide, index) => (
           <div
             key={slide.id}
-            className={`group relative shrink-0 w-32 rounded-xl border cursor-pointer transition-all overflow-hidden ${
-              slide.id === currentSlideId
+            draggable={!!onReorder}
+            onDragStart={(e) => {
+              setDragId(slide.id);
+              e.dataTransfer.effectAllowed = 'move';
+            }}
+            onDragEnd={() => {
+              setDragId(null);
+              setDragOverId(null);
+            }}
+            onDragOver={(e) => {
+              if (!onReorder || !dragId) return;
+              e.preventDefault();
+              e.dataTransfer.dropEffect = 'move';
+              if (dragOverId !== slide.id) setDragOverId(slide.id);
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              handleDrop(slide.id);
+            }}
+            className={`group relative shrink-0 w-32 rounded-xl border transition-all overflow-hidden ${
+              onReorder ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'
+            } ${
+              dragOverId === slide.id && dragId && dragId !== slide.id
+                ? 'border-brand-500 ring-2 ring-brand-500/50'
+                : slide.id === currentSlideId
                 ? 'border-brand-500 ring-2 ring-brand-500/30'
                 : 'border-zinc-200/80 hover:border-zinc-300'
-            }`}
+            } ${dragId === slide.id ? 'opacity-40' : ''}`}
             onClick={() => onSelect(slide.id)}
           >
             <div className="relative min-w-0">
