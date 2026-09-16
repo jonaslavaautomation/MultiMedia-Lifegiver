@@ -1,19 +1,31 @@
 # LifeGiver Media Studio
 
-A private church presentation and media management web application. Built for church media teams to create worship presentations, manage songs, add Bible verses, upload media, and run live presentations.
-
-> **Current Phase: Phase 1 — Foundation**
->
-> This phase includes authentication, dashboard, presentation management, and the application shell. The slide editor, live presentation mode, and content management (songs, Bible, media, templates) will be added in future phases.
+A private church presentation and media management web application for LifeGiver Davao's media team — build worship presentations, manage a song library with smart lyrics import, browse Bible verses, manage media, and run live services with a full broadcast-style operator console, projector output, stage/confidence-monitor display, phone remote control, and an OBS/vMix transparent overlay.
 
 ## Tech Stack
 
-- **React** 18 + **TypeScript** — UI framework with strict typing
-- **Vite** — Build tool and dev server
-- **Tailwind CSS** — Utility-first styling with a custom dark studio theme
-- **Supabase** — PostgreSQL database, authentication, and storage
-- **Lucide React** — Icon library
-- **React Router** — Client-side routing
+- **React** 18 + **TypeScript** (strict) — UI framework
+- **Vite** — build tool and dev server
+- **Tailwind CSS** — utility-first styling (light theme, lime/vanilla accent palette)
+- **Supabase** — PostgreSQL database, authentication, storage, and Realtime
+- **Fabric.js** — the slide editor's canvas engine
+- **Framer Motion** — UI transitions (asset drawer, overlay animations)
+- **Lucide React** — icon library
+- **React Router** — client-side routing
+
+## Feature Overview
+
+- **Authentication** — email/password only, no public registration; roles are `admin` / `media` / `pastor`.
+- **Dashboard** — at-a-glance counts and recent activity.
+- **Presentations** — create, list, duplicate, delete; a Canva-style slide editor (nav rail, asset drawers, floating contextual toolbar, dotted-grid canvas) built on Fabric.js.
+- **Slide backgrounds** — solid color, an uploaded image/video from the Media library, a pasted direct video URL, or a built-in **Motion Background Library** (54 original animated presets across Worship/Prayer/Bible/Sermon/Countdown/Announcement collections, with search, category filters, and per-user favorites).
+- **Songs** — a song library with a manual lyrics/section editor, plus **Smart Import**: paste lyrics text and it auto-detects Verse/Pre-Chorus/Chorus/Refrain/Bridge/Intro/Outro/Tag structure, strips chord charts, lets you pick a slide theme and an optional motion background, and generates a presentation marked `ready` — immediately usable for Go Live. In-progress imports autosave locally and can be restored.
+- **Bible** — browse by book/chapter/verse or jump straight to a reference (e.g. "John 3:16"); add verses to a presentation.
+- **Media** — upload and manage images, videos, and audio (with a live waveform preview).
+- **Templates** — reusable slide template records.
+- **Live Presentation Mode** — an operator console (current/next preview, blackout, a stopwatch/countdown timer, MIDI controller + keyboard hotkey bindings) that drives, over `BroadcastChannel` (same computer) and Supabase Realtime (a remote device), a full-bleed **Projector** output, a **Stage Display** / confidence monitor, a phone-friendly **Remote Control** page, and a chroma-key-ready **Overlay** for OBS/vMix.
+- **Command Palette** (⌘K) for fast navigation and search.
+- **Users & Settings** — admin-only team and app configuration pages.
 
 ## Installation
 
@@ -38,41 +50,25 @@ cp .env.example .env
 
 ## Supabase Setup
 
-1. Create a new project at [supabase.com](https://supabase.com).
-2. Copy your project URL and anon key into `.env`.
-3. The database migration is applied automatically via the Supabase MCP tools. To apply manually, run the SQL from the migration in the Supabase SQL Editor.
-4. In Supabase Auth settings:
-   - Enable Email/Password authentication.
-   - Disable email confirmation (off by default).
-   - There is no public registration — admins create accounts via the Supabase dashboard or API.
+1. Create a project at [supabase.com](https://supabase.com) and copy its URL/anon key into `.env`.
+2. Apply every file in `supabase/migrations/` **in filename (chronological) order** via the Supabase SQL Editor — there is no automatic migration runner in this environment, so a new migration added to the repo needs to be run manually before the feature it supports will work against your database.
+3. In Supabase Auth settings: enable Email/Password auth, disable email confirmation, and leave public sign-up off — admins create accounts via the Supabase dashboard.
+4. First admin user: Authentication → Users → Add user, then flip that user's `role` to `admin` in the `profiles` table (Table Editor).
 
-### Database Schema
-
-The following tables are created:
+### Database Schema (high level)
 
 | Table | Purpose |
 |---|---|
 | `profiles` | User profiles with roles (admin, media, pastor). Auto-created on signup. |
-| `presentations` | Worship presentation records with title, status, and service date. |
-| `slides` | Individual slides within a presentation (Phase 3). |
-| `songs` | Worship song library with lyrics and metadata. |
+| `presentations` | Presentation records — title, status, service date, and `source_song_id` linking back to a song it was generated from. |
+| `slides` | Individual slides within a presentation (Fabric.js canvas JSON + background metadata). |
+| `songs` | Worship song library — lyrics stored as structured sections (type/label/text/order). |
 | `bible_verses` | Saved Bible verses for presentations. |
 | `media` | Uploaded images, videos, and audio files. |
-| `templates` | Reusable slide templates. |
+| `templates` | Reusable slide template records. |
+| `motion_favorites` | Per-user favorited Motion Background Library preset ids. |
 
-All tables use:
-- UUID primary keys
-- Timestamps (`created_at`, `updated_at`)
-- Foreign keys with proper cascade rules
-- JSONB columns for flexible content storage
-- Row Level Security with role-based policies
-
-### Creating Your First Admin User
-
-1. Go to Supabase Dashboard → Authentication → Users → Add user.
-2. Enter an email and password.
-3. The `profiles` table will auto-create a row with role `media`.
-4. Update the role to `admin` in the Supabase Table Editor (profiles table).
+All tables use UUID primary keys, `created_at`/`updated_at` timestamps, foreign keys with appropriate cascade rules, JSONB columns for flexible content, and Row Level Security with role-based policies. The Motion Background Library's 54 presets themselves are **not** a database table — they're static catalog data shipped with the app (`src/lib/motionLibrary.ts`).
 
 ## Local Development
 
@@ -80,89 +76,50 @@ All tables use:
 npm run dev
 ```
 
-The dev server starts automatically. Open the URL shown in your terminal.
-
-## Build
+## Build & Checks
 
 ```bash
-npm run build
-```
-
-Type checking:
-
-```bash
-npm run typecheck
+npm run build       # production build
+npm run typecheck   # tsc --noEmit
+npm run lint        # eslint
 ```
 
 ## Vercel Deployment
 
-1. Push your code to a Git repository (GitHub, GitLab, or Bitbucket).
-2. Go to [vercel.com](https://vercel.com) and import the repository.
-3. Add environment variables in Vercel project settings:
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
-4. Deploy. Vercel will run `npm run build` automatically.
+This repo includes a `vercel.json` SPA rewrite. Import the repository at [vercel.com](https://vercel.com), add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` as project environment variables, and deploy — Vercel runs `npm run build` automatically. Once the GitHub repo is connected, a push to `main` triggers a new deployment.
 
 ## Roles & Permissions
 
 | Role | Access |
 |---|---|
-| **Admin** | Full access including Users and Settings |
-| **Media** | Presentations, Songs, Bible, Media, Templates |
-| **Pastor** | Presentations, Songs, Bible, Media, Templates |
+| **Admin** | Everything, including Users and Settings |
+| **Media** | Presentations, Songs, Bible, Media, Templates, Live Presentation |
+| **Pastor** | Presentations, Songs, Bible, Media, Templates, Live Presentation |
 
-Admin-only pages:
-- `/users` — Manage team members and roles
-- `/settings` — Application configuration
-
-## Current Phase 1 Features
-
-- Email/password authentication (no public registration)
-- Protected routes — only authenticated users can access the app
-- Role-based access control (admin, media, pastor)
-- Dashboard with presentation/song/media/template counts
-- Recent presentations and upcoming services
-- Presentation management: create, list, open, duplicate, delete
-- Presentation editor placeholder (ready for Phase 3)
-- Responsive sidebar navigation with mobile support
-- Clean placeholder pages for Songs, Bible, Media, and Templates
-- Users management page (admin only)
-- Settings page with app info (admin only)
-- Dark professional media-studio aesthetic with maroon/red accents
-
-## Future Phases
-
-### Phase 2 — Content Management
-- Song library with lyric editor
-- Bible verse search and management
-- Media upload and management
-- Template builder
-
-### Phase 3 — Slide Editor & Live Presentation
-- Full Canva-style slide editor with drag-and-drop
-- Live presentation mode with projector/dual-screen support
-- Real-time lyrics display during worship
-- Slide transitions and animations
-- Background media integration
+Admin-only pages: `/users` (team & roles) and `/settings` (app configuration).
 
 ## Project Structure
 
 ```
 src/
 ├── components/
-│   ├── layout/          # AppLayout, Sidebar, Header, MobileNav
-│   ├── ui/              # Button, Card, Badge, Input, Modal, StatCard, EmptyState
+│   ├── editor/          # Slide editor: canvas stage, nav rail, asset drawers, panels
+│   ├── motion/           # Motion Background Library player, card, and browser panel
+│   ├── live/             # Live-mode shared renderer, timer, telemetry bar, hotkeys modal
+│   ├── songs/            # Song section editor, Smart Import modal
+│   ├── bible/, media/, command/, layout/, ui/
 │   └── LoadingScreen.tsx
 ├── context/
-│   └── AuthContext.tsx  # Supabase auth provider
-├── lib/
-│   └── supabase.ts      # Supabase client singleton
-├── pages/               # Route pages
-├── types/
-│   └── index.ts         # TypeScript types for database models
-├── App.tsx              # Router setup
-├── main.tsx             # Entry point
-└── index.css            # Tailwind + global styles
+│   └── AuthContext.tsx   # Supabase auth provider
+├── hooks/                # useFabricCanvas, useLiveChannel, useMidiController, …
+├── lib/                  # supabase client, slide/lyrics/motion logic, pure helpers
+├── pages/                # Route pages
+├── types/                # TypeScript types for database models and editor state
+├── App.tsx               # Router setup
+├── main.tsx               # Entry point
+└── index.css              # Tailwind + global styles
+
+supabase/migrations/       # Apply in filename order — see Supabase Setup above
 ```
 
 ## License
