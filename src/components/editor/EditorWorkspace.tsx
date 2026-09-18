@@ -12,7 +12,9 @@ import {
   createTextObject,
   deleteActiveObjects,
   serializeSlide,
+  toggleInlineTextStyle,
 } from '@/lib/fabricObjects';
+import type { Textbox } from 'fabric';
 import { resolveAndRenderSlide } from '@/lib/renderSlide';
 import { createBlankSlideContent, isEmptySlideContent } from '@/lib/slideContent';
 import { getMediaSignedUrl } from '@/lib/mediaStorage';
@@ -303,6 +305,41 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
       const dy = e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0;
       active.set({ left: (active.left ?? 0) + dx, top: (active.top ?? 0) + dy });
       active.setCoords();
+      canvas.requestRenderAll();
+      markDirty();
+      refreshSelection();
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [canvas, markDirty, refreshSelection]);
+
+  // Ctrl/Cmd+B/I/U for bold/italic/underline — unlike the Delete/Arrow/Undo
+  // handlers above, this one deliberately does NOT skip while a textbox is
+  // mid-edit (isEditing), since that's exactly when someone wants to bold a
+  // word they've just highlighted; toggleInlineTextStyle itself decides
+  // whether to style just the selected range or the whole textbox. Still
+  // skips plain <input>/<textarea>/contentEditable elsewhere on the page
+  // that aren't the textbox currently being edited.
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (!canvas) return;
+      if (!(e.metaKey || e.ctrlKey) || e.shiftKey || e.altKey) return;
+      const key = e.key.toLowerCase();
+      if (key !== 'b' && key !== 'i' && key !== 'u') return;
+
+      const active = canvas.getActiveObject();
+      if (!active || active.type !== 'textbox') return;
+      const isEditingTextbox = 'isEditing' in active && (active as { isEditing?: boolean }).isEditing;
+
+      if (!isEditingTextbox) {
+        const tag = document.activeElement?.tagName.toLowerCase();
+        if (tag === 'input' || tag === 'textarea' || (document.activeElement as HTMLElement | null)?.isContentEditable) return;
+      }
+
+      e.preventDefault();
+      const kind = key === 'b' ? 'bold' : key === 'i' ? 'italic' : 'underline';
+      toggleInlineTextStyle(active as Textbox, kind);
       canvas.requestRenderAll();
       markDirty();
       refreshSelection();

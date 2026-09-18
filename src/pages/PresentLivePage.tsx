@@ -18,6 +18,7 @@ import {
   Snowflake,
   Church,
   PackageCheck,
+  Pencil,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
@@ -27,6 +28,7 @@ import { useLiveChannel } from '@/hooks/useLiveChannel';
 import { useRealtimeLiveChannel } from '@/hooks/useRealtimeLiveChannel';
 import { useMidiController } from '@/hooks/useMidiController';
 import { SlideCanvasRenderer } from '@/components/live/SlideCanvasRenderer';
+import { SlideQuickEditModal } from '@/components/live/SlideQuickEditModal';
 import { TimerControl } from '@/components/live/TimerControl';
 import { BroadcastTelemetryBar } from '@/components/live/BroadcastTelemetryBar';
 import { ConnectionStatusBadge } from '@/components/live/ConnectionStatusBadge';
@@ -89,6 +91,13 @@ export function PresentLivePage() {
   const [linkCopied, setLinkCopied] = useState(false);
   const [hotkeyModalOpen, setHotkeyModalOpen] = useState(false);
   const [servicePackModalOpen, setServicePackModalOpen] = useState(false);
+  // The slide currently open in the Quick Edit overlay (see
+  // SlideQuickEditModal) — null when it's closed. Saving there patches this
+  // slide in `slides` below, which flows straight into buildState()/the
+  // broadcast effect like any other change, so an edit to the slide
+  // currently on air updates the Projector/Stage/Overlay windows immediately
+  // with no extra sync code needed.
+  const [editingSlide, setEditingSlide] = useState<Slide | null>(null);
   const [hotkeyBindings, setHotkeyBindings] = useState<HotkeyBindings>(() => loadHotkeyBindings());
 
   // Identifies this specific PresentLivePage instance to any OTHER operator
@@ -390,6 +399,12 @@ export function PresentLivePage() {
   // first, so a custom binding never double-fires alongside a default).
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
+      // The Quick Edit overlay (SlideQuickEditModal) has its own keyboard
+      // shortcuts (Ctrl/Cmd+B for Bold among them) that must never also
+      // trigger the console's own shortcuts underneath it — e.g. Blackout's
+      // "B" firing alongside Bold just because both use the same letter.
+      if (editingSlide) return;
+
       const tag = document.activeElement?.tagName.toLowerCase();
       // Also covers any contentEditable region generically, not just
       // <input>/<textarea> by tag name — the timer duration field is a
@@ -408,23 +423,29 @@ export function PresentLivePage() {
         return;
       }
 
+      // These single-letter shortcuts deliberately require no modifier key —
+      // Ctrl/Cmd+B/I/U are reserved for text formatting (see
+      // SlideQuickEditModal / EditorWorkspace), so a Ctrl/Cmd combination
+      // here must never also fire Blackout/Freeze/Safe Slide.
+      const noModifier = !e.metaKey && !e.ctrlKey && !e.altKey;
+
       if (e.key === 'ArrowRight' || e.key === ' ') {
         e.preventDefault();
         goNext();
       } else if (e.key === 'ArrowLeft') {
         e.preventDefault();
         goPrev();
-      } else if (e.key.toLowerCase() === 'b') {
+      } else if (noModifier && e.key.toLowerCase() === 'b') {
         toggleBlackout();
-      } else if (e.key.toLowerCase() === 'f') {
+      } else if (noModifier && e.key.toLowerCase() === 'f') {
         toggleFreeze();
-      } else if (e.key.toLowerCase() === 'l') {
+      } else if (noModifier && e.key.toLowerCase() === 'l') {
         toggleSafeSlide();
       }
     }
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [goNext, goPrev, toggleBlackout, toggleFreeze, toggleSafeSlide, hotkeyBindings]);
+  }, [goNext, goPrev, toggleBlackout, toggleFreeze, toggleSafeSlide, hotkeyBindings, editingSlide]);
 
   // MIDI: a bound pad/note triggers the same shared callbacks as the UI
   // buttons, keyboard shortcuts, and remote commands. Suppressed while the
@@ -435,7 +456,7 @@ export function PresentLivePage() {
   // while the modal's own "learning" listener is the one that should react.
   useMidiController({
     onNoteOn: (note) => {
-      if (hotkeyModalOpen) return;
+      if (hotkeyModalOpen || editingSlide) return;
       const action = findActionForMidiNote(hotkeyBindings, note);
       if (action === 'next') goNext();
       else if (action === 'previous') goPrev();
@@ -583,18 +604,32 @@ export function PresentLivePage() {
             <p className="text-sm text-zinc-500">No slides in this presentation.</p>
           ) : (
             slides.map((slide, index) => (
-              <button
+              <div
                 key={slide.id}
-                onClick={() => goToSlide(index)}
-                className={`shrink-0 w-40 lg:w-full text-left px-3 py-2.5 rounded-xl border transition-all ${
+                className={`group relative shrink-0 w-40 lg:w-full rounded-xl border overflow-hidden transition-all ${
                   index === slideIndex
-                    ? 'border-cyan-500/70 bg-cyan-950/20 text-cyan-200 shadow-[0_0_0_1px_rgba(6,182,212,0.25)]'
-                    : 'border-hud-border bg-hud-panel/60 text-zinc-400 hover:border-zinc-600'
+                    ? 'border-cyan-500/70 bg-cyan-950/20 shadow-[0_0_0_1px_rgba(6,182,212,0.25)]'
+                    : 'border-hud-border bg-hud-panel/60 hover:border-zinc-600'
                 }`}
               >
-                <span className="text-[10px] text-zinc-500 mr-1.5">{index + 1}</span>
-                <span className="text-xs truncate">{slide.title}</span>
-              </button>
+                <button onClick={() => goToSlide(index)} className="block w-full text-left" title="Check this slide — click to go live">
+                  <SlideCanvasRenderer content={slide.content} className="w-full pointer-events-none" />
+                  <div className="flex items-center gap-1.5 px-2 py-1.5">
+                    <span className="text-[10px] text-zinc-500 shrink-0">{index + 1}</span>
+                    <span className={`text-xs truncate ${index === slideIndex ? 'text-cyan-200' : 'text-zinc-400'}`}>{slide.title}</span>
+                  </div>
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditingSlide(slide);
+                  }}
+                  title="Edit this slide's text and layout"
+                  className="absolute top-1.5 right-1.5 p-1 rounded-md bg-black/60 text-zinc-300 opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-white hover:bg-black/80 transition-opacity"
+                >
+                  <Pencil className="w-3 h-3" />
+                </button>
+              </div>
             ))
           )}
         </div>
@@ -612,11 +647,24 @@ export function PresentLivePage() {
                   </span>
                 )}
               </div>
-              <SlideCanvasRenderer
-                content={slides[slideIndex]?.content ?? null}
-                onBackgroundStatus={setProgramBgUnavailable}
-                className="rounded-2xl border-2 border-red-600/60 overflow-hidden bg-hud-panel shadow-[0_0_24px_-6px_rgba(239,68,68,0.35)]"
-              />
+              <div className="relative">
+                <SlideCanvasRenderer
+                  content={slides[slideIndex]?.content ?? null}
+                  onBackgroundStatus={setProgramBgUnavailable}
+                  className="rounded-2xl border-2 border-red-600/60 overflow-hidden bg-hud-panel shadow-[0_0_24px_-6px_rgba(239,68,68,0.35)] pointer-events-none"
+                />
+                {slides[slideIndex] && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setEditingSlide(slides[slideIndex])}
+                    title="Fix a typo or edit this slide right now — it's currently on air, and Save updates the Projector/Stage/Overlay windows immediately without advancing to the next slide"
+                    className="absolute top-2 right-2 shadow-lg"
+                  >
+                    <Pencil className="w-3.5 h-3.5" /> Edit This Slide
+                  </Button>
+                )}
+              </div>
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 mb-1.5">
@@ -696,6 +744,15 @@ export function PresentLivePage() {
       />
 
       <ServicePackModal open={servicePackModalOpen} onClose={() => setServicePackModalOpen(false)} slides={slides} />
+
+      <SlideQuickEditModal
+        slide={editingSlide}
+        onClose={() => setEditingSlide(null)}
+        onSaved={(updated) => {
+          setSlides((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
+          setEditingSlide(null);
+        }}
+      />
     </div>
   );
 }
