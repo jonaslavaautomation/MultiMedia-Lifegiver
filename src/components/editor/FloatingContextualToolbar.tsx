@@ -40,6 +40,7 @@ import {
   assignId,
   deleteActiveObjects,
   reorderActiveObject,
+  toggleInlineTextStyle,
 } from '@/lib/fabricObjects';
 import { alignSelection, distributeSelection, type AlignEdge } from '@/lib/alignDistribute';
 import type { SelectedObjectSnapshot, TextAlign } from '@/types/editor';
@@ -195,29 +196,29 @@ export function FloatingContextualToolbar({ canvas, selection, refreshSelection,
                   onChange={(align: TextAlign) => withActiveTextbox((tb) => tb.set({ textAlign: align }))}
                 />
                 <div className="flex items-center gap-0.5">
-                  <Tooltip label="Bold">
+                  <Tooltip label="Bold (Ctrl/Cmd+B)">
                     <Button
                       variant={selection.bold ? 'primary' : 'ghost'}
                       size="sm"
-                      onClick={() => withActiveTextbox((tb) => tb.set({ fontWeight: selection.bold ? 'normal' : 'bold' }))}
+                      onClick={() => withActiveTextbox((tb) => toggleInlineTextStyle(tb, 'bold'))}
                     >
                       <Bold className="w-3.5 h-3.5" />
                     </Button>
                   </Tooltip>
-                  <Tooltip label="Italic">
+                  <Tooltip label="Italic (Ctrl/Cmd+I)">
                     <Button
                       variant={selection.italic ? 'primary' : 'ghost'}
                       size="sm"
-                      onClick={() => withActiveTextbox((tb) => tb.set({ fontStyle: selection.italic ? 'normal' : 'italic' }))}
+                      onClick={() => withActiveTextbox((tb) => toggleInlineTextStyle(tb, 'italic'))}
                     >
                       <Italic className="w-3.5 h-3.5" />
                     </Button>
                   </Tooltip>
-                  <Tooltip label="Underline">
+                  <Tooltip label="Underline (Ctrl/Cmd+U)">
                     <Button
                       variant={selection.underline ? 'primary' : 'ghost'}
                       size="sm"
-                      onClick={() => withActiveTextbox((tb) => tb.set({ underline: !selection.underline }))}
+                      onClick={() => withActiveTextbox((tb) => toggleInlineTextStyle(tb, 'underline'))}
                     >
                       <Underline className="w-3.5 h-3.5" />
                     </Button>

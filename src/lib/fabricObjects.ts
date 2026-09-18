@@ -52,6 +52,54 @@ export function toggleShadow(canvas: Canvas, enabled: boolean): void {
   canvas.requestRenderAll();
 }
 
+export type InlineTextStyleKind = 'bold' | 'italic' | 'underline';
+
+interface EditableTextbox {
+  isEditing?: boolean;
+  selectionStart?: number;
+  selectionEnd?: number;
+  getSelectionStyles(startIndex?: number, endIndex?: number, complete?: boolean): Record<string, unknown>[];
+  setSelectionStyles(styles: Record<string, unknown>, startIndex?: number, endIndex?: number): void;
+}
+
+function isStyleOn(style: Record<string, unknown>, kind: InlineTextStyleKind): boolean {
+  if (kind === 'bold') return style.fontWeight === 'bold' || style.fontWeight === 700;
+  if (kind === 'italic') return style.fontStyle === 'italic';
+  return style.underline === true;
+}
+
+function toStyleProps(kind: InlineTextStyleKind, on: boolean): Record<string, unknown> {
+  if (kind === 'bold') return { fontWeight: on ? 'bold' : 'normal' };
+  if (kind === 'italic') return { fontStyle: on ? 'italic' : 'normal' };
+  return { underline: on };
+}
+
+/**
+ * Toggles bold/italic/underline — shared by the Ctrl/Cmd+B/I/U shortcut and
+ * the floating toolbar's Bold/Italic/Underline buttons, so the two can never
+ * diverge in behavior. While actively editing with a text range selected,
+ * styles the selected characters only (Fabric's per-character style map,
+ * via getSelectionStyles/setSelectionStyles); otherwise (no active edit, or
+ * an edit with just a blinking cursor and no range) falls back to styling
+ * the whole textbox, matching how a fresh textbox or a plain object
+ * selection has no notion of a character range.
+ */
+export function toggleInlineTextStyle(textbox: Textbox, kind: InlineTextStyleKind): void {
+  const editable = textbox as unknown as EditableTextbox;
+  const start = editable.selectionStart ?? 0;
+  const end = editable.selectionEnd ?? 0;
+  const hasRangeSelection = editable.isEditing === true && end > start;
+
+  if (hasRangeSelection) {
+    const existing = editable.getSelectionStyles(start, end, true);
+    const currentlyOn = existing.length > 0 && existing.every((style) => isStyleOn(style, kind));
+    editable.setSelectionStyles(toStyleProps(kind, !currentlyOn), start, end);
+  } else {
+    const currentlyOn = isStyleOn(textbox as unknown as Record<string, unknown>, kind);
+    textbox.set(toStyleProps(kind, !currentlyOn));
+  }
+}
+
 interface CreateTextOptions {
   /** Center the new text box at this point (canvas logical coordinates) instead of the slide's center — used for click-to-add. */
   centerAt?: { x: number; y: number };
