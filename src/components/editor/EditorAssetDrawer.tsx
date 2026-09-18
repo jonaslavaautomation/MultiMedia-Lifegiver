@@ -5,6 +5,7 @@ import type { EditorPanelKind } from '@/components/editor/EditorNavRail';
 
 const PANEL_TITLES: Record<EditorPanelKind, string> = {
   templates: 'Templates',
+  import: 'Import Slides',
   bible: 'Bible Verses',
   songs: 'Worship Songs',
   elements: 'Elements',

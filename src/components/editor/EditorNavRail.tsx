@@ -1,7 +1,7 @@
-import { LayoutTemplate, BookOpen, Music4, Shapes, Type, Image as ImageIcon, Palette } from 'lucide-react';
+import { LayoutTemplate, BookOpen, Music4, Shapes, Type, Image as ImageIcon, Palette, FileUp } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
-export type EditorPanelKind = 'templates' | 'bible' | 'songs' | 'elements' | 'text' | 'media' | 'brand';
+export type EditorPanelKind = 'templates' | 'bible' | 'songs' | 'elements' | 'text' | 'media' | 'brand' | 'import';
 
 interface NavItem {
   kind: EditorPanelKind;
@@ -11,6 +11,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { kind: 'templates', label: 'Templates', icon: LayoutTemplate },
+  { kind: 'import', label: 'Import', icon: FileUp },
   { kind: 'bible', label: 'Bible', icon: BookOpen },
   { kind: 'songs', label: 'Songs', icon: Music4 },
   { kind: 'elements', label: 'Elements', icon: Shapes },
