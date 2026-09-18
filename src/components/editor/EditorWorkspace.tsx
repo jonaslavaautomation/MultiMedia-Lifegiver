@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useFabricCanvas } from '@/hooks/useFabricCanvas';
 import { useSelectedObject } from '@/hooks/useSelectedObject';
@@ -30,6 +30,10 @@ import { EditorNavRail, type EditorPanelKind } from '@/components/editor/EditorN
 import { EditorAssetDrawer } from '@/components/editor/EditorAssetDrawer';
 import { FloatingContextualToolbar } from '@/components/editor/FloatingContextualToolbar';
 import { TemplatesPanel } from '@/components/editor/panels/TemplatesPanel';
+// Lazy — pdfjs-dist (PDF rendering, used only by this panel) is large
+// enough that bundling it into the main chunk would slow down every editor
+// page load just to support a feature most sessions never touch.
+const ImportPanel = lazy(() => import('@/components/editor/panels/ImportPanel').then((m) => ({ default: m.ImportPanel })));
 import { BiblePanel } from '@/components/editor/panels/BiblePanel';
 import { SongsPanel } from '@/components/editor/panels/SongsPanel';
 import { ElementsPanel } from '@/components/editor/panels/ElementsPanel';
@@ -603,6 +607,14 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
     setCurrentSlideId(newSlide.id);
   }
 
+  // ImportPanel already does the Supabase inserts itself (each imported PDF
+  // page/image becomes its own slide row as soon as it's ready, so a large
+  // deck shows visible progress instead of appearing all at once at the
+  // end) — this just mirrors those already-saved rows into local state.
+  function handleImportSlides(newSlides: Slide[]) {
+    setSlides((prev) => [...prev, ...newSlides]);
+  }
+
   async function handleDuplicateSlide(id: string) {
     const source = slides.find((s) => s.id === id);
     if (!source) return;
@@ -793,6 +805,12 @@ export function EditorWorkspace({ presentationId }: EditorWorkspaceProps) {
     switch (activePanel) {
       case 'templates':
         return <TemplatesPanel onApply={(content) => void handleApplyTemplate(content)} getCurrentSlideContent={getCurrentSlideContent} />;
+      case 'import':
+        return (
+          <Suspense fallback={<p className="text-xs text-zinc-500">Loading importer…</p>}>
+            <ImportPanel presentationId={presentationId} existingSlideCount={slides.length} onImported={handleImportSlides} />
+          </Suspense>
+        );
       case 'bible':
         return <BiblePanel canvas={canvas} markDirty={markDirty} refreshSelection={refreshSelection} />;
       case 'songs':
