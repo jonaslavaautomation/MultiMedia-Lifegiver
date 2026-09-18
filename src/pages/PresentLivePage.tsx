@@ -19,6 +19,7 @@ import {
   Church,
   PackageCheck,
   Pencil,
+  ListMusic,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
@@ -29,6 +30,7 @@ import { useRealtimeLiveChannel } from '@/hooks/useRealtimeLiveChannel';
 import { useMidiController } from '@/hooks/useMidiController';
 import { SlideCanvasRenderer } from '@/components/live/SlideCanvasRenderer';
 import { SlideQuickEditModal } from '@/components/live/SlideQuickEditModal';
+import { AddSongModal } from '@/components/live/AddSongModal';
 import { TimerControl } from '@/components/live/TimerControl';
 import { BroadcastTelemetryBar } from '@/components/live/BroadcastTelemetryBar';
 import { ConnectionStatusBadge } from '@/components/live/ConnectionStatusBadge';
@@ -98,6 +100,7 @@ export function PresentLivePage() {
   // currently on air updates the Projector/Stage/Overlay windows immediately
   // with no extra sync code needed.
   const [editingSlide, setEditingSlide] = useState<Slide | null>(null);
+  const [addSongModalOpen, setAddSongModalOpen] = useState(false);
   const [hotkeyBindings, setHotkeyBindings] = useState<HotkeyBindings>(() => loadHotkeyBindings());
 
   // Identifies this specific PresentLivePage instance to any OTHER operator
@@ -403,7 +406,7 @@ export function PresentLivePage() {
       // shortcuts (Ctrl/Cmd+B for Bold among them) that must never also
       // trigger the console's own shortcuts underneath it — e.g. Blackout's
       // "B" firing alongside Bold just because both use the same letter.
-      if (editingSlide) return;
+      if (editingSlide || addSongModalOpen) return;
 
       const tag = document.activeElement?.tagName.toLowerCase();
       // Also covers any contentEditable region generically, not just
@@ -445,7 +448,7 @@ export function PresentLivePage() {
     }
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [goNext, goPrev, toggleBlackout, toggleFreeze, toggleSafeSlide, hotkeyBindings, editingSlide]);
+  }, [goNext, goPrev, toggleBlackout, toggleFreeze, toggleSafeSlide, hotkeyBindings, editingSlide, addSongModalOpen]);
 
   // MIDI: a bound pad/note triggers the same shared callbacks as the UI
   // buttons, keyboard shortcuts, and remote commands. Suppressed while the
@@ -456,7 +459,7 @@ export function PresentLivePage() {
   // while the modal's own "learning" listener is the one that should react.
   useMidiController({
     onNoteOn: (note) => {
-      if (hotkeyModalOpen || editingSlide) return;
+      if (hotkeyModalOpen || editingSlide || addSongModalOpen) return;
       const action = findActionForMidiNote(hotkeyBindings, note);
       if (action === 'next') goNext();
       else if (action === 'previous') goPrev();
@@ -469,6 +472,23 @@ export function PresentLivePage() {
   function handleHotkeyBindingsChange(next: HotkeyBindings) {
     setHotkeyBindings(next);
     saveHotkeyBindings(next);
+  }
+
+  // Appends a freshly-added song's slides to this same live presentation and
+  // immediately jumps the live output to the first one — since they land in
+  // this presentation's own `slides` array, they flow through buildState()/
+  // the broadcast effect above exactly like any other slide, so the
+  // Projector/Stage Display/Overlay windows already open (tied to this
+  // presentation's id) pick them up with no need to reopen anything.
+  function handleSongAdded(inserted: Slide[]) {
+    if (inserted.length === 0) {
+      setAddSongModalOpen(false);
+      return;
+    }
+    const targetIndex = slides.length;
+    setSlides((prev) => [...prev, ...inserted]);
+    setSlideIndex(targetIndex);
+    setAddSongModalOpen(false);
   }
 
   function openWindow(kind: 'projector' | 'stage' | 'overlay') {
@@ -553,6 +573,14 @@ export function PresentLivePage() {
           <ConnectionStatusBadge />
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setAddSongModalOpen(true)}
+            title="Add a song's slides to this live set — no need to switch presentations or reopen Projector/Stage"
+          >
+            <ListMusic className="w-3.5 h-3.5" /> Add Song
+          </Button>
           <Button variant={blackout ? 'danger' : 'outline'} size="sm" onClick={toggleBlackout} title="Toggle blackout (B)">
             {blackout ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
             {blackout ? 'Blacked Out' : 'Blackout'}
@@ -752,6 +780,14 @@ export function PresentLivePage() {
           setSlides((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
           setEditingSlide(null);
         }}
+      />
+
+      <AddSongModal
+        open={addSongModalOpen}
+        onClose={() => setAddSongModalOpen(false)}
+        presentationId={id ?? ''}
+        existingSlideCount={slides.length}
+        onAdded={handleSongAdded}
       />
     </div>
   );
